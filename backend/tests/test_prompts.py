@@ -1,5 +1,5 @@
 """Tests for prompt builders."""
-from backend.agent.prompts import (
+from src.agent.prompts import (
     SYSTEM_PROMPT,
     build_plan_prompt,
     build_react_prompt,

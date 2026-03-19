@@ -3,8 +3,8 @@ import pytest
 import respx
 import httpx
 
-from backend.models.state import GreenhouseState
-from backend.sim_client import SimEngineClient
+from src.models.state import GreenhouseState
+from src.sim_client import SimEngineClient
 
 
 @pytest.fixture

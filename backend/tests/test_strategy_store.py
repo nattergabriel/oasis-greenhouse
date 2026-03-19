@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch
 
-from backend.strategy.store import StrategyStore
+from src.strategy.store import StrategyStore
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ class TestStrategyStoreRead:
 
     def test_read_fallback_inline(self, tmp_strategy):
         """When both strategy and initial file are missing, use inline fallback."""
-        with patch("backend.strategy.store.settings") as mock_settings:
+        with patch("src.strategy.store.settings") as mock_settings:
             mock_settings.initial_strategy_path = "/nonexistent/path.md"
             mock_settings.strategy_file_path = str(tmp_strategy.file_path)
 
@@ -54,7 +54,7 @@ class TestStrategyStoreWrite:
 class TestGetInitialStrategy:
     def test_inline_fallback(self):
         """_get_initial_strategy should return inline fallback when file missing."""
-        with patch("backend.strategy.store.settings") as mock_settings:
+        with patch("src.strategy.store.settings") as mock_settings:
             mock_settings.initial_strategy_path = "/nonexistent/STRATEGY-INITIAL.md"
             result = StrategyStore._get_initial_strategy()
             assert "# Initial Strategy" in result
@@ -67,7 +67,7 @@ class TestGetInitialStrategy:
         initial_file = tmp_path / "STRATEGY-INITIAL.md"
         initial_file.write_text("# Real Initial Strategy")
 
-        with patch("backend.strategy.store.settings") as mock_settings:
+        with patch("src.strategy.store.settings") as mock_settings:
             mock_settings.initial_strategy_path = str(initial_file)
             result = StrategyStore._get_initial_strategy()
             assert result == "# Real Initial Strategy"

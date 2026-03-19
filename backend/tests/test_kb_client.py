@@ -3,7 +3,7 @@ import pytest
 import respx
 import httpx
 
-from backend.kb.client import KnowledgeBaseClient
+from src.kb.client import KnowledgeBaseClient
 
 
 @pytest.fixture

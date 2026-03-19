@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
-from backend.models.state import AgentAction, GreenhouseState
+from src.models.state import AgentAction, GreenhouseState
 
 
 class TestInitNode:
@@ -10,9 +10,9 @@ class TestInitNode:
     async def test_init_node_returns_expected_keys(self, sample_greenhouse):
         """init_node should initialise greenhouse, load KB, load strategy."""
         with (
-            patch("backend.nodes.init.sim_client") as mock_sim,
-            patch("backend.nodes.init.kb_cache") as mock_kb_cache,
-            patch("backend.nodes.init.strategy_store") as mock_strategy,
+            patch("src.nodes.init.sim_client") as mock_sim,
+            patch("src.nodes.init.kb_cache") as mock_kb_cache,
+            patch("src.nodes.init.strategy_store") as mock_strategy,
         ):
             mock_sim.init = AsyncMock(return_value=sample_greenhouse)
             mock_kb_cache.load = AsyncMock()
@@ -20,7 +20,7 @@ class TestInitNode:
             mock_kb_cache.get_nutrition_targets_text.return_value = "nutrition targets"
             mock_strategy.read.return_value = "# Strategy"
 
-            from backend.nodes.init import init_node
+            from src.nodes.init import init_node
 
             state = {"run_id": "test-123", "config": {}}
             result = await init_node(state)
@@ -39,10 +39,10 @@ class TestPlanNode:
     @pytest.mark.asyncio
     async def test_plan_node_calls_llm(self, sample_greenhouse, mock_llm_plan_response):
         """plan_node should build prompt, call LLM, and return decisions."""
-        with patch("backend.nodes.plan.bedrock_client") as mock_llm:
+        with patch("src.nodes.plan.bedrock_client") as mock_llm:
             mock_llm.call = AsyncMock(return_value=mock_llm_plan_response)
 
-            from backend.nodes.plan import plan_node
+            from src.nodes.plan import plan_node
 
             state = {
                 "greenhouse": sample_greenhouse,
@@ -65,10 +65,10 @@ class TestPlanNode:
         """plan_node should append to existing decisions list."""
         existing = AgentAction(day=0, node="plan", reasoning="initial", actions=[])
 
-        with patch("backend.nodes.plan.bedrock_client") as mock_llm:
+        with patch("src.nodes.plan.bedrock_client") as mock_llm:
             mock_llm.call = AsyncMock(return_value=mock_llm_plan_response)
 
-            from backend.nodes.plan import plan_node
+            from src.nodes.plan import plan_node
 
             state = {
                 "greenhouse": sample_greenhouse,
@@ -103,10 +103,10 @@ class TestSimulateNode:
             ],
         }
 
-        with patch("backend.nodes.simulate.sim_client") as mock_sim:
+        with patch("src.nodes.simulate.sim_client") as mock_sim:
             mock_sim.tick = AsyncMock(return_value=tick_result)
 
-            from backend.nodes.simulate import simulate_node
+            from src.nodes.simulate import simulate_node
 
             state = {
                 "greenhouse": sample_greenhouse,
@@ -149,10 +149,10 @@ class TestSimulateNode:
             ],
         }
 
-        with patch("backend.nodes.simulate.sim_client") as mock_sim:
+        with patch("src.nodes.simulate.sim_client") as mock_sim:
             mock_sim.tick = AsyncMock(return_value=tick_result)
 
-            from backend.nodes.simulate import simulate_node
+            from src.nodes.simulate import simulate_node
 
             state = {
                 "greenhouse": sample_greenhouse,
@@ -175,13 +175,13 @@ class TestReactNode:
     async def test_react_node(self, sample_greenhouse, mock_llm_react_response):
         """react_node should query KB and call LLM."""
         with (
-            patch("backend.nodes.react.bedrock_client") as mock_llm,
-            patch("backend.nodes.react.kb_client") as mock_kb,
+            patch("src.nodes.react.bedrock_client") as mock_llm,
+            patch("src.nodes.react.kb_client") as mock_kb,
         ):
             mock_llm.call = AsyncMock(return_value=mock_llm_react_response)
             mock_kb.query_operational_scenario = AsyncMock(return_value="Water guidance")
 
-            from backend.nodes.react import react_node
+            from src.nodes.react import react_node
 
             state = {
                 "greenhouse": sample_greenhouse,
@@ -211,13 +211,13 @@ class TestReflectNode:
     async def test_reflect_node(self, sample_greenhouse, mock_llm_reflect_response):
         """reflect_node should call LLM and save strategy."""
         with (
-            patch("backend.nodes.reflect.bedrock_client") as mock_llm,
-            patch("backend.nodes.reflect.strategy_store") as mock_strategy,
+            patch("src.nodes.reflect.bedrock_client") as mock_llm,
+            patch("src.nodes.reflect.strategy_store") as mock_strategy,
         ):
             mock_llm.call = AsyncMock(return_value=mock_llm_reflect_response)
             mock_strategy.write = MagicMock()
 
-            from backend.nodes.reflect import reflect_node
+            from src.nodes.reflect import reflect_node
 
             state = {
                 "greenhouse": sample_greenhouse,

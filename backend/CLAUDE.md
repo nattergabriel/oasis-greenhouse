@@ -86,4 +86,4 @@ Store simulation results as JSON files in a `data/simulations/` directory. Use U
 The agent sets **zone plans** (percentage-based crop allocations). The sim engine handles planting, harvesting, and replanting automatically. Read BACKEND-SUMMARY.md carefully.
 
 ## Run Command
-The app should run with: `uvicorn backend.main:app --host 0.0.0.0 --port 8000`
+The app should run with: `uvicorn src.main:app --host 0.0.0.0 --port 8000`

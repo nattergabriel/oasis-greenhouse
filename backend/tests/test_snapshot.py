@@ -1,6 +1,6 @@
 """Tests for create_snapshot helper."""
-from backend.nodes._snapshot import create_snapshot
-from backend.models.state import (
+from src.nodes._snapshot import create_snapshot
+from src.models.state import (
     DailySnapshot,
     SlotSnapshot,
     CropSnapshot,

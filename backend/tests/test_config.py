@@ -7,7 +7,7 @@ def test_settings_defaults():
     """Settings should load with sane defaults even without .env."""
     # Reimport with clean env to get defaults
     with patch.dict(os.environ, {}, clear=False):
-        from backend.config import Settings
+        from src.config import Settings
         s = Settings()
 
     assert s.sim_engine_url == "http://localhost:8001"
@@ -22,6 +22,6 @@ def test_settings_defaults():
 def test_settings_env_override():
     """Settings should pick up env var overrides."""
     with patch.dict(os.environ, {"SIM_ENGINE_URL": "http://test:9999"}):
-        from backend.config import Settings
+        from src.config import Settings
         s = Settings()
     assert s.sim_engine_url == "http://test:9999"

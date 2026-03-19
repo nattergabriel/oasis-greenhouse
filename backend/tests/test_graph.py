@@ -1,7 +1,7 @@
 """Tests for LangGraph wiring — route_after_simulate + build_graph."""
 import pytest
 
-from backend.graph import route_after_simulate, build_graph
+from src.graph import route_after_simulate, build_graph
 
 
 class TestRouteAfterSimulate:

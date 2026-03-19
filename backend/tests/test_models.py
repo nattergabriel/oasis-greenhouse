@@ -1,5 +1,5 @@
 """Tests for Pydantic domain models and TypedDicts."""
-from backend.models.state import (
+from src.models.state import (
     Crop,
     Slot,
     GreenhouseState,
@@ -180,7 +180,7 @@ class TestAgentState:
 
 class TestTrainingRunRequest:
     def test_defaults(self):
-        from backend.models.state import TrainingRunRequest
+        from src.models.state import TrainingRunRequest
         req = TrainingRunRequest()
         assert req.seed == 42
         assert req.crop_assignments == {}

@@ -3,7 +3,7 @@ import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
-from backend.agent.llm import BedrockClient
+from src.agent.llm import BedrockClient
 
 
 class TestParseJson:
@@ -68,7 +68,7 @@ class TestBedrockClientCall:
             }
         }
 
-        with patch("backend.agent.llm.boto3.client", return_value=mock_boto_client):
+        with patch("src.agent.llm.boto3.client", return_value=mock_boto_client):
             client = BedrockClient()
 
         result = await client.call("system prompt", "user prompt")
@@ -87,7 +87,7 @@ class TestBedrockClientCall:
             }
         }
 
-        with patch("backend.agent.llm.boto3.client", return_value=mock_boto_client):
+        with patch("src.agent.llm.boto3.client", return_value=mock_boto_client):
             client = BedrockClient()
 
         result = await client.call("sys", "usr")

@@ -6,8 +6,8 @@ from unittest.mock import patch, AsyncMock, MagicMock
 
 from fastapi.testclient import TestClient
 
-from backend.main import app
-from backend.models.state import (
+from src.main import app
+from src.models.state import (
     SimulationMetrics,
     SimulationResult,
     GreenhouseState,
@@ -46,9 +46,9 @@ class TestTrainingRunEndpoint:
         }
 
         with (
-            patch("backend.main.graph") as mock_graph,
-            patch("backend.main.strategy_store") as mock_strategy,
-            patch("backend.main._save_simulation_result"),
+            patch("src.main.graph") as mock_graph,
+            patch("src.main.strategy_store") as mock_strategy,
+            patch("src.main._save_simulation_result"),
         ):
             mock_graph.ainvoke = AsyncMock(return_value=final_state)
             mock_strategy.read.return_value = "# Old Strategy"
@@ -68,8 +68,8 @@ class TestTrainingRunEndpoint:
     def test_run_training_error(self, client):
         """POST /api/training/run should return 500 on graph error."""
         with (
-            patch("backend.main.graph") as mock_graph,
-            patch("backend.main.strategy_store") as mock_strategy,
+            patch("src.main.graph") as mock_graph,
+            patch("src.main.strategy_store") as mock_strategy,
         ):
             mock_graph.ainvoke = AsyncMock(side_effect=RuntimeError("LLM failed"))
             mock_strategy.read.return_value = "# Strategy"
@@ -84,7 +84,7 @@ class TestTrainingRunEndpoint:
 
 class TestListSimulationsEndpoint:
     def test_list_empty(self, client, tmp_path):
-        with patch("backend.main.settings") as mock_settings:
+        with patch("src.main.settings") as mock_settings:
             mock_settings.simulations_dir = str(tmp_path / "empty_sims")
             response = client.get("/api/simulations")
 
@@ -117,7 +117,7 @@ class TestListSimulationsEndpoint:
 
         (sim_dir / "test-sim-1.json").write_text(json.dumps(sim_data))
 
-        with patch("backend.main.settings") as mock_settings:
+        with patch("src.main.settings") as mock_settings:
             mock_settings.simulations_dir = str(sim_dir)
             response = client.get("/api/simulations")
 
@@ -154,7 +154,7 @@ class TestGetSimulationEndpoint:
 
         (sim_dir / "test-sim-1.json").write_text(json.dumps(sim_data))
 
-        with patch("backend.main.settings") as mock_settings:
+        with patch("src.main.settings") as mock_settings:
             mock_settings.simulations_dir = str(sim_dir)
             response = client.get("/api/simulations/test-sim-1")
 
@@ -167,7 +167,7 @@ class TestGetSimulationEndpoint:
         sim_dir = tmp_path / "sims"
         sim_dir.mkdir()
 
-        with patch("backend.main.settings") as mock_settings:
+        with patch("src.main.settings") as mock_settings:
             mock_settings.simulations_dir = str(sim_dir)
             response = client.get("/api/simulations/nonexistent-id")
 
@@ -176,7 +176,7 @@ class TestGetSimulationEndpoint:
 
 class TestGetStrategyEndpoint:
     def test_get_strategy(self, client):
-        with patch("backend.main.strategy_store") as mock_strategy:
+        with patch("src.main.strategy_store") as mock_strategy:
             mock_strategy.read.return_value = "# Current Strategy\nPlant potatoes."
 
             response = client.get("/api/strategy")

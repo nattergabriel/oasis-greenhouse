@@ -1,6 +1,6 @@
 """Shared fixtures for Mars Greenhouse tests."""
 import pytest
-from backend.models.state import (
+from src.models.state import (
     Crop,
     Slot,
     GreenhouseState,
