@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { mockResourceForecast, mockMissionTimeline, mockWeather } from "@/lib/mock-data";
 import { api, useApi } from "@/lib/api";
+import { fmtInt } from "@/lib/utils";
 import type { MilestoneType, RiskLevel } from "@/lib/types";
 import {
   AreaChart,
@@ -307,7 +308,7 @@ export default function ForecastingPage() {
             <div className="flex items-center gap-2 text-sm">
               <Sun className="h-3.5 w-3.5 text-primary" />
               <span className="text-muted-foreground">Solar</span>
-              <span className="ml-auto font-mono tabular-nums">{weather.solarIrradiance} W/m²</span>
+              <span className="ml-auto font-mono tabular-nums">{fmtInt(weather.solarIrradiance)} W/m²</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <AlertTriangle className="h-3.5 w-3.5 text-primary" />
@@ -316,11 +317,11 @@ export default function ForecastingPage() {
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Ext. Temp</span>
-              <span className="ml-auto font-mono tabular-nums">{weather.externalTemperature}°C</span>
+              <span className="ml-auto font-mono tabular-nums">{fmtInt(weather.externalTemperature)}°C</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Pressure</span>
-              <span className="ml-auto font-mono tabular-nums">{weather.atmosphericPressure} Pa</span>
+              <span className="ml-auto font-mono tabular-nums">{fmtInt(weather.atmosphericPressure)} Pa</span>
             </div>
           </div>
 
@@ -332,7 +333,7 @@ export default function ForecastingPage() {
                 {weatherMetric === "solar" ? (
                   <div className="flex items-center gap-2">
                     <Sun className="h-3 w-3 text-primary" />
-                    <span className="font-mono text-sm tabular-nums">{day.solarIrradiance} W/m²</span>
+                    <span className="font-mono text-sm tabular-nums">{fmtInt(day.solarIrradiance)} W/m²</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">

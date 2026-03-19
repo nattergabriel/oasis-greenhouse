@@ -554,13 +554,14 @@ const TABS: { value: TabValue; label: string }[] = [
 ];
 
 export default function CropsPage() {
-  const { state } = useSimulation();
+  const { state, hydrated } = useSimulation();
   const [activeTab, setActiveTab] = useState<TabValue>("catalog");
   const plantingQueue = useApi(() => api.crops.plantingQueue().then(r => r.queue), mockPlantingQueue);
   const harvestJournal = useApi(() => api.crops.harvestJournal().then(r => r.harvests), mockHarvestJournal);
   const stockpileItems = useApi(() => api.crops.stockpile().then(r => r.items), mockStockpile);
   const storedFood = useApi(() => api.nutrition.storedFood(), mockStoredFood);
-  const ghDetail = useApi(() => state.selectedGreenhouseId ? api.greenhouses.get(state.selectedGreenhouseId) : Promise.resolve(null), state.selectedGreenhouseId ? mockGreenhouseDetails[state.selectedGreenhouseId] ?? null : null, [state.selectedGreenhouseId]);
+  const ghId = state.selectedGreenhouseId;
+  const ghDetail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), ghId ? mockGreenhouseDetails[ghId] ?? null : null, [ghId], !hydrated || !ghId);
   const slots = ghDetail?.slots || [];
 
   return (
