@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Progress } from "@/components/ui/progress";
 import { NavLink } from "./nav-link";
 import { useSimulation } from "@/providers/simulation-provider";
 import { StatusPopover } from "./status-popover";
@@ -18,7 +17,7 @@ export function Navbar() {
   const pathname = usePathname();
   const { state } = useSimulation();
   const isAdminActive = pathname.startsWith("/admin");
-  const { resources, alerts, recommendations } = state;
+  const { alerts, recommendations } = state;
   const openAlertCount = alerts.filter((a) => a.status === "OPEN").length;
   const pendingRecs = recommendations.filter((r) => r.status === "PENDING").length;
   const totalIssues = openAlertCount + pendingRecs;
@@ -83,21 +82,6 @@ export function Navbar() {
 
         {/* Quick Status — resource bars + clickable badge */}
         <div className="hidden md:flex items-center gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col gap-1 w-16">
-              <span className="text-[10px] uppercase text-muted-foreground leading-none">Water</span>
-              <Progress value={resources.waterReservePercent} className="h-2" />
-            </div>
-            <div className="flex flex-col gap-1 w-16">
-              <span className="text-[10px] uppercase text-muted-foreground leading-none">Nutri</span>
-              <Progress value={resources.nutrientReservePercent} className="h-2" />
-            </div>
-            <div className="flex flex-col gap-1 w-16">
-              <span className="text-[10px] uppercase text-muted-foreground leading-none">Energy</span>
-              <Progress value={resources.energyReservePercent} className="h-2" />
-            </div>
-          </div>
-
           <StatusPopover
             alerts={alerts.filter((a) => a.status === "OPEN")}
             recommendations={recommendations.filter((r) => r.status === "PENDING")}
