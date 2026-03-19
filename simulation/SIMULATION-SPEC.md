@@ -1,6 +1,6 @@
 # Simulation Specification — Core
 
-> **Version:** Clean rewrite after session decisions. This is the ONLY spec Claude Code should follow.
+> **Version:** Updated with batch execution model, zone plans, API alignment, and tiered additions.
 > **Rule:** Build exactly this. Nothing more. Additions are listed at the bottom — do not implement them unless explicitly told to.
 >
 > **Data sources:** **(KB)** = from Syngenta MCP Knowledge Base. **(SIM)** = our simulation mechanic. **(NASA)** = external research.
@@ -9,7 +9,7 @@
 
 ## What the simulation does
 
-A 450-day loop simulating a Martian greenhouse that supplements the diet of 4 astronauts. An AI agent manages the greenhouse — planting crops, allocating water, adjusting conditions. The simulation measures how much of the crew's nutritional needs the greenhouse can provide.
+A 450-day simulation of a Martian greenhouse that supplements the diet of 4 astronauts. An AI agent sets zone-level crop plans and environmental settings. The simulation engine runs the day-by-day physics, auto-harvests and auto-replants crops according to the zone plan, and stops early when events or threshold breaches require the agent to react.
 
 ## Success metrics (what we optimize)
 
@@ -25,40 +25,102 @@ A 450-day loop simulating a Martian greenhouse that supplements the diet of 4 as
 
 ---
 
-## Day loop
+## Execution model: batch mode
+
+The sim engine is a **stateless REST server**. The backend orchestrator manages the agent loop. The sim engine does NOT call the agent — it only runs physics.
+
+### Three endpoints
+
+- `POST /simulate/init` — create initial greenhouse state from config
+- `POST /simulate/tick` — advance N days with agent actions, return updated state
+- `POST /simulate/inject-event` — manually inject an event (admin panel)
+
+### How a full run works
+
+```
+1. Orchestrator calls /simulate/init → empty greenhouse state at day 0
+2. Orchestrator sends state to agent (LLM call) → agent returns zone plans + settings
+3. Orchestrator calls /simulate/tick with agent actions for ~30 days
+4. Sim runs day-by-day, auto-harvesting and auto-replanting per zone plans
+   → If event fires or threshold breached: STOP EARLY, return to orchestrator
+   → Orchestrator sends state + event to agent (LLM call) → agent returns reactive actions
+   → Orchestrator calls /simulate/tick with remaining days
+5. If batch completes normally: orchestrator sends state to agent for next 30-day review
+6. Repeat until day 450
+7. Post-run: one LLM call to analyze run and update strategy document
+```
+
+**Estimated LLM calls per run:** ~20-25 (15 scheduled reviews + 5-10 reactive)
+
+### Agent triggers
+
+| Trigger | Type | When |
+|---------|------|------|
+| Day 0 | Scheduled | Initial zone plans |
+| Every ~30 days | Scheduled | Review metrics, adjust plans |
+| Event fires | Reactive | `water_recycling_decline` or `temperature_failure` |
+| Crop health < 30 | Reactive | Crop about to die |
+| Water < 15% (1,500L) | Reactive | Resource crisis |
+| Energy deficit 3+ days | Reactive | Must cut lighting or heating |
+
+---
+
+## Day loop (inside /simulate/tick)
 
 ```python
-for day in range(1, 451):
-    # 1. Environment updates
-    environment.update(day)  # solar hours, temperature (seasonal)
-    
-    # 2. Random events
-    events = roll_events(day)
-    apply_events(events, environment, crops, resources)
-    
-    # 3. Crops update
-    for crop in all_crops:
-        crop.grow(environment, resources, zone)
-        crop.detect_stress(environment, resources, zone)
-    
-    # 4. Resources consumed
-    resources.consume(all_crops, crew_size=4)
-    resources.recycle()
-    
-    # 5. Harvest ready crops
-    for crop in all_crops:
-        if crop.is_harvestable():
-            food_supply.add(crop.harvest())
-    
-    # 6. Feed crew (greenhouse first, stored food fills gap)
-    daily_result = feed_crew(food_supply, stored_food, crew_size=4)
-    
-    # 7. Emit state
-    state = build_state(day, environment, zones, food_supply, stored_food, resources, daily_result, events)
-    
-    # 8. Agent decides + acts
-    actions = agent.decide(state)
-    apply_actions(actions, zones, resources, environment)
+def simulate_tick(state, actions, days, inject_events):
+    daily_log = []
+    energy_deficit_streak = 0
+
+    for day_offset in range(1, days + 1):
+        current_day = state.mission_day + day_offset
+
+        # 1. Apply scheduled agent actions for this day
+        apply_actions(get_actions_for_day(actions, day_offset), zones, resources, environment)
+
+        # 2. Environment updates (seasonal solar, temperature)
+        environment.update(current_day)
+
+        # 3. Random events + injected events
+        events = roll_events(current_day)
+        if day_offset in inject_events:
+            events.append(inject_events[day_offset])
+        apply_events(events, environment, resources)
+
+        # 4. Crops grow and detect stress
+        for crop in all_crops:
+            crop.grow(environment, resources, zone)
+            crop.detect_stress(environment, resources, zone)
+
+        # 5. Resources consumed and recycled
+        resources.consume(all_crops, crew_size=4)
+        resources.recycle()
+
+        # 6. Auto-harvest ready crops + auto-replant per zone plan
+        for crop in all_crops:
+            if crop.is_harvestable():
+                food_supply.add(crop.harvest())
+                zone.auto_replant(crop)  # replant same type per zone plan
+
+        # 7. Feed crew
+        daily_result = feed_crew(food_supply, stored_food, crew_size=4)
+
+        # 8. Log this day
+        daily_log.append(build_daily_log(current_day, ...))
+
+        # 9. Early stop checks
+        if events:
+            return early_stop("event_fired", events[0], state, daily_log)
+
+        energy_deficit_streak = energy_deficit_streak + 1 if energy_deficit > 0 else 0
+        if any(crop.health < 30 for crop in all_crops):
+            return early_stop("threshold_breach", "crop_health_critical", state, daily_log)
+        if resources.water < 1500:
+            return early_stop("threshold_breach", "water_critical", state, daily_log)
+        if energy_deficit_streak >= 3:
+            return early_stop("threshold_breach", "energy_deficit_persistent", state, daily_log)
+
+    return complete(state, daily_log)
 ```
 
 ---
@@ -90,7 +152,7 @@ solar_hours = 12 + 3 * sin(2π * day / 687)  # 9-15 hrs over Martian year
 outside_temp = -63 + 20 * sin(2π * day / 687)  # -83 to -43°C
 
 # Greenhouse targets (derived from KB crop requirements)
-internal_temp = 22  # °C
+internal_temp = 22  # °C (default, agent can adjust via set_temperature)
 co2_level = 1000    # ppm
 
 # Energy budget
@@ -136,7 +198,7 @@ class Crop:
     planted_day: int
     age: int            # days since planting
     health: float       # 0-100, affects yield at harvest
-    growth: float       # 0-100%, harvested when ≥95%
+    growth: float       # 0-100%, auto-harvested when ≥95%
     active_stress: str | None  # one of 7 stress types or None
 ```
 
@@ -196,15 +258,25 @@ else:
     health -= STRESS_SEVERITY[stress]
 ```
 
-### Harvest (kg-based)
+### Auto-harvest + auto-replant
 
 ```python
+# Harvest condition
 if growth >= 95.0 and health > 20:
     yield_kg = yield_per_m2 * footprint_m2 * (health / 100.0)
     yield_kcal = yield_kg * 10 * kcal_per_100g
     yield_protein_g = yield_kg * 10 * protein_per_100g
     yield_micronutrients = CROP_MICRONUTRIENT_MAP[type]
+    food_supply.add(yield)
+    # Auto-replant: plant same crop type in same spot per zone plan
+    zone.plant(crop.type)
 ```
+
+Harvesting is automatic. When a crop reaches ≥95% growth with >20 health, the engine harvests it, adds yield to food supply, and immediately replants the same crop type in that spot. The agent does not control harvest timing or individual replanting — it controls the zone plan.
+
+### Crop death
+
+Health hits 0 → crop removed, logged as waste, area freed. Auto-replant still applies — a new crop of the same type (per zone plan) is planted in the freed space.
 
 ### Crop → micronutrient map (KB)
 
@@ -255,7 +327,7 @@ def feed_crew(food_supply, stored_food, crew_size):
     daily_need_kcal = crew_size * 3000
     daily_need_protein_g = crew_size * 100
 
-    # Greenhouse production today
+    # Greenhouse production: consume from stockpile
     gh_kcal = food_supply.consume_available_calories()
     gh_protein_g = food_supply.consume_available_protein()
     gh_micronutrients = food_supply.get_micronutrients_covered()
@@ -267,23 +339,29 @@ def feed_crew(food_supply, stored_food, crew_size):
     return {
         "calorie_gh_fraction": gh_kcal / daily_need_kcal,
         "protein_gh_fraction": gh_protein_g / daily_need_protein_g,
-        "micronutrients_covered": gh_micronutrients,  # list of nutrient names
-        "micronutrient_count": len(set(gh_micronutrients)),  # out of 7
+        "micronutrients_covered": gh_micronutrients,
+        "micronutrient_count": len(set(gh_micronutrients)),
         "stored_food_remaining": stored_food.remaining_calories,
         "stored_food_days_left": stored_food.remaining_calories / daily_need_kcal,
     }
 ```
 
+### Stockpile note
+
+The `food_supply` is the stockpile of harvested crops that haven't been eaten yet. Crops are auto-harvested into the stockpile, crew eats from it daily. **No spoilage in core** — harvested food stays indefinitely. Food spoilage is a stretch addition.
+
 ---
 
 ## Component 5: Resources
 
-### Starting values (SIM — fixed, configurable later)
+### Starting values (defaults — configurable via /simulate/init)
 
-| Resource | Amount | Unit |
-|----------|--------|------|
+| Resource | Default | Unit |
+|----------|---------|------|
 | Water | 10,000 | liters |
 | Nutrients | 5,000 | units |
+| Water recycling rate | 0.90 | ratio |
+| Nutrient recycling rate | 0.70 | ratio |
 | Energy | Solar-dependent | units/sol |
 
 ### Per-tick
@@ -296,27 +374,32 @@ water -= water_used
 nutrients -= nutrients_used
 
 # Recycling (KB: 85-95% water recovery)
-water += water_used * 0.90
-nutrients += nutrients_used * 0.70  # SIM estimate
+water += water_used * recycling_rate        # default 0.90
+nutrients += nutrients_used * nutrient_recycling_rate  # default 0.70
 
 # Energy (daily, no storage)
 energy_generated = solar_hours * panel_efficiency
 energy_needed = heating + lighting + pumps
 energy_deficit = max(0, energy_needed - energy_generated)
-
-# Critical thresholds
-# water == 0 → crops get no water → drought stress on everything
-# nutrients critically low → nutrient_deficiency stress
-# energy deficit → must cut lighting or heating (agent decides)
 ```
+
+### Early stop thresholds
+
+| Condition | Threshold | Stop reason |
+|-----------|-----------|-------------|
+| Crop health critical | Any crop health < 30 | `threshold_breach: crop_health_critical` |
+| Water critical | Water < 1,500L (15% of default) | `threshold_breach: water_critical` |
+| Persistent energy deficit | Energy deficit 3+ consecutive days | `threshold_breach: energy_deficit_persistent` |
 
 ---
 
-## Component 6: Greenhouse zones (SIM + NASA)
+## Component 6: Greenhouse zones with zone plans (SIM + NASA)
 
 60 m² total growing area. 4 zones × 15 m² each. Grounded in NASA research.
 
 > Sources: Wheeler et al. (40-50 m²/person for full calories), NASA prototype (48 m² for 25% supplement for 6 crew), Lunar Palace 1 (69 m² for 55% food for 3 crew).
+
+### Zone model
 
 ```python
 class Zone:
@@ -325,33 +408,70 @@ class Zone:
     crops: list[Crop]
     artificial_light: bool = True
     water_allocation: float = 1.0  # multiplier 0.0-1.5
+    crop_plan: dict = {}           # e.g. {"potato": 0.6, "beans_peas": 0.4}
 
     def used_area(self): return sum(c.footprint_m2 for c in self.crops)
     def available_area(self): return self.area_m2 - self.used_area()
     def can_plant(self, crop_type): return self.available_area() >= CROP_FOOTPRINT[crop_type]
 ```
 
+### Zone plan
+
+The agent sets a **crop plan** per zone — a percentage allocation of crops. The sim engine fills the zone according to the plan and auto-replants after harvest.
+
+Example agent action:
+```json
+{ "type": "set_zone_plan", "zone_id": 1, "crops": {"potato": 0.6, "beans_peas": 0.4} }
+```
+
+The engine translates this: in a 15 m² zone, 60% = 9 m² for potatoes (4 plantings × 2.0 m² = 8 m²), 40% = 6 m² for beans (4 plantings × 1.5 m² = 6 m²). Total used: 14 m².
+
+When a potato is auto-harvested in this zone, the engine auto-replants a potato in the freed spot. If the agent changes the plan at a review ("shift to 40% potato, 60% beans"), new plantings follow the updated ratio, and existing crops grow to completion before being replaced.
+
+### Initial fill
+
+When a zone plan is first set (or changed), the engine fills any empty area according to the plan. It plants as many crops as will fit within the percentage allocation.
+
 ---
 
 ## Component 7: Random events (2 only — both KB-backed)
 
-| Event | Prob/sol | Duration | Effect | KB source |
-|-------|---------|----------|--------|-----------|
-| Water recycling degradation | 1% | 5-15 sols | Recycling drops to 70-80% | KB scenario 6.3 |
-| Temperature control failure | 1% | 1-3 sols | Internal temp drifts ±5°C | KB scenario 6.6 |
+| Event | Type name | Prob/sol | Duration | Effect | Recovery | KB source |
+|-------|-----------|---------|----------|--------|----------|-----------|
+| Water recycling degradation | `water_recycling_decline` | 1% | 5-15 sols | Recycling drops to 70-80% | Gradual recovery over duration | KB 6.3 |
+| Temperature control failure | `temperature_failure` | 1% | 1-3 sols | Internal temp drifts ±5°C | Auto-resolves after duration | KB 6.6 |
 
-Plus: **manual injection via admin panel** (feature list item).
+Events can also be **manually injected** via the admin panel (`/simulate/inject-event`) or included in the tick request via `inject_events`.
+
+### Event behavior
+
+```python
+# Water recycling decline
+if event_active("water_recycling_decline"):
+    days_elapsed = current_day - event.start_day
+    # Gradual recovery: starts at reduced rate, linearly returns to normal
+    progress = days_elapsed / event.duration
+    recycling_rate = event.reduced_rate + (0.90 - event.reduced_rate) * progress
+else:
+    recycling_rate = 0.90
+
+# Temperature failure
+if event_active("temperature_failure"):
+    internal_temp = target_temp + event.drift  # drift is +5 or -5
+else:
+    internal_temp = target_temp
+```
 
 ---
 
 ## Component 8: Initial state
 
-Greenhouse starts empty. Agent decides what to plant.
+Greenhouse starts empty. Agent sets zone plans.
 
 ```python
 initial = {
     "day": 0,
-    "zones": [Zone(id=i, area_m2=15.0, crops=[]) for i in range(1, 5)],
+    "zones": [Zone(id=i, area_m2=15.0, crops=[], crop_plan={}) for i in range(1, 5)],
     "stored_food": StoredFood(remaining=5_400_000),
     "food_supply": {},
     "resources": ResourcePool(water=10_000, nutrients=5_000),
@@ -362,14 +482,31 @@ initial = {
 
 ## Agent actions
 
+Harvesting and replanting are automatic (per zone plan). The agent controls strategy.
+
 | Action | Parameters | Effect |
 |--------|-----------|--------|
-| `plant` | crop_type, zone_id | Plant crop in zone (if area available) |
-| `harvest` | crop_id | Harvest ready crop → food supply |
-| `remove` | crop_id | Remove dead/stressed crop (frees area) |
-| `water_adjust` | zone_id, multiplier (0-1.5) | Change water allocation for zone |
-| `light_toggle` | zone_id, on/off | Toggle artificial lighting |
-| `set_temperature` | target_temp | Adjust greenhouse temperature |
+| `set_zone_plan` | zone_id, crops (dict of type → fraction) | Set crop allocation for a zone. Engine fills empty area and auto-replants per plan. |
+| `remove` | crop_id | Remove a specific crop (frees area, auto-replant fills it per plan) |
+| `water_adjust` | zone_id, multiplier (0.0-1.5) | Change water allocation for zone |
+| `light_toggle` | zone_id, on/off | Toggle artificial lighting for zone |
+| `set_temperature` | target_temp | Adjust greenhouse internal temperature |
+
+### Example agent output (day 0)
+
+```json
+{
+  "actions": [
+    { "type": "set_zone_plan", "zone_id": 1, "crops": {"potato": 1.0} },
+    { "type": "set_zone_plan", "zone_id": 2, "crops": {"potato": 0.5, "beans_peas": 0.5} },
+    { "type": "set_zone_plan", "zone_id": 3, "crops": {"lettuce": 0.5, "radish": 0.3, "herbs": 0.2} },
+    { "type": "set_zone_plan", "zone_id": 4, "crops": {"beans_peas": 0.7, "herbs": 0.3} },
+    { "type": "water_adjust", "zone_id": 1, "value": 1.2 },
+    { "type": "water_adjust", "zone_id": 3, "value": 0.8 },
+    { "type": "set_temperature", "value": 20 }
+  ]
+}
+```
 
 ---
 
@@ -381,7 +518,7 @@ initial = {
   "environment": {
     "solar_hours": 13.2,
     "outside_temp": -52,
-    "internal_temp": 22,
+    "internal_temp": 20,
     "energy_generated": 45,
     "energy_needed": 38,
     "energy_deficit": 0
@@ -389,10 +526,11 @@ initial = {
   "zones": [{
     "id": 1,
     "area_m2": 15.0,
-    "used_area_m2": 12.5,
-    "available_area_m2": 2.5,
+    "used_area_m2": 14.0,
+    "available_area_m2": 1.0,
     "artificial_light": true,
-    "water_allocation": 1.0,
+    "water_allocation": 1.2,
+    "crop_plan": {"potato": 1.0},
     "crops": [{
       "id": "crop_001",
       "type": "potato",
@@ -430,7 +568,6 @@ initial = {
     "micronutrient_count": 5
   },
   "active_events": [],
-  "agent_actions": [],
   "metrics": {
     "avg_calorie_gh_fraction": 0.19,
     "avg_protein_gh_fraction": 0.14,
@@ -442,31 +579,59 @@ initial = {
 }
 ```
 
+### Daily log (in tick response)
+
+Each day in a tick batch produces a log entry:
+
+```json
+{
+  "day": 52,
+  "resource_consumption": { "water": 52.0, "nutrients": 12.0 },
+  "resource_recovery": { "water": 46.8, "nutrients": 8.4 },
+  "energy": { "generated": 45, "needed": 38, "deficit": 0 },
+  "harvests": [{"crop_id": "crop_012", "type": "radish", "yield_kg": 0.8}],
+  "replants": [{"zone_id": 3, "type": "radish"}],
+  "crop_stress_changes": [{"crop_id": "crop_005", "stress": "heat", "health": 72}],
+  "warnings": []
+}
+```
+
 ---
 
-## Additions for later (do NOT build now)
+## Planned next additions (KB-backed — add once core is stable, do NOT build yet)
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| EVA missions | Every 30 sols, 1.4x calorie multiplier, need capable crew | Medium |
-| Astronaut personas | Names, roles, weights, individual calorie needs | Low |
-| Mood system | Variety bonus, stored food penalty, herbs boost | Medium |
-| Health/death mechanic | Health score, deficiency streaks, crew death | Medium |
-| Infection/disease | Probability-based, spreads between crops | Medium |
-| Dust storms | 2%/sol, 3-7 days, -60 to -90% solar | High |
-| Pump failure event | 1%/sol, 1-2 days, no water delivery | Medium |
-| Light malfunction event | 1.5%/sol, 1-3 days, zone loses light | Medium |
-| Weather forecast | 7-day projected solar + storm risk | Medium |
-| Food spoilage | Harvested food expires after N days | Low |
-| Configurable resources | Admin panel sets starting water/nutrients | Low |
-| Mission capability | Health > threshold required for EVA | Low |
-| Treat disease action | Agent treats infected crop, 70% success | Medium |
-| Ration stored food action | Agent caps daily stored food use | Low |
+Design the core so these plug in easily.
+
+| Feature | KB source | What it adds |
+|---------|-----------|-------------|
+| **Crop disease / pathogen risk** | KB scenario 6.5 | Fungal/bacterial risk, zone isolation, containment. Adds `treat_disease` action. |
+| **Energy budget reduction event** | KB scenario 6.4 | Energy drops from non-weather causes. Agent prioritizes lighting vs heating. |
+| **CO₂ imbalance event** | KB scenario 6.7 | CO₂ drifts outside 800-1200 ppm. Stresses crops AND crew safety. |
+
+---
+
+## Stretch additions (do NOT build — nice-to-have if time allows)
+
+| Feature | Description | Source | Priority |
+|---------|-------------|--------|----------|
+| Individual plant/remove actions | Agent controls specific crop placement alongside zone plans | SIM | High |
+| Dust storms | 2%/sol, 3-7 days, -60 to -90% solar | SIM (real Mars, not in KB) | High |
+| Health score per astronaut | Drops from calorie/protein deficiency | SIM | Medium |
+| Mood system | Variety bonus, stored food penalty, herbs boost | SIM | Medium |
+| EVA missions | Every 30 sols, 1.4x calorie multiplier | SIM | Medium |
+| Food spoilage | Lettuce ~3d, potatoes ~30d shelf life | SIM | Medium |
+| Weather forecast | 7-day projected solar for proactive agent | SIM | Medium |
+| Pump failure event | 1%/sol, 1-2 days, no water delivery | SIM | Medium |
+| Light malfunction event | 1.5%/sol, 1-3 days, zone loses light | SIM | Medium |
+| Astronaut personas | Names, roles, weights, individual needs | SIM | Low |
+| Configurable resources | Admin panel adjusts starting values | SIM | Low |
+| Mission capability | Health > threshold for EVA | SIM | Low |
 
 ---
 
 ## KB data reference
 
 Raw KB responses: `simulation/kb_data/`
+Raw KB source documents: `backend/docs/Mars-Crop-Data/`
 MCP tool: `kb-start-hack-target___knowledge_base_retrieve`
 MCP endpoint: `https://kb-start-hack-gateway-buyjtibfpg.gateway.bedrock-agentcore.us-east-2.amazonaws.com/mcp`
