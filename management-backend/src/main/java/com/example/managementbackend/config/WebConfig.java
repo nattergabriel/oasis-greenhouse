@@ -27,11 +27,12 @@ public class WebConfig implements WebMvcConfigurer {
         // Agent-write endpoints require X-Agent-Token
         registry.addInterceptor(agentTokenInterceptor)
                 .addPathPatterns(
-                        "/api/agent/log",          // POST
-                        "/api/agent/log/**",        // PATCH /{id}
+                        "/api/agent/log",           // POST
+                        "/api/agent/log/**",         // PATCH /{id}
                         "/api/agent/recommendations", // POST
-                        "/api/alerts",              // POST
-                        "/api/crops/planting-queue" // POST
+                        "/api/alerts",               // POST
+                        "/api/crops/planting-queue",  // POST
+                        "/api/bridge/**"             // POST import-result
                 );
     }
 }

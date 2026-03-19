@@ -15,7 +15,12 @@ class BridgeClient:
 
     def __init__(self, base_url: str | None = None) -> None:
         self.base_url = base_url or settings.management_backend_url
-        self._client = httpx.AsyncClient(timeout=60.0)
+        self._client = httpx.AsyncClient(
+            timeout=60.0,
+            headers={
+                "X-Agent-Token": settings.agent_token,
+            },
+        )
 
     async def close(self) -> None:
         await self._client.aclose()
