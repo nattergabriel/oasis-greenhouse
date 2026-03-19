@@ -7,7 +7,7 @@ import { ChevronDown, Thermometer, Sprout, Droplets, Sun, Leaf, Flower2 } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { emptyStoredFood } from "@/lib/defaults";
 import { useSimulation } from "@/providers/simulation-provider";
-import { api, useApi } from "@/lib/api";
+import { api, useApi, useApiState } from "@/lib/api";
 import type { Crop, CropCategory, PlantingQueueItem, HarvestEntry, StockpileItem, PlantSlot } from "@/lib/types";
 
 // === Helpers ===
@@ -473,11 +473,11 @@ function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots
 
 // === Stockpile View (with headers + legend) ===
 
-function StockpileView({ items, storedFood }: { items: StockpileItem[]; storedFood: { totalCalories: number; remainingCalories: number } }) {
+function StockpileView({ items, storedFood, loading }: { items: StockpileItem[]; storedFood: { totalCalories: number; remainingCalories: number }; loading: boolean }) {
   const totalCalories = items.reduce((sum, item) => sum + item.estimatedCalories, 0);
   const totalDays = items.reduce((sum, item) => sum + item.daysOfSupply, 0);
 
-  if (items.length === 0) {
+  if (loading) {
     return (
       <div className="space-y-3">
         <div
@@ -506,6 +506,16 @@ function StockpileView({ items, storedFood }: { items: StockpileItem[]; storedFo
           </div>
         </Card>
       </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <Card className="flex flex-col items-center justify-center py-10 text-center">
+        <Sprout className="h-8 w-8 text-muted-foreground/40" />
+        <p className="mt-3 text-sm text-muted-foreground">No stockpile data available</p>
+        <p className="mt-1 text-xs text-muted-foreground/60">Harvested crops will appear here once recorded</p>
+      </Card>
     );
   }
 
@@ -616,8 +626,8 @@ function StockpileView({ items, storedFood }: { items: StockpileItem[]; storedFo
 
 // === Harvest Journal (unchanged) ===
 
-function HarvestJournalTable({ entries }: { entries: HarvestEntry[] }) {
-  if (entries.length === 0) {
+function HarvestJournalTable({ entries, loading }: { entries: HarvestEntry[]; loading: boolean }) {
+  if (loading) {
     return (
       <div className="space-y-1">
         <div
@@ -641,6 +651,16 @@ function HarvestJournalTable({ entries }: { entries: HarvestEntry[] }) {
           </div>
         ))}
       </div>
+    );
+  }
+
+  if (entries.length === 0) {
+    return (
+      <Card className="flex flex-col items-center justify-center py-10 text-center">
+        <Sprout className="h-8 w-8 text-muted-foreground/40" />
+        <p className="mt-3 text-sm text-muted-foreground">No harvest entries recorded</p>
+        <p className="mt-1 text-xs text-muted-foreground/60">Harvest data will appear here as crops are collected</p>
+      </Card>
     );
   }
 
@@ -688,8 +708,8 @@ export default function CropsPage() {
   const { state, hydrated } = useSimulation();
   const [activeTab, setActiveTab] = useState<TabValue>("catalog");
   const plantingQueue = useApi(() => api.crops.plantingQueue().then(r => r.queue), [] as PlantingQueueItem[]);
-  const harvestJournal = useApi(() => api.crops.harvestJournal().then(r => r.harvests), [] as HarvestEntry[]);
-  const stockpileItems = useApi(() => api.crops.stockpile().then(r => r.items), [] as StockpileItem[]);
+  const { data: harvestJournal, loading: harvestLoading } = useApiState(() => api.crops.harvestJournal().then(r => r.harvests), [] as HarvestEntry[]);
+  const { data: stockpileItems, loading: stockpileLoading } = useApiState(() => api.crops.stockpile().then(r => r.items), [] as StockpileItem[]);
   const storedFood = useApi(() => api.nutrition.storedFood(), emptyStoredFood);
   const ghId = state.selectedGreenhouseId;
   const ghDetail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), null, [ghId], !hydrated || !ghId);
@@ -724,11 +744,11 @@ export default function CropsPage() {
       )}
 
       {activeTab === "journal" && (
-        <HarvestJournalTable entries={harvestJournal} />
+        <HarvestJournalTable entries={harvestJournal} loading={harvestLoading} />
       )}
 
       {activeTab === "stockpile" && (
-        <StockpileView items={stockpileItems} storedFood={storedFood} />
+        <StockpileView items={stockpileItems} storedFood={storedFood} loading={stockpileLoading} />
       )}
     </div>
   );

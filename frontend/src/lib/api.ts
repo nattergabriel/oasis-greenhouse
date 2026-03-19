@@ -51,6 +51,25 @@ export function useApi<T>(fetcher: () => Promise<T>, fallback: T, deps: any[] = 
   return data;
 }
 
+// Like useApi but also exposes a loading flag so callers can
+// distinguish "still fetching" from "fetched but empty."
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useApiState<T>(fetcher: () => Promise<T>, fallback: T, deps: any[] = [], skip = false): { data: T; loading: boolean } {
+  const [data, setData] = useState<T>(fallback);
+  const [loading, setLoading] = useState(!skip);
+  useEffect(() => {
+    if (skip) { setLoading(false); return; }
+    setLoading(true);
+    let cancelled = false;
+    fetcher()
+      .then((result) => { if (!cancelled) { setData(result); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...deps, skip]);
+  return { data, loading };
+}
+
 // --- HTTP helpers ---
 
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
