@@ -1,17 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { Sprout } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { NavLink } from "./nav-link";
 import { useSimulation } from "@/providers/simulation-provider";
 import { StatusPopover } from "./status-popover";
@@ -25,28 +21,23 @@ export function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="flex h-full items-center gap-1 px-4">
-        {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-2 mr-4">
-          <Sprout className="h-5 w-5 text-primary" />
-        </Link>
-
+      <div className="mx-auto flex h-full w-full max-w-7xl items-center">
         {/* Main Nav — text only, separated by vertical dividers */}
-        <div className="flex items-center">
+        <div className="flex items-center -ml-3">
           <NavLink href="/dashboard" label="Dashboard" />
-          <Separator orientation="vertical" className="mx-1 h-4" />
+          <Divider />
           <NavLink href="/greenhouse" label="Greenhouse" />
-          <Separator orientation="vertical" className="mx-1 h-4" />
+          <Divider />
           <NavLink href="/agent" label="Agent" />
-          <Separator orientation="vertical" className="mx-1 h-4" />
+          <Divider />
           <NavLink href="/alerts" label="Alerts" />
-          <Separator orientation="vertical" className="mx-1 h-4" />
+          <Divider />
           <NavLink href="/crops" label="Crops" />
-          <Separator orientation="vertical" className="mx-1 h-4" />
+          <Divider />
           <NavLink href="/nutrition" label="Nutrition" />
-          <Separator orientation="vertical" className="mx-1 h-4" />
+          <Divider />
           <NavLink href="/forecasting" label="Forecast" />
-          <Separator orientation="vertical" className="mx-1 h-4" />
+          <Divider />
 
           {/* Admin Dropdown */}
           <DropdownMenu>
@@ -110,5 +101,11 @@ export function Navbar() {
         </div>
       </div>
     </nav>
+  );
+}
+
+function Divider() {
+  return (
+    <div className="mx-1.5 w-px h-3.5 bg-border self-center" />
   );
 }

@@ -257,11 +257,11 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   const plantAreaW = domeW - 80;
 
   return (
-    <div className="rounded-lg overflow-hidden border border-border bg-[#0a0908]">
+    <div className="rounded-lg overflow-hidden border border-border bg-[#0a0908] h-full">
       <svg
         viewBox={`0 0 ${viewW} ${viewH}`}
         className="w-full"
-        style={{ display: "block", height: compact ? "220px" : "280px" }}
+        style={{ display: "block", height: compact ? "100%" : "280px" }}
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>

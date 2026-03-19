@@ -24,14 +24,14 @@ export default function DashboardPage() {
       <h1 className="text-xl font-medium tracking-tight">Dashboard</h1>
 
       {/* Row 1: Greenhouse visualization (left) + Live stats (right) */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2" style={{ alignItems: "stretch" }}>
         {/* Animated greenhouse — clickable to /greenhouse */}
         <Link href="/greenhouse" className="block hover:opacity-95 transition-opacity">
           <GreenhouseCrossSection compact />
         </Link>
 
         {/* Companion panel: resources + sensors at a glance */}
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {/* Resource meters */}
           <div className="grid grid-cols-3 gap-3">
             <MetricCard label="Water" value={`${Math.round(resources.waterReservePercent)}%`} status={resources.waterReservePercent > 50 ? "healthy" : resources.waterReservePercent > 25 ? "warning" : "critical"} />
@@ -40,7 +40,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Compact sensor readings */}
-          <Card className="p-4">
+          <Card className="p-4 flex-1">
             <span className="text-xs uppercase tracking-wide text-muted-foreground">Environment</span>
             <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5">
               <SensorRow label="Temp" value={`${sensor.temperature.value}°C`} status={sensor.temperature.status} />
