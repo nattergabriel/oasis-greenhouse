@@ -15,6 +15,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Pause, Play, FastForward } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Scenario, SimulationSummary } from "@/lib/types"
 
 type TabValue = "current" | "scenarios" | "history"
@@ -170,6 +171,30 @@ export default function SimulationPage() {
       {/* Current Run — per-simulation cards with inline controls */}
       {activeTab === "current" && (
         <div className="space-y-4">
+          {simulations.length === 0 && (
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-8 w-28 rounded-lg" />
+              </div>
+              <div className="grid grid-cols-5 gap-4">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-8 w-16" />
+                  </div>
+                ))}
+              </div>
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-4 w-full" />
+            </Card>
+          )}
+          {simulations.filter((s) => s.status === "RUNNING" || s.status === "PAUSED").length === 0 && simulations.length > 0 && (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No active simulations</p>
+              <p className="text-xs text-muted-foreground mt-1">Start a new simulation or check history for past runs.</p>
+            </Card>
+          )}
           {simulations
             .filter((s) => s.status === "RUNNING" || s.status === "PAUSED")
             .map((sim) => {
@@ -268,6 +293,18 @@ export default function SimulationPage() {
       {/* Scenarios — redesigned cards */}
       {activeTab === "scenarios" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {scenarios.length === 0 && Array.from({ length: 6 }, (_, i) => (
+            <Card key={i} className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-16 rounded-md" />
+                <Skeleton className="h-5 w-24 rounded-md" />
+              </div>
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-9 w-full rounded-lg mt-2" />
+            </Card>
+          ))}
           {scenarios.map((scenario) => (
             <Card
               key={scenario.id}
@@ -314,7 +351,14 @@ export default function SimulationPage() {
       {activeTab === "history" && (
         <Card className="p-6">
           <span className="text-xs uppercase tracking-wide text-muted-foreground">Past Simulations</span>
-          <table className="w-full text-sm mt-4">
+          {simulations.length === 0 && (
+            <div className="mt-4 space-y-3">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          )}
+          <table className={`w-full text-sm mt-4 ${simulations.length === 0 ? "hidden" : ""}`}>
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left py-2 font-medium text-muted-foreground">Name</th>

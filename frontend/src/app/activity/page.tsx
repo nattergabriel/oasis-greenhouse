@@ -129,7 +129,6 @@ function DecisionsStack({ pending, onApprove, onDismiss }: {
   if (pending.length === 0) {
     return (
       <Card className="p-8 text-center">
-        <Bot className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
         <p className="text-sm text-muted-foreground">Agent is operating autonomously — no decisions needed</p>
       </Card>
     );
@@ -371,7 +370,6 @@ export default function ActivityPage() {
 
         {sortedAlerts.length === 0 ? (
           <Card className="p-8 text-center">
-            <CheckCircle className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
               {alertFilter === "ALL" ? "All systems nominal" : `No ${alertFilter.toLowerCase()} alerts`}
             </p>

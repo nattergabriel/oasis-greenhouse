@@ -24,6 +24,7 @@ import {
   Sun,
   AlertTriangle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // === Helpers ===
 
@@ -126,28 +127,17 @@ export default function ForecastingPage() {
     const futureData = forecast.slice(0, 15);
 
     return [
-      ...pastData.map((d) => ({
+      ...pastData.map((d, i) => ({
         ...d,
         waterActual: d.waterReservePercent,
         nutrientActual: d.nutrientReservePercent,
         energyActual: d.energyReservePercent,
-        waterProjected: undefined as number | undefined,
-        nutrientProjected: undefined as number | undefined,
-        energyProjected: undefined as number | undefined,
+        // Last past point bridges actual → projected so the dashed line connects
+        waterProjected: i === pastData.length - 1 ? d.waterReservePercent : undefined as number | undefined,
+        nutrientProjected: i === pastData.length - 1 ? d.nutrientReservePercent : undefined as number | undefined,
+        energyProjected: i === pastData.length - 1 ? d.energyReservePercent : undefined as number | undefined,
       })),
-      {
-        missionDay: forecast[0].missionDay,
-        waterReservePercent: forecast[0].waterReservePercent,
-        nutrientReservePercent: forecast[0].nutrientReservePercent,
-        energyReservePercent: forecast[0].energyReservePercent,
-        waterActual: forecast[0].waterReservePercent,
-        nutrientActual: forecast[0].nutrientReservePercent,
-        energyActual: forecast[0].energyReservePercent,
-        waterProjected: forecast[0].waterReservePercent,
-        nutrientProjected: forecast[0].nutrientReservePercent,
-        energyProjected: forecast[0].energyReservePercent,
-      },
-      ...futureData.slice(1).map((d) => ({
+      ...futureData.map((d) => ({
         ...d,
         waterActual: undefined as number | undefined,
         nutrientActual: undefined as number | undefined,
@@ -327,6 +317,12 @@ export default function ForecastingPage() {
 
           <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 lg:mb-0 lg:self-end block pt-4 border-t border-border">7-Day Forecast</span>
           <div className="space-y-1.5">
+            {weather.forecast.length === 0 && Array.from({ length: 7 }, (_, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                <Skeleton className="h-4 w-14" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ))}
             {weather.forecast.map((day) => (
               <div key={day.missionDay} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
                 <span className="font-mono text-xs tabular-nums text-muted-foreground w-16">SOL {day.missionDay}</span>
@@ -369,6 +365,13 @@ export default function ForecastingPage() {
 
           <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 lg:mb-0 lg:self-end block pt-4 border-t border-border">Next Milestones</span>
           <div className="space-y-1.5">
+            {upcomingMilestones.length === 0 && Array.from({ length: 7 }, (_, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+                <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
+                <Skeleton className="h-4 w-14 shrink-0" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ))}
             {upcomingMilestones.slice(0, 7).map((m) => (
               <div key={m.missionDay} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
                 <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: milestoneColor(m.type) }} />
