@@ -1,0 +1,28 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "tools": [
+      {
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "The search query to find relevant information",
+              "type": "string"
+            },
+            "max_results": {
+              "description": "Maximum number of results to return (default: 5)",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "name": "kb-start-hack-target___knowledge_base_retrieve",
+        "description": "Retrieve relevant information chunks from the knowledge base"
+      }
+    ]
+  }
+}

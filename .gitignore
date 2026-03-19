@@ -52,6 +52,9 @@ coverage/
 htmlcov/
 .pytest_cache/
 
+# Claude — personal context (not shared)
+.claude-local.md
+
 # Misc
 *.sqlite3
 *.db
