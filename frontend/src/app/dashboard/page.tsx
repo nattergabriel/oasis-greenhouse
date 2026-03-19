@@ -6,7 +6,8 @@ import { useSimulation } from "@/providers/simulation-provider";
 import { emptySensorSnapshot, emptyWeather, emptyStoredFood, emptyNutritionEntry } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
 import { GreenhouseCrossSection } from "@/components/greenhouse-cross-section";
-import { Droplet, Leaf, Zap, Sun, AlertTriangle, Thermometer, Gauge, SunDim, Moon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Droplet, Leaf, Zap, Sun, AlertTriangle, Thermometer, Gauge, SunDim, Moon, Warehouse } from "lucide-react";
 import type { RiskLevel } from "@/lib/types";
 import { fmt, fmtInt } from "@/lib/utils";
 
@@ -24,13 +25,19 @@ function riskColor(risk: RiskLevel): string {
 
 export default function DashboardPage() {
   const { state, hydrated } = useSimulation();
-  const { resources } = state;
   const ghId = state.selectedGreenhouseId;
-  const sensor = useApi(() => api.greenhouses.sensorsLatest(ghId!), emptySensorSnapshot, [ghId], !hydrated || !ghId);
-  const weather = useApi(() => api.weather.current(), emptyWeather);
-  const stockpile = useApi(() => api.crops.stockpile().then(r => r.items), [] as import("@/lib/types").StockpileItem[]);
-  const storedFood = useApi(() => api.nutrition.storedFood(), emptyStoredFood);
-  const nutritionEntries = useApi(() => api.nutrition.consumption(new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10), new Date().toISOString().slice(0, 10)).then(r => r.dailyEntries), [emptyNutritionEntry]);
+  const skip = !hydrated || !ghId;
+
+  const sensor = useApi(() => api.greenhouses.sensorsLatest(ghId!), emptySensorSnapshot, [ghId], skip);
+  const weather = useApi(() => api.weather.current(), emptyWeather, [], skip);
+  const stockpile = useApi(() => api.crops.stockpile().then(r => r.items), [] as import("@/lib/types").StockpileItem[], [], skip);
+  const storedFood = useApi(() => api.nutrition.storedFood(), emptyStoredFood, [], skip);
+  const nutritionEntries = useApi(() => api.nutrition.consumption(new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10), new Date().toISOString().slice(0, 10)).then(r => r.dailyEntries), [emptyNutritionEntry], [], skip);
+
+  if (!hydrated) return <DashboardSkeleton />;
+  if (!ghId) return <DashboardEmpty />;
+
+  const { resources } = state;
   const totalCalories = stockpile.reduce((s, i) => s + i.estimatedCalories, 0);
   const latestNutrition = nutritionEntries[nutritionEntries.length - 1];
   const ghFractionPct = Math.round(latestNutrition.calorieGhFraction * 100);
@@ -318,6 +325,60 @@ function SensorRow({ label, value, status }: { label: string; value: string; sta
         <span className="text-muted-foreground">{label}</span>
       </div>
       <span className="font-mono tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="mx-auto max-w-7xl space-y-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-36" />
+        <Skeleton className="h-5 w-24" />
+      </div>
+      <Skeleton className="h-1.5 w-full rounded-full" />
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <Skeleton className="h-[300px] rounded-lg" />
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <Skeleton className="h-[76px] rounded-lg" />
+            <Skeleton className="h-[76px] rounded-lg" />
+            <Skeleton className="h-[76px] rounded-lg" />
+          </div>
+          <Skeleton className="h-full min-h-[200px] rounded-lg" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <Skeleton className="h-[240px] rounded-lg" />
+        <Skeleton className="h-[240px] rounded-lg" />
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <Skeleton className="h-[88px] rounded-lg" />
+        <Skeleton className="h-[88px] rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+function DashboardEmpty() {
+  return (
+    <div className="mx-auto max-w-7xl space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+      </div>
+      <Card className="flex flex-col items-center justify-center py-20 text-center">
+        <Warehouse className="h-12 w-12 text-muted-foreground/50" />
+        <h2 className="mt-4 text-lg font-medium">No greenhouse available</h2>
+        <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+          Start a simulation to initialize the greenhouse and begin monitoring crops, sensors, and resources.
+        </p>
+        <Link
+          href="/admin/simulation"
+          className="mt-6 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+        >
+          Launch Simulation
+        </Link>
+      </Card>
     </div>
   );
 }
