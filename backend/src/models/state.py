@@ -149,6 +149,7 @@ class GreenhouseState(BaseModel):
     next_crop_id: int = 1
     seed: int = 42
     consecutive_energy_deficit_days: int = 0
+    rng_state: Optional[Any] = None  # saved Random.getstate() for determinism across ticks
 
 
 # ============================================================================
