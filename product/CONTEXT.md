@@ -5,59 +5,50 @@
 **Role:** PM / Design / Demo Lead
 **Name:** Michael
 
-**Responsibilities:**
-- Facilitate ideation and keep scope in check
-- Create wireframes or quick mockups
-- Track progress via `docs/TIMELINE.md`
-- Prepare the demo pitch, slides, and submission materials
-- User testing — try the app as a real user and file issues
-- Write the project description for submission
-- Record backup demo video
+---
 
-**Handoff points:**
-- Communicate priority and scope decisions to the team
-- Provide design assets/direction to frontend dev
-- Drive the demo rehearsal
+## Current Phase
+
+**Hackathon live.** Currently focused on simulation engine design and build.
+Product/UI work resumes after simulation is functional.
 
 ---
 
-## Shared Context (read-only references)
+## Workspace Map
 
-These are team-wide docs. Read them for context, but edits go through the team:
-
-- `docs/ROLES.md` — role definitions for the 4-person team
-- `docs/APPROACH.md` — hackathon playbook (ideation → demo)
-- `docs/TIMELINE.md` — phase-by-phase timeline templates (24h / 48h)
-- `contracts/API.md` — API contract between frontend and backend
-- `shared/` — shared constants, types, validation (code-level)
-
----
-
-## Our Workspace: `product/`
-
-| Folder | Purpose |
-|--------|---------|
-| `product/brand/` | Identity kit — colors, fonts, logo, tone |
-| `product/brand/assets/` | Logo files, icons, exports |
-| `product/design-system/` | Component decisions, spacing, UI library config |
-| `product/wireframes/` | Mockups, screenshots, UI sketches |
-| `product/pitch/` | Demo script, slides content, submission text |
-| `product/research/` | Challenge analysis, competitor notes, user insights |
-
-**Key files:**
-- `PREP-PLAN.md` — layered prep plan (what to do and in what order)
-- `brand/IDENTITY.md` — brand identity template
-- `design-system/SYSTEM.md` — design system template
+| Location | Purpose | Status |
+|----------|---------|--------|
+| `simulation/` | Greenhouse simulation engine (shared workspace) | **Active** |
+| `product/` | PM/Design workspace | Paused until simulation done |
+| `product/research/` | Challenge brief, tech stack, business case | Updated |
+| `product/brand/` | Identity kit (colors, fonts, logo) | Not started |
+| `product/pitch/` | Demo script, slides, submission | Not started |
+| `product/wireframes/` | Dashboard mockups | Not started |
+| `product/Instruction Docs/` | Official hackathon instructions (read reference) |  |
 
 ---
 
-## Challenge Status
+## Key Reference Files
 
-> **Not yet dropped.** We are in pre-game mode.
-> Once the challenge is announced, update this section with:
-> - Challenge prompt (verbatim or summarized)
-> - Key constraints and judging criteria
-> - Initial reaction / idea seeds
+| File | What it contains |
+|------|-----------------|
+| `simulation/SIMULATION-SPEC.md` | Full simulation specification |
+| `product/FEATURES.md` | Agreed feature list |
+| `product/research/CASE-BRIEF.md` | Syngenta challenge (complete) |
+| `product/research/TECH-STACK.md` | MCP endpoint, AWS infra, architecture, links |
+| `backend/docs/LEARNING-SYSTEM.md` | Agent learning approach (read-only) |
+| `product/Instruction Docs/README.md` | Official getting started guide |
+| `CLAUDE.md` | Repo conventions (read-only) |
+
+---
+
+## Critical: MCP Endpoint
+
+```
+https://kb-start-hack-gateway-buyjtibfpg.gateway.bedrock-agentcore.us-east-2.amazonaws.com/mcp
+```
+
+This is the Syngenta knowledge base. The simulation parameters AND the agent decisions both reference this source. They must be consistent.
 
 ---
 
@@ -65,16 +56,18 @@ These are team-wide docs. Read them for context, but edits go through the team:
 
 | # | Decision | Rationale | Date |
 |---|----------|-----------|------|
-| 1 | Folder structure: brand/, design-system/, wireframes/, pitch/, research/ | Layered approach — brand feeds design system feeds templates | 2026-03-18 |
+| 1 | Product folder structure (brand, design-system, wireframes, pitch, research) | Layered prep approach | 2026-03-18 |
+| 2 | Simulation as top-level `/simulation/` directory | Shared across team, not product-specific | 2026-03-19 |
+| 3 | Hybrid simulation approach (Python math + LLM agent + LLM flavor) | Fast, reliable, demo-friendly | 2026-03-19 |
+| 4 | Learning system: summary injection + rules extraction across runs | Visible learning arc for demo | 2026-03-19 |
+| 5 | 6 crop types, 4 zones, 4 astronauts, day-by-day tick | Manageable scope for hackathon | 2026-03-19 |
 
 ---
 
-## Current Phase
+## Next Steps
 
-**Pre-hackathon** — working through `PREP-PLAN.md` Layer 1 (brand) and Layer 2 (design system).
-
----
-
-## Notes
-
-_Space for quick thoughts, links, or anything that doesn't fit above._
+1. **Query the MCP endpoint** — extract real crop data, environmental constants, nutritional targets
+2. **Validate/update simulation spec** with KB data
+3. **Build simulation engine** in Python
+4. **Connect agent** to AgentCore gateway
+5. Then: UI wireframes, brand, pitch
