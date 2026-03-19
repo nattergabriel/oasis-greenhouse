@@ -32,6 +32,9 @@ public class DataSeederServiceImpl implements DataSeederService {
     private final TimelineEventRepository timelineEventRepository;
     private final AgentLogEntryRepository agentLogEntryRepository;
     private final SensorSnapshotRepository sensorSnapshotRepository;
+    private final PlantingQueueItemRepository plantingQueueItemRepository;
+    private final ConsumptionEntryRepository consumptionEntryRepository;
+    private final SimulationRepository simulationRepository;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -58,6 +61,13 @@ public class DataSeederServiceImpl implements DataSeederService {
         // Active operational data
         seedAlerts();
         seedRecommendations();
+        seedPlantingQueue();
+
+        // Nutritional tracking
+        seedConsumptionEntries();
+
+        // Simulation history
+        seedSimulationHistory();
 
         log.info("Database seeding completed successfully - all tables populated with showcase data");
     }
@@ -199,6 +209,9 @@ public class DataSeederServiceImpl implements DataSeederService {
         agentLogEntryRepository.deleteAll();
         harvestEntryRepository.deleteAll();
         stockpileItemRepository.deleteAll();
+        plantingQueueItemRepository.deleteAll();
+        consumptionEntryRepository.deleteAll();
+        simulationRepository.deleteAll();
 
         // Clear core data
         greenhouseRepository.deleteAll();
@@ -756,6 +769,306 @@ public class DataSeederServiceImpl implements DataSeederService {
         }
 
         log.info("Seeded {} sensor snapshots (24-hour coverage)", sensorSnapshotRepository.count());
+    }
+
+    private void seedPlantingQueue() {
+        if (plantingQueueItemRepository.count() > 0) {
+            log.info("Planting queue already exists, skipping seed");
+            return;
+        }
+        log.info("Seeding planting queue with AI-recommended priorities...");
+
+        List<Crop> allCrops = cropRepository.findAll();
+        List<Greenhouse> greenhouses = greenhouseRepository.findAll();
+        if (greenhouses.isEmpty() || allCrops.isEmpty()) return;
+
+        Greenhouse greenhouse = greenhouses.get(0);
+        int currentMissionDay = 60;
+
+        // Priority 1: Urgent protein production (beans)
+        Crop beans = allCrops.stream().filter(c -> c.getName().equals("Beans/Peas")).findFirst().orElse(null);
+        if (beans != null) {
+            PlantingQueueItem item1 = new PlantingQueueItem();
+            item1.setRank(1);
+            item1.setCropId(beans.getId());
+            item1.setCropName(beans.getName());
+            item1.setGreenhouseId(greenhouse.getId());
+            item1.setRecommendedPlantDate(Instant.now().plusSeconds(86400 * 2)); // 2 days from now
+            item1.setMissionDay(currentMissionDay + 2);
+            item1.setReason("URGENT: Protein deficit detected. Current intake 280g/day vs required 360-540g/day. " +
+                "Legumes provide 7g protein per 100g (MCP KB 3.6). Priority planting to close 22% protein gap.");
+            item1.setNutritionalGapsAddressed(Arrays.asList("Protein", "Iron", "Folate"));
+            plantingQueueItemRepository.save(item1);
+        }
+
+        // Priority 2: Caloric security (potato)
+        Crop potato = allCrops.stream().filter(c -> c.getName().equals("Potato")).findFirst().orElse(null);
+        if (potato != null) {
+            PlantingQueueItem item2 = new PlantingQueueItem();
+            item2.setRank(2);
+            item2.setCropId(potato.getId());
+            item2.setCropName(potato.getName());
+            item2.setGreenhouseId(greenhouse.getId());
+            item2.setRecommendedPlantDate(Instant.now().plusSeconds(86400 * 3));
+            item2.setMissionDay(currentMissionDay + 3);
+            item2.setReason("HIGH: Primary energy crop. Potatoes provide 77 kcal/100g with excellent storage (180 days). " +
+                "Current caloric production at 82% of target. Planting now ensures harvest at Day 155.");
+            item2.setNutritionalGapsAddressed(Arrays.asList("Calories", "Carbohydrates", "Potassium"));
+            plantingQueueItemRepository.save(item2);
+        }
+
+        // Priority 3: Vitamin K supplementation (lettuce)
+        Crop lettuce = allCrops.stream().filter(c -> c.getName().equals("Lettuce")).findFirst().orElse(null);
+        if (lettuce != null) {
+            PlantingQueueItem item3 = new PlantingQueueItem();
+            item3.setRank(3);
+            item3.setCropId(lettuce.getId());
+            item3.setCropName(lettuce.getName());
+            item3.setGreenhouseId(greenhouse.getId());
+            item3.setRecommendedPlantDate(Instant.now().plusSeconds(86400 * 5));
+            item3.setMissionDay(currentMissionDay + 5);
+            item3.setReason("MEDIUM: Vitamin K coverage at 78%. Lettuce provides 126 mcg/100g (MCP KB 3.3). " +
+                "Fast cycle (37 days) allows rapid micronutrient supplementation. Also addresses Vitamin A gap.");
+            item3.setNutritionalGapsAddressed(Arrays.asList("Vitamin K", "Vitamin A", "Folate"));
+            plantingQueueItemRepository.save(item3);
+        }
+
+        // Priority 4: Fast-cycle dietary diversity (radish)
+        Crop radish = allCrops.stream().filter(c -> c.getName().equals("Radish")).findFirst().orElse(null);
+        if (radish != null) {
+            PlantingQueueItem item4 = new PlantingQueueItem();
+            item4.setRank(4);
+            item4.setCropId(radish.getId());
+            item4.setCropName(radish.getName());
+            item4.setGreenhouseId(greenhouse.getId());
+            item4.setRecommendedPlantDate(Instant.now().plusSeconds(86400 * 7));
+            item4.setMissionDay(currentMissionDay + 7);
+            item4.setReason("MEDIUM: Crew morale and dietary variety. Fastest cycle (25 days) provides fresh produce quickly. " +
+                "Vitamin C source (14.8 mg/100g). Low resource cost.");
+            item4.setNutritionalGapsAddressed(Arrays.asList("Vitamin C", "Dietary Variety"));
+            plantingQueueItemRepository.save(item4);
+        }
+
+        // Priority 5: Crew well-being (herbs)
+        Crop herbs = allCrops.stream().filter(c -> c.getName().equals("Herbs")).findFirst().orElse(null);
+        if (herbs != null) {
+            PlantingQueueItem item5 = new PlantingQueueItem();
+            item5.setRank(5);
+            item5.setCropId(herbs.getId());
+            item5.setCropName(herbs.getName());
+            item5.setGreenhouseId(greenhouse.getId());
+            item5.setRecommendedPlantDate(Instant.now().plusSeconds(86400 * 10));
+            item5.setMissionDay(currentMissionDay + 10);
+            item5.setReason("LOW: Psychological well-being. Herbs enhance meal palatability, improving crew morale. " +
+                "Highest Vitamin K (414 mcg/100g) and iron (3.2 mg/100g) among all crops. Continuous harvest model.");
+            item5.setNutritionalGapsAddressed(Arrays.asList("Vitamin K", "Iron", "Crew Morale"));
+            plantingQueueItemRepository.save(item5);
+        }
+
+        log.info("Seeded {} planting queue items with priority rankings", plantingQueueItemRepository.count());
+    }
+
+    private void seedConsumptionEntries() {
+        if (consumptionEntryRepository.count() > 0) {
+            log.info("Consumption entries already exist, skipping seed");
+            return;
+        }
+        log.info("Seeding daily consumption entries for nutritional tracking...");
+
+        List<Crop> allCrops = cropRepository.findAll();
+        if (allCrops.isEmpty()) return;
+
+        // Seed consumption data for the past 14 days (Mission Days 46-60)
+        // Simulate realistic daily consumption patterns for 4 astronauts
+        LocalDate today = LocalDate.now();
+
+        for (int daysAgo = 14; daysAgo >= 0; daysAgo--) {
+            LocalDate date = today.minusDays(daysAgo);
+
+            // Daily consumption varies by crop type
+            // Target: ~3000 kcal per astronaut per day = 12,000 kcal total crew
+
+            // Lettuce: ~1.5 kg/day crew (225 kcal) - fresh greens daily
+            Crop lettuce = allCrops.stream().filter(c -> c.getName().equals("Lettuce")).findFirst().orElse(null);
+            if (lettuce != null) {
+                createConsumptionEntry(date, lettuce, 1.5, 225.0);
+            }
+
+            // Potato: ~6 kg/day crew (4,620 kcal) - primary carb source
+            Crop potato = allCrops.stream().filter(c -> c.getName().equals("Potato")).findFirst().orElse(null);
+            if (potato != null) {
+                createConsumptionEntry(date, potato, 6.0, 4620.0);
+            }
+
+            // Radish: ~0.8 kg/day crew (128 kcal) - supplemental variety
+            Crop radish = allCrops.stream().filter(c -> c.getName().equals("Radish")).findFirst().orElse(null);
+            if (radish != null) {
+                createConsumptionEntry(date, radish, 0.8, 128.0);
+            }
+
+            // Beans: ~2.5 kg/day crew (2,500 kcal) - protein source
+            Crop beans = allCrops.stream().filter(c -> c.getName().equals("Beans/Peas")).findFirst().orElse(null);
+            if (beans != null) {
+                createConsumptionEntry(date, beans, 2.5, 2500.0);
+            }
+
+            // Herbs: ~0.15 kg/day crew (34.5 kcal) - flavoring
+            Crop herbs = allCrops.stream().filter(c -> c.getName().equals("Herbs")).findFirst().orElse(null);
+            if (herbs != null) {
+                createConsumptionEntry(date, herbs, 0.15, 34.5);
+            }
+
+            // Total per day: ~7,507 kcal from greenhouse (62.5% of crew needs)
+            // Remaining ~4,493 kcal from stored food
+        }
+
+        log.info("Seeded {} consumption entries (14 days × 5 crops)", consumptionEntryRepository.count());
+
+        // Calculate and log totals
+        List<ConsumptionEntry> allEntries = consumptionEntryRepository.findAll();
+        double totalKg = allEntries.stream().mapToDouble(ConsumptionEntry::getQuantityKg).sum();
+        double totalKcal = allEntries.stream().mapToDouble(ConsumptionEntry::getCaloriesLogged).sum();
+        double avgDailyKcal = totalKcal / 15; // 15 days
+        double greenhouseFraction = avgDailyKcal / 12000.0;
+
+        log.info("Total consumed: {:.1f} kg, {:.0f} kcal over 15 days", totalKg, totalKcal);
+        log.info("Average daily: {:.0f} kcal ({:.1f}% from greenhouse, {:.1f}% from stored food)",
+            avgDailyKcal, greenhouseFraction * 100, (1 - greenhouseFraction) * 100);
+    }
+
+    private void createConsumptionEntry(LocalDate date, Crop crop, double quantityKg, double calories) {
+        ConsumptionEntry entry = new ConsumptionEntry();
+        entry.setDate(date);
+        entry.setCropId(crop.getId());
+        entry.setQuantityKg(quantityKg);
+        entry.setCaloriesLogged(calories);
+        consumptionEntryRepository.save(entry);
+    }
+
+    private void seedSimulationHistory() {
+        if (simulationRepository.count() > 0) {
+            log.info("Simulation history already exists, skipping seed");
+            return;
+        }
+        log.info("Seeding simulation history with AI learning runs...");
+
+        // Simulation 1: Initial baseline run (completed)
+        Simulation sim1 = new Simulation();
+        sim1.setName("Baseline Conservative Strategy");
+        sim1.setLearningGoal("Establish baseline performance with conservative resource management. " +
+            "Prioritize food security over diversity. Minimize risk.");
+        sim1.setStatus(SimulationStatus.COMPLETED);
+        sim1.setCreatedAt(Instant.now().minusSeconds(86400 * 20)); // 20 days ago
+        sim1.setCompletedAt(Instant.now().minusSeconds(86400 * 18));
+        sim1.setMissionDuration(450);
+        sim1.setCrewSize(4);
+        sim1.setYieldTarget(0.60); // 60% of crew caloric needs
+        sim1.setOutcomeScore(0.72); // Exceeded baseline
+        sim1.setAutonomyLevel(AutonomyLevel.SUGGEST_ONLY);
+        sim1.setRiskTolerance(RiskTolerance.CONSERVATIVE);
+        sim1.setWaterLiters(50000.0);
+        sim1.setNutrientKg(500.0);
+        sim1.setEnergyKwh(100000.0);
+        sim1.setCertaintyThreshold(0.85);
+        sim1.setPriorityWeightYield(0.6);
+        sim1.setPriorityWeightDiversity(0.2);
+        sim1.setPriorityWeightResourceConservation(0.2);
+        simulationRepository.save(sim1);
+
+        // Simulation 2: Protein optimization run (completed)
+        Simulation sim2 = new Simulation();
+        sim2.setName("Protein-Focused Strategy");
+        sim2.setLearningGoal("Maximize protein production to meet crew requirements without stored food supplementation. " +
+            "Increase legume allocation by 40%.");
+        sim2.setStatus(SimulationStatus.COMPLETED);
+        sim2.setCreatedAt(Instant.now().minusSeconds(86400 * 15));
+        sim2.setCompletedAt(Instant.now().minusSeconds(86400 * 13));
+        sim2.setMissionDuration(450);
+        sim2.setCrewSize(4);
+        sim2.setYieldTarget(0.70);
+        sim2.setOutcomeScore(0.81); // Significant improvement
+        sim2.setAutonomyLevel(AutonomyLevel.HYBRID);
+        sim2.setRiskTolerance(RiskTolerance.MODERATE);
+        sim2.setWaterLiters(50000.0);
+        sim2.setNutrientKg(500.0);
+        sim2.setEnergyKwh(100000.0);
+        sim2.setCertaintyThreshold(0.75);
+        sim2.setPriorityWeightYield(0.5);
+        sim2.setPriorityWeightDiversity(0.3);
+        sim2.setPriorityWeightResourceConservation(0.2);
+        simulationRepository.save(sim2);
+
+        // Simulation 3: Water scarcity scenario (completed)
+        Simulation sim3 = new Simulation();
+        sim3.setName("Water Scarcity Resilience Test");
+        sim3.setLearningGoal("Test agent response to water recycling degradation scenario (MCP KB 6.3). " +
+            "Evaluate drought-tolerant crop prioritization.");
+        sim3.setStatus(SimulationStatus.COMPLETED);
+        sim3.setCreatedAt(Instant.now().minusSeconds(86400 * 10));
+        sim3.setCompletedAt(Instant.now().minusSeconds(86400 * 8));
+        sim3.setMissionDuration(450);
+        sim3.setCrewSize(4);
+        sim3.setYieldTarget(0.65);
+        sim3.setOutcomeScore(0.68); // Maintained under stress
+        sim3.setAutonomyLevel(AutonomyLevel.HYBRID);
+        sim3.setRiskTolerance(RiskTolerance.MODERATE);
+        sim3.setWaterLiters(40000.0); // Reduced water availability
+        sim3.setNutrientKg(500.0);
+        sim3.setEnergyKwh(100000.0);
+        sim3.setCertaintyThreshold(0.70);
+        sim3.setPriorityWeightYield(0.4);
+        sim3.setPriorityWeightDiversity(0.3);
+        sim3.setPriorityWeightResourceConservation(0.3);
+        simulationRepository.save(sim3);
+
+        // Simulation 4: Aggressive optimization (completed with poor outcome - learning opportunity)
+        Simulation sim4 = new Simulation();
+        sim4.setName("Aggressive Yield Maximization");
+        sim4.setLearningGoal("Push resource limits to maximize caloric yield. Test upper bounds of greenhouse productivity. " +
+            "RESULT: Failed due to resource exhaustion - valuable learning on sustainability limits.");
+        sim4.setStatus(SimulationStatus.COMPLETED);
+        sim4.setCreatedAt(Instant.now().minusSeconds(86400 * 5));
+        sim4.setCompletedAt(Instant.now().minusSeconds(86400 * 4));
+        sim4.setMissionDuration(450);
+        sim4.setCrewSize(4);
+        sim4.setYieldTarget(0.90); // Ambitious
+        sim4.setOutcomeScore(0.42); // Poor outcome - resource exhaustion
+        sim4.setAutonomyLevel(AutonomyLevel.FULLY_AUTONOMOUS);
+        sim4.setRiskTolerance(RiskTolerance.AGGRESSIVE);
+        sim4.setWaterLiters(50000.0);
+        sim4.setNutrientKg(500.0);
+        sim4.setEnergyKwh(100000.0);
+        sim4.setCertaintyThreshold(0.60);
+        sim4.setPriorityWeightYield(0.8);
+        sim4.setPriorityWeightDiversity(0.1);
+        sim4.setPriorityWeightResourceConservation(0.1);
+        simulationRepository.save(sim4);
+
+        // Simulation 5: Current optimal strategy (running)
+        Simulation sim5 = new Simulation();
+        sim5.setName("Balanced Nutrition & Resource Strategy");
+        sim5.setLearningGoal("Apply learnings from previous runs. Balance protein, micronutrients, and resource efficiency. " +
+            "Target 75% caloric self-sufficiency with full nutritional coverage.");
+        sim5.setStatus(SimulationStatus.RUNNING);
+        sim5.setCreatedAt(Instant.now().minusSeconds(86400 * 2));
+        sim5.setCompletedAt(null);
+        sim5.setMissionDuration(450);
+        sim5.setCrewSize(4);
+        sim5.setYieldTarget(0.75);
+        sim5.setOutcomeScore(null); // Still running
+        sim5.setAutonomyLevel(AutonomyLevel.HYBRID);
+        sim5.setRiskTolerance(RiskTolerance.MODERATE);
+        sim5.setWaterLiters(50000.0);
+        sim5.setNutrientKg(500.0);
+        sim5.setEnergyKwh(100000.0);
+        sim5.setCertaintyThreshold(0.70);
+        sim5.setPriorityWeightYield(0.4);
+        sim5.setPriorityWeightDiversity(0.3);
+        sim5.setPriorityWeightResourceConservation(0.3);
+        simulationRepository.save(sim5);
+
+        log.info("Seeded {} simulation runs (4 completed, 1 running)", simulationRepository.count());
+        log.info("Learning progression: 0.72 → 0.81 → 0.68 (stress) → 0.42 (failed) → current run");
     }
 
     // ==================== CROP CREATION METHODS (MCP KB DATA) ====================
