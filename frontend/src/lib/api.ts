@@ -31,8 +31,8 @@ import type {
 
 import { useState, useEffect } from "react";
 
-// Requests go to same-origin /api/* which next.config.ts rewrites to the backend
-const BASE_URL = "";
+// Static export: calls API Gateway directly with X-API-Key header
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 // Hook: returns fallback immediately, swaps to real data when API responds.
 // Pass skip=true to defer the fetch (e.g. waiting for a valid ID).

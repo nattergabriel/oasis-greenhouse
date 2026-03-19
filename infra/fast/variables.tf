@@ -30,12 +30,3 @@ variable "api_key" {
   description = "API key for demo access control"
   sensitive   = true
 }
-
-variable "github_repo" {
-  description = "GitHub repo for Amplify: owner/repo (leave empty to skip frontend deployment)"
-  default     = ""
-}
-
-variable "github_branch" {
-  default = "main"
-}

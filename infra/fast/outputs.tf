@@ -29,8 +29,13 @@ output "simulation_url_internal" {
 }
 
 output "frontend_url" {
-  value       = var.github_repo != "" ? "https://${aws_amplify_branch.main[0].branch_name}.${aws_amplify_app.frontend[0].default_domain}" : "Not deployed (run frontend locally)"
-  description = "Frontend URL (empty if github_repo not set)"
+  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+  description = "CloudFront URL for frontend"
+}
+
+output "frontend_s3_bucket" {
+  value       = aws_s3_bucket.frontend.id
+  description = "S3 bucket name for frontend static files"
 }
 
 output "db_endpoint" {
