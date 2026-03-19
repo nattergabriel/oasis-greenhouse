@@ -44,7 +44,7 @@ export function StatusPopover({ alerts, recommendations, totalIssues }: StatusPo
   }, [open]);
 
   // Derive badge display state
-  const badgeLabel = cleared ? "OK" : totalIssues > 0 ? totalIssues : "OK";
+  const badgeLabel = cleared ? 0 : totalIssues > 0 ? totalIssues : "OK";
   const badgeVariant: "destructive" | "outline" = (() => {
     if (cleared || totalIssues === 0) return "outline";
     if (acknowledged) return "outline";
