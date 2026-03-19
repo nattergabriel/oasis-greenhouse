@@ -410,7 +410,7 @@ resource "aws_apprunner_service" "simulation" {
 
   health_check_configuration {
     protocol = "HTTP"
-    path     = "/"
+    path     = "/health"
     interval = 10
     timeout  = 5
     healthy_threshold   = 1
@@ -429,45 +429,6 @@ resource "aws_apprunner_service" "simulation" {
 # Backend orchestrator calls simulation REST API directly
 # No Lambda or EventBridge Scheduler needed
 
-# ─── Amplify — Frontend (Optional) ───────────────────────────────────────────
-
-resource "aws_amplify_app" "frontend" {
-  count = var.github_repo != "" ? 1 : 0
-
-  name       = "${var.project}-frontend"
-  repository = "https://github.com/${var.github_repo}"
-
-  build_spec = <<-EOT
-    version: 1
-    frontend:
-      phases:
-        preBuild:
-          commands:
-            - cd frontend && npm ci
-        build:
-          commands:
-            - npm run build
-      artifacts:
-        baseDirectory: frontend/dist
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - frontend/node_modules/**/*
-  EOT
-
-  environment_variables = {
-    VITE_API_BASE_URL = "${aws_apigatewayv2_stage.prod.invoke_url}/api"
-    VITE_USE_MOCKS    = "false"
-    # SECURITY: API key should be provided by user at runtime, never embedded in client-side code
-  }
-}
-
-resource "aws_amplify_branch" "main" {
-  count = var.github_repo != "" ? 1 : 0
-
-  app_id      = aws_amplify_app.frontend[0].id
-  branch_name = var.github_branch
-
-  enable_auto_build = true
-}
+# ─── Frontend (S3 + CloudFront) ──────────────────────────────────────────────
+# Frontend infrastructure is defined in frontend.tf
+# Deploy with: ./deploy-frontend.sh

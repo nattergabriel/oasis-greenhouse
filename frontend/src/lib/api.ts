@@ -61,6 +61,7 @@ import { useState, useEffect, useRef } from "react";
 // Toggle this to switch between mock and real API
 const USE_MOCK = false;
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
 
 // Hook: returns fallback immediately, swaps to real data when API responds.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -85,15 +86,19 @@ function qs(params: Record<string, string | number | undefined | null>): string 
 }
 
 async function get<T>(endpoint: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`);
+  const headers: HeadersInit = {};
+  if (API_KEY) headers["X-API-Key"] = API_KEY;
+  const res = await fetch(`${BASE_URL}${endpoint}`, { headers });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
 async function post<T>(endpoint: string, body?: unknown): Promise<T> {
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (API_KEY) headers["X-API-Key"] = API_KEY;
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
@@ -101,9 +106,11 @@ async function post<T>(endpoint: string, body?: unknown): Promise<T> {
 }
 
 async function put<T>(endpoint: string, body?: unknown): Promise<T> {
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (API_KEY) headers["X-API-Key"] = API_KEY;
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
@@ -111,9 +118,11 @@ async function put<T>(endpoint: string, body?: unknown): Promise<T> {
 }
 
 async function patchReq<T>(endpoint: string, body?: unknown): Promise<T> {
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (API_KEY) headers["X-API-Key"] = API_KEY;
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
@@ -121,13 +130,17 @@ async function patchReq<T>(endpoint: string, body?: unknown): Promise<T> {
 }
 
 async function del<T>(endpoint: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, { method: "DELETE" });
+  const headers: HeadersInit = {};
+  if (API_KEY) headers["X-API-Key"] = API_KEY;
+  const res = await fetch(`${BASE_URL}${endpoint}`, { method: "DELETE", headers });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
 async function delVoid(endpoint: string): Promise<void> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, { method: "DELETE" });
+  const headers: HeadersInit = {};
+  if (API_KEY) headers["X-API-Key"] = API_KEY;
+  const res = await fetch(`${BASE_URL}${endpoint}`, { method: "DELETE", headers });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
 }
 
