@@ -16,6 +16,7 @@ function getCategoryColor(category: CropCategory): string {
     case "VEGETABLE": return "#4ead6b";
     case "LEGUME": return "#d4924a";
     case "HERB": return "#7c6aad";
+    default: return "#9c9488";
   }
 }
 

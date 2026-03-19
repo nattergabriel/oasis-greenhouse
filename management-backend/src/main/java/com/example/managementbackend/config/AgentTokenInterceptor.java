@@ -16,6 +16,10 @@ public class AgentTokenInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // Only enforce agent token on write methods — frontend reads are unauthenticated
+        if ("GET".equalsIgnoreCase(request.getMethod()) || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
         String token = request.getHeader("X-Agent-Token");
         if (token == null || token.isBlank() || (!expectedToken.isBlank() && !expectedToken.equals(token))) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
