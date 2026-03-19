@@ -233,19 +233,24 @@ export const mockSensorSnapshot: SensorSnapshot = {
   },
 };
 
-export const mockSensorHistory: SensorHistoryReading[] = Array.from({ length: 24 }, (_, i) => ({
-  timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString(),
-  temperature: 19 + Math.sin(i / 4) * 1.5 + Math.random() * 0.5,
-  humidity: 60 + Math.sin(i / 6) * 5 + Math.random() * 2,
-  lightIntensity: i >= 6 && i <= 18 ? 15000 + Math.random() * 5000 : 200 + Math.random() * 100,
-  par: i >= 6 && i <= 18 ? 280 + Math.random() * 80 : 10 + Math.random() * 5,
-  co2: 980 + Math.sin(i / 3) * 40 + Math.random() * 20,
-  waterFlowRate: 2.2 + Math.random() * 0.5,
-  waterRecyclingEfficiency: 88 + Math.random() * 4,
-  nutrientSolutionPh: 6.0 + Math.random() * 0.3,
-  nutrientSolutionEc: 1.9 + Math.random() * 0.4,
-  nutrientSolutionDissolvedOxygen: 7.0 + Math.random() * 0.5,
-}));
+// Deterministic pseudo-random noise per index (avoids SSR hydration mismatch)
+const _sensorNoise = [0.31,0.72,0.15,0.88,0.44,0.63,0.27,0.95,0.51,0.38,0.69,0.12,0.84,0.56,0.33,0.77,0.48,0.91,0.22,0.65,0.41,0.73,0.18,0.86];
+export const mockSensorHistory: SensorHistoryReading[] = Array.from({ length: 24 }, (_, i) => {
+  const n = _sensorNoise[i];
+  return {
+    timestamp: new Date(Date.UTC(2026, 5, 15, i)).toISOString(),
+    temperature: 19 + Math.sin(i / 4) * 1.5 + n * 0.5,
+    humidity: 60 + Math.sin(i / 6) * 5 + n * 2,
+    lightIntensity: i >= 6 && i <= 18 ? 15000 + n * 5000 : 200 + n * 100,
+    par: i >= 6 && i <= 18 ? 280 + n * 80 : 10 + n * 5,
+    co2: 980 + Math.sin(i / 3) * 40 + n * 20,
+    waterFlowRate: 2.2 + n * 0.5,
+    waterRecyclingEfficiency: 88 + n * 4,
+    nutrientSolutionPh: 6.0 + n * 0.3,
+    nutrientSolutionEc: 1.9 + n * 0.4,
+    nutrientSolutionDissolvedOxygen: 7.0 + n * 0.5,
+  };
+});
 
 // === Weather ===
 export const mockWeather: MarsWeather = {
@@ -389,30 +394,31 @@ export const mockStoredFood: StoredFood = {
 };
 
 // === Nutrition (crew of 4, 12,000 kcal/day target) ===
-export const mockNutritionEntries: DailyNutritionEntry[] = Array.from({ length: 7 }, (_, i) => {
-  const ghFraction = 0.15 + Math.random() * 0.08;
-  const ghKcal = Math.round(12000 * ghFraction);
+// Deterministic data — no Math.random() to avoid SSR hydration mismatch
+const _nutritionSeed = [0.42, 0.67, 0.23, 0.81, 0.55, 0.34, 0.73];
+export const mockNutritionEntries: DailyNutritionEntry[] = _nutritionSeed.map((s, i) => {
+  const ghFraction = +(0.15 + s * 0.08).toFixed(3);
   return {
     date: new Date(2026, 5, 9 + i).toISOString(),
     totalCalories: 12000,
-    proteinG: Math.round(380 + Math.random() * 40),
-    carbsG: Math.round(1200 + Math.random() * 200),
-    fatG: Math.round(380 + Math.random() * 60),
-    fiberG: Math.round(90 + Math.random() * 30),
+    proteinG: Math.round(380 + s * 40),
+    carbsG: Math.round(1200 + s * 200),
+    fatG: Math.round(380 + s * 60),
+    fiberG: Math.round(90 + s * 30),
     targetCalories: 12000,
     coveragePercent: 100,
     micronutrients: {
-      vitaminAMcg: Math.round(2400 + Math.random() * 1200),
-      vitaminCMg: Math.round(240 + Math.random() * 120),
-      vitaminKMcg: Math.round(320 + Math.random() * 160),
-      folateMcg: Math.round(1200 + Math.random() * 400),
-      ironMg: Math.round(50 + Math.random() * 22),
-      potassiumMg: Math.round(10000 + Math.random() * 3600),
-      magnesiumMg: Math.round(1200 + Math.random() * 400),
+      vitaminAMcg: Math.round(2400 + s * 1200),
+      vitaminCMg: Math.round(240 + s * 120),
+      vitaminKMcg: Math.round(320 + s * 160),
+      folateMcg: Math.round(1200 + s * 400),
+      ironMg: Math.round(50 + s * 22),
+      potassiumMg: Math.round(10000 + s * 3600),
+      magnesiumMg: Math.round(1200 + s * 400),
     },
-    calorieGhFraction: +ghFraction.toFixed(3),
-    proteinGhFraction: +(0.12 + Math.random() * 0.08).toFixed(3),
-    micronutrientsCovered: Math.random() > 0.3 ? 7 : 5 + Math.floor(Math.random() * 2),
+    calorieGhFraction: ghFraction,
+    proteinGhFraction: +(0.12 + s * 0.08).toFixed(3),
+    micronutrientsCovered: s > 0.3 ? 7 : 5 + Math.floor(s * 2),
   };
 });
 
@@ -432,14 +438,16 @@ export const mockCoverageHeatmap: CoverageHeatmap = {
 };
 
 // === Forecast ===
+const _forecastNoise = [0.4,0.7,0.2,0.9,0.5,0.6,0.3,0.8,0.1,0.75,0.45,0.65,0.35,0.85,0.55,0.25,0.95,0.15,0.78,0.42,0.68,0.32,0.88,0.52,0.62,0.28,0.82,0.48,0.72,0.38];
 export const mockResourceForecast: ResourceProjection[] = Array.from({ length: 30 }, (_, i) => {
   const day = 142 + i;
   const stormDip = (day >= 146 && day <= 148) ? 8 : 0;
+  const n = _forecastNoise[i];
   return {
     missionDay: day,
-    waterReservePercent: Math.max(20, 73 - i * 0.8 - stormDip + Math.random() * 2),
-    nutrientReservePercent: Math.max(15, 58 - i * 0.6 + Math.random() * 2),
-    energyReservePercent: Math.max(25, 84 - i * 0.5 - stormDip * 1.5 + Math.random() * 2),
+    waterReservePercent: Math.max(20, 73 - i * 0.8 - stormDip + n * 2),
+    nutrientReservePercent: Math.max(15, 58 - i * 0.6 + n * 2),
+    energyReservePercent: Math.max(25, 84 - i * 0.5 - stormDip * 1.5 + n * 2),
     riskLevel: i > 25 ? "HIGH" : i > 15 ? "MODERATE" : "LOW",
   };
 });
