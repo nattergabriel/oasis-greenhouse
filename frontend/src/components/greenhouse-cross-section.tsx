@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId } from "react";
 import { useSimulation } from "@/providers/simulation-provider";
 import { mockGreenhouseDetails, mockWeather } from "@/lib/mock-data";
 import type { PlantSlot } from "@/lib/types";
 
 // Unique SVG IDs per instance to avoid clashes when rendered multiple times
-let instanceCounter = 0;
 function useInstanceId() {
-  return useMemo(() => `gh-${++instanceCounter}`, []);
+  const id = useId();
+  return `gh-${id.replace(/:/g, "")}`;
 }
 
 function getGrowthStage(p: number) {
