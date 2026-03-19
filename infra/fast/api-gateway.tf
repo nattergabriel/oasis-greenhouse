@@ -10,10 +10,14 @@ resource "aws_apigatewayv2_api" "main" {
   description   = "Martian Greenhouse API with API key authentication"
 
   cors_configuration {
-    # Allow localhost for development
-    # For production: Update CORS after Amplify deployment to add the specific domain
-    allow_origins = ["http://localhost:5173", "http://localhost:3000", "http://localhost:5174"]
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    # Allow localhost for development + CloudFront for production
+    allow_origins = [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:5174",
+      "https://${aws_cloudfront_distribution.frontend.domain_name}"
+    ]
+    allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     allow_headers = ["*"]
     expose_headers = ["*"]
     max_age = 3600
