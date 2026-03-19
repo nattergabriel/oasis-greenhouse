@@ -47,7 +47,7 @@ async def root() -> dict:
 @app.post("/api/training/run")
 async def run_training_simulation(request: TrainingRunRequest) -> dict:
     """Run a training simulation and improve strategy."""
-    run_id = str(uuid.uuid4())
+    run_id = request.simulation_id or str(uuid.uuid4())
     logger.info("Starting training run: %s", run_id)
 
     strategy_before = strategy_store.read()

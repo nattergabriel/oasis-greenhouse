@@ -18,10 +18,6 @@ variable "agent_token" {
   sensitive = true
 }
 
-variable "system_token" {
-  sensitive = true
-}
-
 variable "anthropic_api_key" {
   sensitive = true
 }

@@ -12,6 +12,7 @@ import com.example.managementbackend.model.enums.TimelineEventType;
 import com.example.managementbackend.model.shared.AgentConfigDto;
 import com.example.managementbackend.model.shared.PriorityWeightsDto;
 import com.example.managementbackend.repository.*;
+import com.example.managementbackend.service.PythonBackendClient;
 import com.example.managementbackend.service.SimulationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class SimulationServiceImpl implements SimulationService {
     private final ScenarioInjectionRepository scenarioInjectionRepository;
     private final TimelineEventRepository timelineEventRepository;
     private final ScenarioRepository scenarioRepository;
+    private final PythonBackendClient pythonBackendClient;
 
     @Override
     public SimulationListResponse listSimulations() {
@@ -79,6 +81,9 @@ public class SimulationServiceImpl implements SimulationService {
 
         sim = simulationRepository.save(sim);
         log.info("Created simulation: id={}, name={}", sim.getId(), sim.getName());
+
+        // Trigger training run on the Python backend (async — returns immediately)
+        pythonBackendClient.triggerTrainingRunAsync(sim.getId());
 
         return new CreateSimulationResponse(sim.getId(), sim.getStatus(), sim.getCreatedAt().toString());
     }
