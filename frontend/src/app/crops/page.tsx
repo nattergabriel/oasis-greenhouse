@@ -1,9 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Wheat, Sprout, Clock, Scale, Droplets, Thermometer, CalendarDays } from "lucide-react";
+import { ChevronDown, Thermometer, Sprout, Droplets, Sun, CalendarDays } from "lucide-react";
 import { mockCrops, mockPlantingQueue, mockHarvestJournal, mockStockpile } from "@/lib/mock-data";
 import { useSimulation } from "@/providers/simulation-provider";
 import type { Crop, CropCategory, WaterRequirement, PlantingQueueItem, HarvestEntry, StockpileItem } from "@/lib/types";
@@ -12,145 +12,193 @@ import type { Crop, CropCategory, WaterRequirement, PlantingQueueItem, HarvestEn
 
 function getCategoryColor(category: CropCategory): string {
   switch (category) {
-    case "VEGETABLE": return "bg-[#5a9a6b]/20 text-[#5a9a6b] border-[#5a9a6b]/30";
-    case "LEGUME": return "bg-[#d4924a]/20 text-[#d4924a] border-[#d4924a]/30";
-    case "GRAIN": return "bg-[#c4a344]/20 text-[#c4a344] border-[#c4a344]/30";
-    case "HERB": return "bg-[#7c6aad]/20 text-[#7c6aad] border-[#7c6aad]/30";
-  }
-}
-
-function getWaterColor(requirement: WaterRequirement): string {
-  switch (requirement) {
-    case "LOW": return "bg-[#4a7c9e]/20 text-[#4a7c9e] border-[#4a7c9e]/30";
-    case "MEDIUM": return "bg-[#4a7c9e]/30 text-[#4a7c9e] border-[#4a7c9e]/40";
-    case "HIGH": return "bg-[#4a7c9e]/40 text-[#4a7c9e] border-[#4a7c9e]/50";
+    case "VEGETABLE": return "#5a9a6b";
+    case "LEGUME": return "#d4924a";
+    case "GRAIN": return "#c4a344";
+    case "HERB": return "#7c6aad";
   }
 }
 
 function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(isoString).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function formatDateTime(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-}
+const MISSION_ROLES: Record<string, { role: string; desc: string }> = {
+  Lettuce: { role: "Micronutrient Stabilizer", desc: "Fast-cycle leafy green, rich in Vitamin K and A. Low caloric density but essential for micronutrient coverage and dietary diversity." },
+  Tomato: { role: "Dietary Diversity", desc: "Moderate cycle, good potassium and vitamin C source. High yield per m² makes it efficient for supplementing diet variety." },
+  Potato: { role: "Energy Backbone", desc: "Primary caloric security crop with high yield per m². Relatively stable storage potential. The energy foundation of the mission diet." },
+  Spinach: { role: "Micronutrient Density", desc: "Exceptional folate, iron, and vitamin K content. Short cycle allows rapid nutritional correction when deficits are detected." },
+  Soybean: { role: "Protein Security", desc: "Primary plant-based protein source for the crew. Moderate cycle with nitrogen fixation capability. Critical for muscle mass preservation." },
+  Wheat: { role: "Caloric Reserve", desc: "High calorie density grain for long-term energy storage. Longest growth cycle but highest caloric return per harvest." },
+  Radish: { role: "Fast Buffer", desc: "Very short cycle system feedback and variety crop. Used as rapid response crop when system stability needs verification." },
+  Basil: { role: "Crew Morale", desc: "Psychological well-being enhancer. Minimal caloric contribution but improves palatability and supports crew satisfaction." },
+};
 
-// === Components ===
+type TabValue = "catalog" | "queue" | "journal" | "stockpile";
 
-function CropCatalogCard({ crop }: { crop: Crop }) {
+// === Crop Row (expandable) ===
+
+function CropRow({ crop, isFirst }: { crop: Crop; isFirst: boolean }) {
+  const [open, setOpen] = useState(false);
   const { name, category, growthDays, waterRequirement, typicalYieldPerM2Kg, nutritionalProfile, environmentalRequirements } = crop;
-  const { caloriesPer100g, proteinG, carbsG, fatG } = nutritionalProfile;
-  const { optimalTempMinC, optimalTempMaxC, optimalPhMin, optimalPhMax, lightRequirementParMin, lightRequirementParMax } = environmentalRequirements;
+  const role = MISSION_ROLES[name];
+  const catColor = getCategoryColor(category);
 
   return (
-    <Card className="p-4 hover:border-primary/30 transition-colors">
-      <div className="space-y-3">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <h3 className="text-lg font-semibold">{name}</h3>
-          <Badge className={`${getCategoryColor(category)} border font-mono text-xs`}>
-            {category}
-          </Badge>
+    <div
+      className={`border-x border-b border-border overflow-hidden transition-colors ${isFirst ? "border-t rounded-t-lg" : ""} ${open ? "bg-card" : "hover:bg-secondary/50"}`}
+      style={{ borderLeftColor: open ? catColor : undefined, borderLeftWidth: open ? "2px" : undefined }}
+    >
+      {/* Collapsed summary */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full grid items-center px-4 py-3.5 text-left transition-colors"
+        style={{ gridTemplateColumns: "minmax(120px, 1fr) 90px 100px 90px 90px 80px 80px 24px" }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: catColor }} />
+          <span className="text-base font-medium truncate">{name}</span>
+          {role && <span className="text-xs text-muted-foreground truncate hidden lg:inline">{role.role}</span>}
         </div>
-
-        {/* Key Stats Row */}
-        <div className="flex items-center gap-3 text-sm">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Clock className="w-4 h-4" />
-            <span className="font-mono">{growthDays}d</span>
-          </div>
-          <Badge className={`${getWaterColor(waterRequirement)} border text-xs`}>
-            {waterRequirement}
-          </Badge>
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Scale className="w-4 h-4" />
-            <span className="font-mono">{typicalYieldPerM2Kg}kg/m²</span>
-          </div>
+        <span className="text-sm text-muted-foreground">{category}</span>
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <span className="font-mono tabular-nums">{growthDays}</span>
+          <span>days</span>
         </div>
+        <span className="text-sm text-muted-foreground">{waterRequirement}</span>
+        <span className="text-sm text-muted-foreground font-mono tabular-nums">{typicalYieldPerM2Kg} kg/m²</span>
+        <span className="text-sm font-mono tabular-nums">{nutritionalProfile.caloriesPer100g} kcal</span>
+        <span className="text-sm font-mono tabular-nums">{nutritionalProfile.proteinG}g</span>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
 
-        {/* Nutritional Summary */}
-        <div className="grid grid-cols-4 gap-2 text-xs">
-          <div className="bg-background/50 rounded px-2 py-1.5 border border-border">
-            <div className="text-muted-foreground text-[10px] uppercase">Cal</div>
-            <div className="font-mono">{caloriesPer100g}</div>
-          </div>
-          <div className="bg-background/50 rounded px-2 py-1.5 border border-border">
-            <div className="text-muted-foreground text-[10px] uppercase">Protein</div>
-            <div className="font-mono">{proteinG}g</div>
-          </div>
-          <div className="bg-background/50 rounded px-2 py-1.5 border border-border">
-            <div className="text-muted-foreground text-[10px] uppercase">Carbs</div>
-            <div className="font-mono">{carbsG}g</div>
-          </div>
-          <div className="bg-background/50 rounded px-2 py-1.5 border border-border">
-            <div className="text-muted-foreground text-[10px] uppercase">Fat</div>
-            <div className="font-mono">{fatG}g</div>
-          </div>
-        </div>
-
-        {/* Environmental Ranges */}
-        <div className="space-y-1 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Thermometer className="w-3.5 h-3.5" />
-            <span className="font-mono">{optimalTempMinC}–{optimalTempMaxC}°C</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] w-3.5 text-center">pH</span>
-            <span className="font-mono">{optimalPhMin}–{optimalPhMax}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Sprout className="w-3.5 h-3.5" />
-            <span className="font-mono">{lightRequirementParMin}–{lightRequirementParMax} µmol/m²/s</span>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function PlantingQueueList({ items }: { items: PlantingQueueItem[] }) {
-  return (
-    <div className="space-y-3">
-      {items.map((item) => (
-        <Card key={item.rank} className="p-4 hover:border-primary/30 transition-colors">
-          <div className="flex gap-4">
-            {/* Rank Badge */}
-            <div className="flex-shrink-0">
-              <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary/50 flex items-center justify-center">
-                <span className="text-xl font-bold text-primary font-mono">#{item.rank}</span>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 space-y-2">
-              <div className="flex items-start justify-between">
-                <h3 className="text-lg font-semibold">{item.cropName}</h3>
-                <Badge variant="outline" className="font-mono text-xs">
-                  SOL {item.missionDay}
-                </Badge>
+      {/* Expanded detail */}
+      {open && (
+        <div className="px-5 pb-6 pt-3 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left: Mission role + description */}
+            <div className="lg:col-span-4 space-y-4">
+              <div>
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">Mission Role</span>
+                <p className="mt-1.5 text-primary font-medium">{role?.role}</p>
+                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{role?.desc}</p>
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CalendarDays className="w-4 h-4" />
-                <span>{formatDate(item.recommendedPlantDate)}</span>
-              </div>
-
-              <p className="text-sm">{item.reason}</p>
-
-              {item.nutritionalGapsAddressed.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {item.nutritionalGapsAddressed.map((gap) => (
-                    <Badge key={gap} className="bg-[#5a9a6b]/20 text-[#5a9a6b] border-[#5a9a6b]/30 border text-xs">
-                      {gap}
-                    </Badge>
-                  ))}
+              {/* Stress sensitivities */}
+              {crop.stressSensitivities.length > 0 && (
+                <div>
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Sensitivities</span>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {crop.stressSensitivities.map((s) => (
+                      <span key={s} className="inline-flex items-center rounded border border-destructive/20 bg-destructive/5 px-2.5 py-1 text-xs text-destructive">
+                        {s.replace(/_/g, " ")}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
+
+            {/* Center: Nutritional profile */}
+            <div className="lg:col-span-4">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Nutrition per 100g</span>
+              <div className="mt-3 space-y-3">
+                {[
+                  { label: "Calories", value: nutritionalProfile.caloriesPer100g, unit: "kcal", max: 350, color: "#d4924a" },
+                  { label: "Protein", value: nutritionalProfile.proteinG, unit: "g", max: 40, color: "#4a7c9e" },
+                  { label: "Carbs", value: nutritionalProfile.carbsG, unit: "g", max: 75, color: "#c4a344" },
+                  { label: "Fat", value: nutritionalProfile.fatG, unit: "g", max: 20, color: "#9c9488" },
+                  { label: "Fiber", value: nutritionalProfile.fiberG, unit: "g", max: 12, color: "#5a9a6b" },
+                ].map((n) => (
+                  <div key={n.label} className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-16 shrink-0">{n.label}</span>
+                    <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min((n.value / n.max) * 100, 100)}%`, backgroundColor: n.color }}
+                      />
+                    </div>
+                    <span className="font-mono text-xs tabular-nums w-16 text-right">
+                      {n.value} {n.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Environmental requirements */}
+            <div className="lg:col-span-4">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Environment</span>
+              <div className="mt-3 space-y-3">
+                {[
+                  { icon: <Thermometer className="w-4 h-4" />, label: "Temperature", value: `${environmentalRequirements.optimalTempMinC}–${environmentalRequirements.optimalTempMaxC}°C`, sub: `stress >${environmentalRequirements.heatStressThresholdC}°C` },
+                  { icon: <Sun className="w-4 h-4" />, label: "Light (PAR)", value: `${environmentalRequirements.lightRequirementParMin}–${environmentalRequirements.lightRequirementParMax}`, sub: "µmol/m²/s" },
+                  { icon: <Droplets className="w-4 h-4" />, label: "Humidity", value: `${environmentalRequirements.optimalHumidityMinPct}–${environmentalRequirements.optimalHumidityMaxPct}%`, sub: "" },
+                  { icon: <Sprout className="w-4 h-4" />, label: "pH Range", value: `${environmentalRequirements.optimalPhMin}–${environmentalRequirements.optimalPhMax}`, sub: "" },
+                ].map((env) => (
+                  <div key={env.label} className="flex items-center gap-3">
+                    <div className="text-muted-foreground shrink-0">{env.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs text-muted-foreground">{env.label}</span>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-mono text-sm tabular-nums">{env.value}</span>
+                        {env.sub && <span className="text-xs text-muted-foreground">{env.sub}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// === Column header for catalog ===
+
+function CatalogHeader() {
+  return (
+    <div
+      className="grid items-center px-4 py-2.5 text-xs uppercase tracking-wide text-muted-foreground"
+      style={{ gridTemplateColumns: "minmax(120px, 1fr) 90px 100px 90px 90px 80px 80px 24px" }}
+    >
+      <span>Crop</span>
+      <span>Type</span>
+      <span>Cycle</span>
+      <span>Water</span>
+      <span>Yield</span>
+      <span>Cal/100g</span>
+      <span>Protein</span>
+      <span />
+    </div>
+  );
+}
+
+// === Other tab components ===
+
+function PlantingQueueList({ items }: { items: PlantingQueueItem[] }) {
+  return (
+    <div className="space-y-1.5">
+      {items.map((item) => (
+        <div key={item.rank} className="flex items-center gap-4 border border-border rounded-lg px-4 py-3.5 hover:bg-secondary/50 transition-colors">
+          <span className="font-mono text-lg font-bold text-primary w-8 shrink-0">#{item.rank}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{item.cropName}</span>
+              <Badge variant="outline" className="font-mono text-xs">SOL {item.missionDay}</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mt-0.5 truncate">{item.reason}</p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {item.nutritionalGapsAddressed.map((gap) => (
+              <span key={gap} className="inline-flex items-center rounded border border-[#5a9a6b]/30 bg-[#5a9a6b]/10 px-2.5 py-0.5 text-xs text-[#5a9a6b]">
+                {gap}
+              </span>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -158,29 +206,31 @@ function PlantingQueueList({ items }: { items: PlantingQueueItem[] }) {
 
 function HarvestJournalTable({ entries }: { entries: HarvestEntry[] }) {
   return (
-    <div className="space-y-2">
-      {/* Header */}
-      <div className="grid grid-cols-[120px,80px,1fr,100px,120px,1fr] gap-4 px-4 py-2 bg-muted/40 border border-border rounded text-xs uppercase text-muted-foreground font-semibold">
-        <div>Date</div>
-        <div>SOL</div>
-        <div>Crop</div>
-        <div>Yield (kg)</div>
-        <div>Greenhouse</div>
-        <div>Notes</div>
+    <div className="space-y-1">
+      <div
+        className="grid items-center px-4 py-2.5 text-xs uppercase tracking-wide text-muted-foreground"
+        style={{ gridTemplateColumns: "100px 70px 1fr 90px 100px 1fr" }}
+      >
+        <span>Date</span>
+        <span>SOL</span>
+        <span>Crop</span>
+        <span>Yield</span>
+        <span>Location</span>
+        <span>Notes</span>
       </div>
-
-      {/* Rows */}
       {entries.map((entry) => (
-        <Card key={entry.id}>
-          <div className="grid grid-cols-[120px,80px,1fr,100px,120px,1fr] gap-4 px-4 py-3 text-sm items-center">
-            <div className="text-muted-foreground">{formatDate(entry.harvestedAt)}</div>
-            <div className="font-mono tabular-nums text-primary">{entry.missionDay}</div>
-            <div className="font-medium">{entry.cropName}</div>
-            <div className="font-mono tabular-nums text-[#5a9a6b]">{entry.yieldKg}</div>
-            <div className="text-muted-foreground text-xs">{entry.greenhouseId === "a1000000-0000-0000-0000-000000000001" ? "Alpha" : "Beta"}</div>
-            <div className="text-muted-foreground text-xs italic">{entry.notes || "—"}</div>
-          </div>
-        </Card>
+        <div
+          key={entry.id}
+          className="grid items-center px-4 py-3 border border-border rounded-lg hover:bg-secondary/50 transition-colors"
+          style={{ gridTemplateColumns: "100px 70px 1fr 90px 100px 1fr" }}
+        >
+          <span className="text-sm text-muted-foreground">{formatDate(entry.harvestedAt)}</span>
+          <span className="font-mono tabular-nums text-sm text-primary">{entry.missionDay}</span>
+          <span className="font-medium">{entry.cropName}</span>
+          <span className="font-mono tabular-nums text-sm text-[#5a9a6b]">{entry.yieldKg} kg</span>
+          <span className="text-sm text-muted-foreground">{entry.greenhouseId === "a1000000-0000-0000-0000-000000000001" ? "Alpha" : "Beta"}</span>
+          <span className="text-sm text-muted-foreground italic truncate">{entry.notes || "—"}</span>
+        </div>
       ))}
     </div>
   );
@@ -191,72 +241,54 @@ function StockpileList({ items }: { items: StockpileItem[] }) {
   const totalDays = items.reduce((sum, item) => sum + item.daysOfSupply, 0);
 
   return (
-    <div className="space-y-4">
-      {/* Items */}
-      <div className="space-y-2">
+    <div className="space-y-3">
+      <div className="space-y-1.5">
         {items.map((item) => {
           const isExpiringSoon = item.expiresInDays !== null && item.expiresInDays < 7;
-
           return (
-            <Card key={item.cropId} className={`p-4 ${isExpiringSoon ? "border-destructive/40" : ""} hover:border-primary/30 transition-colors`}>
-              <div className="flex items-center justify-between">
-                {/* Crop Name & Quantity */}
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">{item.cropName}</h3>
-                    <div className="text-3xl font-bold font-mono tabular-nums text-primary mt-1">
-                      {item.quantityKg} <span className="text-lg text-muted-foreground">kg</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="flex items-center gap-6 text-right">
-                  <div>
-                    <div className="text-xs text-muted-foreground uppercase">Calories</div>
-                    <div className="font-mono tabular-nums text-lg">{item.estimatedCalories.toLocaleString()}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground uppercase">Days Supply</div>
-                    <div className="font-mono tabular-nums text-lg">{item.daysOfSupply.toFixed(1)}</div>
-                  </div>
-                  {item.expiresInDays !== null && (
-                    <div>
-                      <div className="text-xs text-muted-foreground uppercase">Expires In</div>
-                      <div className={`font-mono tabular-nums text-lg ${isExpiringSoon ? "text-destructive" : ""}`}>
-                        {item.expiresInDays}d
-                      </div>
-                    </div>
-                  )}
-                </div>
+            <div key={item.cropId} className={`flex items-center justify-between border rounded-lg px-4 py-3.5 hover:bg-secondary/50 transition-colors ${isExpiringSoon ? "border-destructive/40" : "border-border"}`}>
+              <div className="flex items-center gap-4">
+                <span className="font-medium w-24">{item.cropName}</span>
+                <span className="font-mono text-lg tabular-nums text-primary">{item.quantityKg} <span className="text-sm text-muted-foreground">kg</span></span>
               </div>
-
-              {isExpiringSoon && (
-                <div className="mt-3 pt-3 border-t border-destructive/20">
-                  <div className="flex items-center gap-2 text-destructive text-sm">
-                    <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
-                    <span>Expiring soon — prioritize consumption</span>
-                  </div>
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <span className="font-mono tabular-nums">{item.estimatedCalories.toLocaleString()}</span>
+                  <span className="text-sm text-muted-foreground ml-1">kcal</span>
                 </div>
-              )}
-            </Card>
+                <div className="text-right">
+                  <span className="font-mono tabular-nums">{item.daysOfSupply.toFixed(1)}</span>
+                  <span className="text-sm text-muted-foreground ml-1">days</span>
+                </div>
+                {item.expiresInDays !== null && (
+                  <div className={`text-right ${isExpiringSoon ? "text-destructive" : ""}`}>
+                    <span className="font-mono tabular-nums">{item.expiresInDays}d</span>
+                    {isExpiringSoon && (
+                      <span className="ml-1.5 relative inline-flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive" />
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           );
         })}
       </div>
 
-      {/* Summary */}
       <Card className="bg-primary/10 border-primary/30 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm text-primary/70 uppercase font-semibold">Total Stockpile</div>
-            <div className="text-2xl font-bold font-mono tabular-nums text-primary mt-1">
-              {totalCalories.toLocaleString()} <span className="text-base text-primary/70">kcal</span>
+            <div className="text-xs text-primary/70 uppercase font-semibold tracking-wide">Total Stockpile</div>
+            <div className="text-xl font-bold font-mono tabular-nums text-primary mt-0.5">
+              {totalCalories.toLocaleString()} <span className="text-sm text-primary/70">kcal</span>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-sm text-primary/70 uppercase font-semibold">Total Days Supply</div>
-            <div className="text-2xl font-bold font-mono tabular-nums text-primary mt-1">
-              {totalDays.toFixed(1)} <span className="text-base text-primary/70">days</span>
+            <div className="text-xs text-primary/70 uppercase font-semibold tracking-wide">Days Supply</div>
+            <div className="text-xl font-bold font-mono tabular-nums text-primary mt-0.5">
+              {totalDays.toFixed(1)} <span className="text-sm text-primary/70">days</span>
             </div>
           </div>
         </div>
@@ -267,63 +299,60 @@ function StockpileList({ items }: { items: StockpileItem[] }) {
 
 // === Main Page ===
 
+const TABS: { value: TabValue; label: string }[] = [
+  { value: "catalog", label: "Catalog" },
+  { value: "queue", label: "Planting Queue" },
+  { value: "journal", label: "Harvest Journal" },
+  { value: "stockpile", label: "Stockpile" },
+];
+
 export default function CropsPage() {
   const { state } = useSimulation();
+  const [activeTab, setActiveTab] = useState<TabValue>("catalog");
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <h1 className="text-xl font-medium tracking-tight">Crop Management</h1>
-        <Badge variant="outline" className="font-mono text-xs tabular-nums">
-          SOL {state.currentMissionDay} / {state.totalMissionDays}
-        </Badge>
+      <h1 className="text-xl font-medium tracking-tight">Crop Management</h1>
+
+      {/* Tab buttons */}
+      <div className="flex gap-2">
+        {TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={`rounded-lg border px-4 py-1.5 text-sm transition-all duration-150 ${
+              activeTab === tab.value
+                ? "border-primary bg-primary/10 text-foreground font-medium"
+                : "border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="catalog" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="catalog">Catalog</TabsTrigger>
-          <TabsTrigger value="queue">Planting Queue</TabsTrigger>
-          <TabsTrigger value="journal">Harvest Journal</TabsTrigger>
-          <TabsTrigger value="stockpile">Stockpile</TabsTrigger>
-        </TabsList>
+      {/* Tab content */}
+      {activeTab === "catalog" && (
+        <div>
+          <CatalogHeader />
+          {mockCrops.map((crop, i) => (
+            <CropRow key={crop.id} crop={crop} isFirst={i === 0} />
+          ))}
+          <div className="border-b border-border rounded-b-lg" />
+        </div>
+      )}
 
-        <TabsContent value="catalog" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockCrops.map((crop) => (
-              <CropCatalogCard key={crop.id} crop={crop} />
-            ))}
-          </div>
-        </TabsContent>
+      {activeTab === "queue" && (
+        <PlantingQueueList items={mockPlantingQueue} />
+      )}
 
-        <TabsContent value="queue" className="space-y-4">
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">
-              AI-recommended planting order based on nutritional gaps, resource availability, and mission timeline.
-            </p>
-          </Card>
-          <PlantingQueueList items={mockPlantingQueue} />
-        </TabsContent>
+      {activeTab === "journal" && (
+        <HarvestJournalTable entries={mockHarvestJournal} />
+      )}
 
-        <TabsContent value="journal" className="space-y-4">
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">
-              Historical record of all harvests with yield metrics and quality notes.
-            </p>
-          </Card>
-          <HarvestJournalTable entries={mockHarvestJournal} />
-        </TabsContent>
-
-        <TabsContent value="stockpile" className="space-y-4">
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">
-              Current food inventory with caloric value, supply duration, and expiration tracking.
-            </p>
-          </Card>
-          <StockpileList items={mockStockpile} />
-        </TabsContent>
-      </Tabs>
+      {activeTab === "stockpile" && (
+        <StockpileList items={mockStockpile} />
+      )}
     </div>
   );
 }

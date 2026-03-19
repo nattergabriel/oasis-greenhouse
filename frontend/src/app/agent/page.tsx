@@ -3,375 +3,210 @@
 import { useState } from "react";
 import { useSimulation } from "@/providers/simulation-provider";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Bot,
-  Check,
-  X,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Brain,
-  BookOpen,
-} from "lucide-react";
-import type {
-  AgentLogEntry,
-  Recommendation,
-  AgentOutcome,
-  Urgency,
-} from "@/lib/types";
+import { Separator } from "@/components/ui/separator";
+import { ChevronDown, Check, X, Bot } from "lucide-react";
+import type { AgentLogEntry, Recommendation, AgentOutcome } from "@/lib/types";
 
-// Helper: Format timestamp as relative time
-function formatRelativeTime(timestamp: string): string {
-  const now = new Date();
-  const then = new Date(timestamp);
-  const diffMs = now.getTime() - then.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMinutes < 1) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${diffDays}d ago`;
+function timeAgo(timestamp: string): string {
+  const ms = Date.now() - new Date(timestamp).getTime();
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(ms / 3600000);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(ms / 86400000)}d ago`;
 }
 
-// Helper: Format expires countdown
-function formatExpiresIn(expiresAt: string | null): string {
-  if (!expiresAt) return "—";
-  const now = new Date();
-  const expires = new Date(expiresAt);
-  const diffMs = expires.getTime() - now.getTime();
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffMinutes = Math.floor(diffMs / 60000);
-
-  if (diffMs < 0) return "Expired";
-  if (diffHours > 0) return `Expires in ${diffHours}h`;
-  return `Expires in ${diffMinutes}m`;
+function outcomeColor(outcome: AgentOutcome): string {
+  if (outcome === "SUCCESS") return "var(--color-status-healthy)";
+  if (outcome === "PENDING") return "var(--color-status-warning)";
+  return "var(--color-status-critical)";
 }
 
-// Helper: Get confidence color
-function getConfidenceColor(confidence: number): string {
-  if (confidence > 0.7) return "bg-[var(--color-status-healthy)]";
-  if (confidence >= 0.5) return "bg-[var(--color-status-warning)]";
-  return "bg-[var(--color-status-critical)]";
+function confidenceColor(c: number): string {
+  if (c > 0.7) return "var(--color-status-healthy)";
+  if (c >= 0.5) return "var(--color-status-warning)";
+  return "var(--color-status-critical)";
 }
 
-// Helper: Get urgency badge colors
-function getUrgencyColors(urgency: Urgency): string {
-  switch (urgency) {
-    case "CRITICAL":
-      return "bg-destructive/20 text-destructive border-destructive/30";
-    case "HIGH":
-      return "bg-primary/20 text-primary border-primary/30";
-    case "MEDIUM":
-      return "bg-[var(--color-status-warning)]/20 text-[var(--color-status-warning)] border-[var(--color-status-warning)]/30";
-    case "LOW":
-      return "bg-muted text-muted-foreground border-border";
-  }
-}
-
-// Helper: Get outcome badge colors
-function getOutcomeColors(outcome: AgentOutcome): string {
-  switch (outcome) {
-    case "SUCCESS":
-      return "bg-[var(--color-status-healthy)]/20 text-[#5a9a6b] border-[var(--color-status-healthy)]/30";
-    case "PENDING":
-      return "bg-[var(--color-status-warning)]/20 text-[#c4a344] border-[var(--color-status-warning)]/30";
-    case "FAILED":
-      return "bg-destructive/20 text-destructive border-destructive/30";
-  }
-}
-
-// RecommendationCard component
-function RecommendationCard({
-  recommendation,
-  onApprove,
-  onDismiss,
-}: {
-  recommendation: Recommendation;
+// === Pending recommendation row ===
+function RecommendationRow({ rec, onApprove, onDismiss }: {
+  rec: Recommendation;
   onApprove: (id: string) => void;
   onDismiss: (id: string) => void;
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
-    <Card className="p-4">
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg mt-1 bg-[var(--color-mars-purple)]/20 text-[var(--color-mars-purple)]">
-          <Brain className="w-4 h-4" />
+    <div className={`border border-border rounded-lg overflow-hidden transition-colors ${open ? "bg-card" : "hover:bg-secondary/50"}`}>
+      <div className="flex items-center px-4 py-4 gap-4">
+        {/* Confidence dot */}
+        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: confidenceColor(rec.confidence) }} />
+
+        {/* Description — clickable to expand */}
+        <button onClick={() => setOpen(!open)} className="flex-1 text-left min-w-0 flex items-center gap-3">
+          <span className="text-base truncate">{rec.description}</span>
+          <span className="text-sm text-muted-foreground shrink-0 font-mono tabular-nums">{Math.round(rec.confidence * 100)}%</span>
+        </button>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => onApprove(rec.id)}
+            className="flex items-center gap-1.5 rounded-lg border border-[#5a9a6b]/30 px-3 py-1.5 text-sm text-[#5a9a6b] transition-colors hover:bg-[#5a9a6b]/10"
+          >
+            <Check className="w-3.5 h-3.5" />
+            Approve
+          </button>
+          <button
+            onClick={() => onDismiss(rec.id)}
+            className="flex items-center gap-1.5 rounded-lg border border-destructive/30 px-3 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
+          >
+            <X className="w-3.5 h-3.5" />
+            Dismiss
+          </button>
         </div>
-        <div className="flex-1 space-y-3">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant="outline" className="text-xs font-mono">
-                  {recommendation.actionType}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className={`text-xs ${getUrgencyColors(recommendation.urgency)}`}
-                >
-                  {recommendation.urgency}
-                </Badge>
-              </div>
-              <p className="text-sm">
-                {recommendation.description}
-              </p>
-            </div>
-          </div>
 
-          {/* Reasoning (expandable) */}
-          <div>
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isExpanded ? (
-                <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronDown className="w-3 h-3" />
-              )}
-              <span>Reasoning</span>
-            </button>
-            {isExpanded && (
-              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                {recommendation.reasoning}
-              </p>
-            )}
-          </div>
-
-          {/* Confidence bar */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                Confidence
-              </span>
-              <span className="text-xs font-mono tabular-nums">
-                {Math.round(recommendation.confidence * 100)}%
-              </span>
-            </div>
-            <div className="h-1.5 bg-muted border border-border rounded-full overflow-hidden">
-              <div
-                className={`h-full ${getConfidenceColor(recommendation.confidence)}`}
-                style={{ width: `${recommendation.confidence * 100}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Expires + Actions */}
-          <div className="flex items-center justify-between gap-3 pt-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Clock className="w-3 h-3" />
-              <span>{formatExpiresIn(recommendation.expiresAt)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onApprove(recommendation.id)}
-                className="border-[var(--color-status-healthy)]/30 text-[#5a9a6b] hover:bg-[var(--color-status-healthy)]/20"
-              >
-                <Check className="w-3 h-3 mr-1" />
-                Approve
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDismiss(recommendation.id)}
-              >
-                <X className="w-3 h-3 mr-1" />
-                Dismiss
-              </Button>
-            </div>
-          </div>
-        </div>
+        {/* Expand chevron — far right */}
+        <button onClick={() => setOpen(!open)} className="shrink-0">
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        </button>
       </div>
-    </Card>
+
+      {open && (
+        <div className="px-5 pb-5 pt-2 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Reasoning</span>
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{rec.reasoning}</p>
+            </div>
+            <div>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Details</span>
+              <div className="mt-1.5 space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Action type</span>
+                  <span className="font-mono text-xs">{rec.actionType}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Urgency</span>
+                  <span>{rec.urgency}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Confidence</span>
+                  <span className="font-mono tabular-nums">{Math.round(rec.confidence * 100)}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-// LogEntryCard component
-function LogEntryCard({ entry }: { entry: AgentLogEntry }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+// === Activity log row ===
+function LogRow({ entry, isFirst }: { entry: AgentLogEntry; isFirst: boolean }) {
+  const [open, setOpen] = useState(false);
 
   return (
-    <Card className="p-4">
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg mt-1 bg-[var(--color-mars-purple)]/20 text-[var(--color-mars-purple)]">
-          <Bot className="w-4 h-4" />
-        </div>
-        <div className="flex-1 space-y-2">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs text-muted-foreground">
-                  {formatRelativeTime(entry.timestamp)}
-                </span>
-                <Badge
-                  variant="outline"
-                  className={`text-xs ${getOutcomeColors(entry.outcome)}`}
-                >
-                  {entry.outcome}
-                </Badge>
-                <Badge variant="outline" className="text-xs font-mono">
-                  {entry.actionType}
-                </Badge>
-              </div>
-              <p className="text-sm">{entry.description}</p>
-            </div>
+    <div className={`border-x border-b border-border overflow-hidden transition-colors ${isFirst ? "border-t rounded-t-lg" : ""} ${open ? "bg-card" : "hover:bg-secondary/50"}`}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center px-4 py-3.5 text-left transition-colors gap-4"
+      >
+        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: outcomeColor(entry.outcome) }} />
+        <div className="flex-1 min-w-0">
+          <span className="text-base truncate block">{entry.description}</span>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-xs text-muted-foreground font-mono">{entry.actionType.replace(/_/g, " ")}</span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs text-muted-foreground font-mono tabular-nums">{timeAgo(entry.timestamp)}</span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs" style={{ color: outcomeColor(entry.outcome) }}>{entry.outcome}</span>
           </div>
+        </div>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
 
-          {/* Expandable details */}
-          <div>
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isExpanded ? (
-                <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronDown className="w-3 h-3" />
-              )}
-              <span>Details</span>
-            </button>
-            {isExpanded && (
-              <div className="mt-2 space-y-2">
-                <div>
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground block mb-1">
-                    Reasoning
-                  </span>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {entry.reasoning}
-                  </p>
-                </div>
-                {entry.knowledgeBaseSource && (
-                  <div>
-                    <span className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1 mb-1">
-                      <BookOpen className="w-3 h-3" />
-                      Knowledge Base Source
-                    </span>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {entry.knowledgeBaseSource}
-                    </p>
-                  </div>
-                )}
+      {open && (
+        <div className="px-5 pb-5 pt-2 border-t border-border animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Reasoning</span>
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{entry.reasoning}</p>
+            </div>
+            {entry.knowledgeBaseSource && (
+              <div>
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">Knowledge Base</span>
+                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{entry.knowledgeBaseSource}</p>
               </div>
             )}
           </div>
         </div>
-      </div>
-    </Card>
+      )}
+    </div>
   );
 }
 
 export default function AgentPage() {
   const { state } = useSimulation();
-  const [outcomeFilter, setOutcomeFilter] = useState<
-    AgentOutcome | "ALL"
-  >("ALL");
+  const [logFilter, setLogFilter] = useState<AgentOutcome | "ALL">("ALL");
 
-  // Filter recommendations (pending only)
-  const pendingRecommendations = state.recommendations.filter(
-    (r) => r.status === "PENDING"
-  );
+  const pending = state.recommendations.filter((r) => r.status === "PENDING");
+  const filteredLog = logFilter === "ALL" ? state.agentLog : state.agentLog.filter((e) => e.outcome === logFilter);
+  const sortedLog = [...filteredLog].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  // Filter log entries
-  const filteredLog =
-    outcomeFilter === "ALL"
-      ? state.agentLog
-      : state.agentLog.filter((entry) => entry.outcome === outcomeFilter);
-
-  // Sort log by timestamp descending (newest first)
-  const sortedLog = [...filteredLog].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
-
-  const handleApprove = (id: string) => {
-    console.log("Approve recommendation:", id);
-  };
-
-  const handleDismiss = (id: string) => {
-    console.log("Dismiss recommendation:", id);
-  };
-
-  const filterButtons: Array<{ value: AgentOutcome | "ALL"; label: string }> = [
-    { value: "ALL", label: "All" },
-    { value: "SUCCESS", label: "Success" },
-    { value: "PENDING", label: "Pending" },
-    { value: "FAILED", label: "Failed" },
-  ];
+  const handleApprove = (id: string) => console.log("Approve:", id);
+  const handleDismiss = (id: string) => console.log("Dismiss:", id);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <h1 className="text-xl font-medium tracking-tight">AI Agent</h1>
-        <Badge variant="outline" className="font-mono text-xs tabular-nums">
-          SOL {state.currentMissionDay} / {state.totalMissionDays}
-        </Badge>
-        <Badge variant="outline" className="text-xs">
-          {state.agentLog.length} actions
-        </Badge>
-      </div>
+      <h1 className="text-xl font-medium tracking-tight">AI Agent</h1>
 
-      {/* Recommended Actions Queue */}
+      {/* Pending decisions */}
       <section>
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">
-            Pending Actions
-          </span>
-          {pendingRecommendations.length > 0 && (
-            <Badge variant="destructive" className="text-xs">
-              {pendingRecommendations.length}
-            </Badge>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Needs Your Decision</span>
+          {pending.length > 0 && (
+            <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-destructive text-[10px] font-bold text-white">
+              {pending.length}
+            </span>
           )}
         </div>
 
-        {pendingRecommendations.length === 0 ? (
+        {pending.length === 0 ? (
           <Card className="p-8 text-center">
-            <div className="inline-flex p-3 rounded-full mb-3 bg-[var(--color-mars-purple)]/20">
-              <Bot className="w-6 h-6 text-[var(--color-mars-purple)]" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              No pending actions — agent is operating autonomously
-            </p>
+            <Bot className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Agent is operating autonomously — no decisions needed</p>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {pendingRecommendations.map((rec) => (
-              <RecommendationCard
-                key={rec.id}
-                recommendation={rec}
-                onApprove={handleApprove}
-                onDismiss={handleDismiss}
-              />
+          <div className="space-y-2">
+            {pending.map((rec) => (
+              <RecommendationRow key={rec.id} rec={rec} onApprove={handleApprove} onDismiss={handleDismiss} />
             ))}
           </div>
         )}
       </section>
 
-      {/* Activity Log */}
+      {/* Divider */}
+      <Separator />
+
+      {/* Activity log */}
       <section>
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">
-            Agent Activity Log
-          </span>
-          <div className="flex items-center gap-1">
-            {filterButtons.map((btn) => (
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Activity Log</span>
+          <div className="flex gap-2">
+            {(["ALL", "SUCCESS", "PENDING", "FAILED"] as (AgentOutcome | "ALL")[]).map((f) => (
               <button
-                key={btn.value}
-                onClick={() => setOutcomeFilter(btn.value)}
-                className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
-                  outcomeFilter === btn.value
-                    ? "border-primary bg-primary/10 text-foreground"
-                    : "border-border bg-card text-muted-foreground hover:bg-accent"
+                key={f}
+                onClick={() => setLogFilter(f)}
+                className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                  logFilter === f
+                    ? "border-primary bg-primary/10 text-foreground font-medium"
+                    : "border-border bg-card text-muted-foreground hover:bg-secondary"
                 }`}
               >
-                {btn.label}
+                {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
               </button>
             ))}
           </div>
@@ -379,15 +214,14 @@ export default function AgentPage() {
 
         {sortedLog.length === 0 ? (
           <Card className="p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              No activity log entries match the current filter
-            </p>
+            <p className="text-sm text-muted-foreground">No entries match this filter</p>
           </Card>
         ) : (
-          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-            {sortedLog.map((entry) => (
-              <LogEntryCard key={entry.id} entry={entry} />
+          <div>
+            {sortedLog.map((entry, i) => (
+              <LogRow key={entry.id} entry={entry} isFirst={i === 0} />
             ))}
+            <div className="border-b border-border rounded-b-lg" />
           </div>
         )}
       </section>
