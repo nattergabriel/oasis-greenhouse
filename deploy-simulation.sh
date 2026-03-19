@@ -27,3 +27,9 @@ aws.exe ecr get-login-password --region "$REGION" | docker login --username AWS 
 docker push "$IMAGE"
 
 echo "✅ Pushed $IMAGE — App Runner will auto-deploy."
+echo ""
+echo "🔄 Refreshing API Gateway integration with Terraform..."
+cd infra/fast
+terraform.exe apply -auto-approve -target=aws_apigatewayv2_integration.simulation
+cd ../..
+echo "✅ API Gateway integration refreshed"

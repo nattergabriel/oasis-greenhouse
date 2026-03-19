@@ -12,27 +12,33 @@ if [ ! -f "infra/fast/terraform.tfstate" ]; then
   exit 1
 fi
 
-echo "📦 1/3 Building and pushing management-backend (Spring Boot)..."
+echo "📦 1/4 Building and pushing management-backend (Spring Boot)..."
 ./deploy-backend.sh
 echo
 
-echo "📦 2/3 Building and pushing agent-backend (Python/LangGraph)..."
+echo "📦 2/4 Building and pushing agent-backend (Python/LangGraph)..."
 ./deploy-agent.sh
 echo
 
-echo "📦 3/3 Building and pushing simulation (FastAPI)..."
+echo "📦 3/4 Building and pushing simulation (FastAPI)..."
 ./deploy-simulation.sh
+echo
+
+echo "📦 4/4 Building and deploying frontend (Next.js → S3 + CloudFront)..."
+./deploy-frontend.sh
+echo
+
+echo "🔄 5/5 Refreshing API Gateway integrations with Terraform..."
+cd infra/fast
+terraform.exe apply -auto-approve -target=aws_apigatewayv2_integration.management_backend -target=aws_apigatewayv2_integration.agent_backend -target=aws_apigatewayv2_integration.simulation
+cd ../..
+echo "✅ API Gateway integrations refreshed"
 echo
 
 echo "✅ All services deployed!"
 echo
 echo "App Runner will automatically deploy the new images (~2-3 minutes)."
+echo "CloudFront deployment complete (cache invalidated)."
 echo
-echo "Check status:"
-echo "  cd infra/fast"
-echo "  terraform.exe output"
-echo
-echo "Test endpoints:"
-echo "  curl \$(cd infra/fast && terraform.exe output -raw management_backend_url)/actuator/health"
-echo "  curl \$(cd infra/fast && terraform.exe output -raw agent_backend_url)/health"
-echo "  curl \$(cd infra/fast && terraform.exe output -raw simulation_url)/docs"
+echo "Get all connection details (frontend URL + API endpoints + API key):"
+echo "  cd infra/fast && ./get-api-info.sh"
