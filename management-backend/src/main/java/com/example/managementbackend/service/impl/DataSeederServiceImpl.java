@@ -144,12 +144,14 @@ public class DataSeederServiceImpl implements DataSeederService {
                 double growthPercent = growthStages[row][col];
 
                 if (assignedCrop != null) {
-                    slot.setCrop(assignedCrop);
-                    slot.setStatus(SlotStatus.GROWING);
+                    slot.setCropId(assignedCrop.getId());
+                    slot.setCropName(assignedCrop.getName());
+                    slot.setStatus(SlotStatus.HEALTHY);
                     slot.setGrowthStagePercent(growthPercent);
-                    slot.setPlantedDate(Instant.now().minusSeconds(
+                    slot.setPlantedAt(Instant.now().minusSeconds(
                         (long)(assignedCrop.getGrowthDays() * 86400 * (growthPercent / 100.0))
                     ));
+                    slot.setDaysUntilHarvest((int)((100 - growthPercent) / 100.0 * assignedCrop.getGrowthDays()));
                 } else {
                     // Fallback: empty slot
                     slot.setStatus(SlotStatus.EMPTY);
@@ -438,11 +440,11 @@ public class DataSeederServiceImpl implements DataSeederService {
         List<PlantSlot> slots = greenhouse.getSlots();
         List<Crop> crops = cropRepository.findAll();
 
-        // Alert 1: HIGH severity - Water recycling degradation
+        // Alert 1: CRITICAL severity - Water recycling degradation
         Alert alert1 = new Alert();
         alert1.setCreatedAt(Instant.now().minusSeconds(3600 * 12)); // 12 hours ago
-        alert1.setSeverity(AlertSeverity.HIGH);
-        alert1.setType(AlertType.RESOURCE_CONSTRAINT);
+        alert1.setSeverity(AlertSeverity.CRITICAL);
+        alert1.setType(AlertType.EQUIPMENT_FAILURE);
         alert1.setGreenhouseId(greenhouse.getId());
         alert1.setDiagnosis("Water recycling efficiency has dropped from 90% to 78%. Projected water depletion in 45 days if not addressed.");
         alert1.setConfidence(0.92);
@@ -451,27 +453,27 @@ public class DataSeederServiceImpl implements DataSeederService {
         alert1.setSuggestedAction("Inspect water recycling system filters. Consider reducing high-water crops temporarily.");
         alertRepository.save(alert1);
 
-        // Alert 2: MEDIUM severity - Crop health degradation
+        // Alert 2: WARNING severity - Crop health degradation
         Alert alert2 = new Alert();
         alert2.setCreatedAt(Instant.now().minusSeconds(3600 * 5)); // 5 hours ago
-        alert2.setSeverity(AlertSeverity.MEDIUM);
-        alert2.setType(AlertType.PLANT_HEALTH_ISSUE);
+        alert2.setSeverity(AlertSeverity.WARNING);
+        alert2.setType(AlertType.ENVIRONMENTAL_STRESS);
         alert2.setGreenhouseId(greenhouse.getId());
         alert2.setSlotId(slots.get(7).getId());
         Crop potato = crops.stream().filter(c -> c.getName().equals("Potato")).findFirst().orElse(null);
         if (potato != null) alert2.setCropId(potato.getId());
         alert2.setDiagnosis("Potato in slot [1,3] showing signs of heat stress. Temperature exceeded 26°C threshold for 8 hours.");
         alert2.setConfidence(0.85);
-        alert2.setStatus(AlertStatus.IN_PROGRESS);
+        alert2.setStatus(AlertStatus.ACKNOWLEDGED);
         alert2.setEscalatedToHuman(false);
         alert2.setSuggestedAction("Reduce ambient temperature to 18-20°C range. Monitor tuber development.");
         alertRepository.save(alert2);
 
-        // Alert 3: LOW severity - Preventive maintenance
+        // Alert 3: INFO severity - Preventive maintenance
         Alert alert3 = new Alert();
         alert3.setCreatedAt(Instant.now().minusSeconds(3600)); // 1 hour ago
-        alert3.setSeverity(AlertSeverity.LOW);
-        alert3.setType(AlertType.OPTIMIZATION_OPPORTUNITY);
+        alert3.setSeverity(AlertSeverity.INFO);
+        alert3.setType(AlertType.OTHER);
         alert3.setGreenhouseId(greenhouse.getId());
         alert3.setDiagnosis("CO₂ levels suboptimal for lettuce growth. Current: 420 ppm, optimal: 600-800 ppm.");
         alert3.setConfidence(0.78);
@@ -484,8 +486,8 @@ public class DataSeederServiceImpl implements DataSeederService {
         Alert alert4 = new Alert();
         alert4.setCreatedAt(Instant.now().minusSeconds(86400 * 3)); // 3 days ago
         alert4.setResolvedAt(Instant.now().minusSeconds(86400 * 2)); // 2 days ago
-        alert4.setSeverity(AlertSeverity.MEDIUM);
-        alert4.setType(AlertType.NUTRIENT_ISSUE);
+        alert4.setSeverity(AlertSeverity.WARNING);
+        alert4.setType(AlertType.NUTRIENT_DEFICIENCY);
         alert4.setGreenhouseId(greenhouse.getId());
         alert4.setDiagnosis("Nitrogen deficiency detected in lettuce crops. Yellowing leaves observed.");
         alert4.setConfidence(0.91);
@@ -494,7 +496,7 @@ public class DataSeederServiceImpl implements DataSeederService {
         alert4.setSuggestedAction("Adjusted nutrient solution N-P-K ratio. Issue resolved.");
         alertRepository.save(alert4);
 
-        log.info("Seeded {} alerts (1 high, 2 medium/in-progress, 1 resolved)", alertRepository.count());
+        log.info("Seeded {} alerts (1 critical, 2 warning/acknowledged, 1 resolved)", alertRepository.count());
     }
 
     private void seedRecommendations() {
@@ -547,7 +549,7 @@ public class DataSeederServiceImpl implements DataSeederService {
         rec3.setStatus(RecommendationStatus.PENDING);
         recommendationRepository.save(rec3);
 
-        // Recommendation 4: EXECUTED - Previous action taken
+        // Recommendation 4: APPROVED - Previous action taken
         Recommendation rec4 = new Recommendation();
         rec4.setCreatedAt(Instant.now().minusSeconds(86400 * 5)); // 5 days ago
         rec4.setExecutedAt(Instant.now().minusSeconds(86400 * 4)); // 4 days ago
@@ -557,10 +559,10 @@ public class DataSeederServiceImpl implements DataSeederService {
             "optimal temperature range of 16-20°C with heat stress threshold at 26°C.");
         rec4.setConfidence(0.89);
         rec4.setUrgency(Urgency.HIGH);
-        rec4.setStatus(RecommendationStatus.EXECUTED);
+        rec4.setStatus(RecommendationStatus.APPROVED);
         recommendationRepository.save(rec4);
 
-        log.info("Seeded {} recommendations (1 urgent, 1 medium, 1 low, 1 executed)", recommendationRepository.count());
+        log.info("Seeded {} recommendations (1 urgent, 1 medium, 1 low, 1 approved)", recommendationRepository.count());
     }
 
     private void seedTimelineEvents() {
@@ -573,7 +575,7 @@ public class DataSeederServiceImpl implements DataSeederService {
         String simulationId = "sim-showcase-001";
 
         // Day 0: Mission start
-        createTimelineEvent(simulationId, 0, TimelineEventType.MISSION_START,
+        createTimelineEvent(simulationId, 0, TimelineEventType.SLOT_SNAPSHOT,
             "Mission commenced. Greenhouse initialized with diverse crop allocation.");
 
         // Day 15: First harvest
@@ -581,31 +583,31 @@ public class DataSeederServiceImpl implements DataSeederService {
             "First radish harvest completed. Yield: 3.4kg. Crew morale boost from fresh food.");
 
         // Day 30: Agent decision
-        createTimelineEvent(simulationId, 30, TimelineEventType.AGENT_DECISION,
+        createTimelineEvent(simulationId, 30, TimelineEventType.AGENT_ACTION,
             "Agent reallocated 2 slots from lettuce to beans to address protein deficit.");
 
         // Day 37: Harvest milestone
         createTimelineEvent(simulationId, 37, TimelineEventType.HARVEST,
             "First lettuce harvest. 4.2kg harvested. Vitamin K supplementation achieved.");
 
-        // Day 42: Crisis event
-        createTimelineEvent(simulationId, 42, TimelineEventType.CRISIS,
+        // Day 42: Crisis event (scenario injected)
+        createTimelineEvent(simulationId, 42, TimelineEventType.SCENARIO_INJECTED,
             "Water recycling efficiency degradation detected. System efficiency dropped to 78%.");
 
         // Day 43: Agent response
-        createTimelineEvent(simulationId, 43, TimelineEventType.AGENT_DECISION,
+        createTimelineEvent(simulationId, 43, TimelineEventType.AGENT_ACTION,
             "Agent reduced water-intensive crops by 15%. Prioritized drought-tolerant species.");
 
-        // Day 50: Milestone
-        createTimelineEvent(simulationId, 50, TimelineEventType.MILESTONE,
+        // Day 50: Milestone (sensor snapshot)
+        createTimelineEvent(simulationId, 50, TimelineEventType.SENSOR_SNAPSHOT,
             "Greenhouse caloric contribution reached 18% of crew requirements.");
 
-        // Day 58: Warning
-        createTimelineEvent(simulationId, 58, TimelineEventType.WARNING,
+        // Day 58: Warning (stress detected)
+        createTimelineEvent(simulationId, 58, TimelineEventType.STRESS_DETECTED,
             "Potato heat stress detected in slot [1,3]. Temperature regulation adjusted.");
 
-        // Day 60: Current state
-        createTimelineEvent(simulationId, 60, TimelineEventType.CHECKPOINT,
+        // Day 60: Current state (slot snapshot)
+        createTimelineEvent(simulationId, 60, TimelineEventType.SLOT_SNAPSHOT,
             "Current status: 16/16 slots active. Protein 92% of target. Water reserves stable.");
 
         log.info("Seeded {} timeline events", timelineEventRepository.count());
@@ -664,13 +666,13 @@ public class DataSeederServiceImpl implements DataSeederService {
             "MCP KB Section 3.4",
             AgentOutcome.SUCCESS);
 
-        // Log 5: Failed action (for realism)
+        // Log 5: Pending action (for realism)
         createAgentLog(simulationId, 55, "CO2_ENRICHMENT_ATTEMPT",
             "Attempted to increase CO₂ levels to 850 ppm for lettuce growth boost.",
             "MCP KB Section 3.3 indicates strong CO₂ enrichment benefit for lettuce (optimal: 600-800 ppm). " +
-                "Attempted 850 ppm but system constraints limited to 780 ppm. Partial success.",
+                "Attempted 850 ppm but system constraints limited to 780 ppm. Awaiting confirmation.",
             "MCP KB Section 3.3",
-            AgentOutcome.PARTIAL_SUCCESS);
+            AgentOutcome.PENDING);
 
         log.info("Seeded {} agent log entries", agentLogEntryRepository.count());
     }
