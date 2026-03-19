@@ -5,6 +5,50 @@ description: Tailwind CSS utility class reference covering layout (flexbox, grid
 
 # Tailwind CSS Quick Reference
 
+## Project Theme Classes
+
+This project uses Tailwind CSS v4 with a dark-only Mars theme. Custom color classes available:
+
+### Background Colors
+```html
+bg-background       /* #0f0e0d - main app background */
+bg-card             /* #1a1917 - card/panel background */
+bg-secondary        /* #252320 - input/secondary surfaces */
+```
+
+### Text Colors
+```html
+text-foreground         /* #e8e2d9 - primary text */
+text-muted-foreground   /* #9c9488 - muted/secondary text */
+text-primary            /* #d4924a - accent/interactive text */
+text-destructive        /* #c75a3a - error/warning text */
+```
+
+### Border Colors
+```html
+border-border       /* #2e2b27 - default borders */
+border-input        /* #2e2b27 - input borders */
+```
+
+### Mars Accent Colors
+```html
+bg-mars-amber | text-mars-amber      /* Mars orange/amber accent */
+bg-mars-red | text-mars-red          /* Mars red accent */
+bg-mars-green | text-mars-green      /* Status healthy */
+bg-mars-yellow | text-mars-yellow    /* Status warning */
+bg-mars-blue | text-mars-blue        /* Info accent */
+bg-mars-purple | text-mars-purple    /* Special accent */
+```
+
+### Status Colors
+```html
+status-healthy      /* Green - optimal conditions */
+status-warning      /* Yellow - attention needed */
+status-critical     /* Red - critical issue */
+```
+
+---
+
 ## Layout
 
 ### Flexbox
@@ -73,29 +117,9 @@ text-xs | text-sm | text-base | text-lg | text-xl | text-2xl | text-3xl | text-4
 font-thin | font-light | font-normal | font-medium | font-semibold | font-bold | font-extrabold
 leading-none | leading-tight | leading-normal | leading-relaxed
 text-left | text-center | text-right
-text-gray-500 | text-blue-600 | text-white
 truncate                              /* single line ellipsis */
 line-clamp-2 | line-clamp-3           /* multi-line truncate */
 uppercase | lowercase | capitalize
-```
-
----
-
-## Colors & Gradients
-
-```
-slate | gray | zinc | neutral | stone
-red | orange | amber | yellow | lime | green | emerald | teal | cyan | sky | blue | indigo | violet | purple | fuchsia | pink | rose
-
-bg-slate-900     /* dark background */
-text-slate-700   /* body text */
-border-slate-200 /* subtle border */
-bg-black/50      /* 50% opacity */
-```
-
-```html
-<div class="bg-gradient-to-r from-blue-500 to-purple-600">
-<div class="bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500">
 ```
 
 ---
@@ -148,7 +172,7 @@ z-0 | z-10 | z-20 | z-30 | z-40 | z-50
 </div>
 
 <!-- Sticky header -->
-<header class="sticky top-0 z-50 bg-white/80 backdrop-blur">
+<header class="sticky top-0 z-50 bg-card/80 backdrop-blur">
 ```
 
 ---
@@ -172,21 +196,18 @@ sm:  640px    md:  768px    lg:  1024px    xl:  1280px    2xl: 1536px
 ## States & Interactions
 
 ```html
-hover:bg-blue-600
-focus:outline-none focus:ring-2 focus:ring-blue-500
+hover:bg-primary
+focus:outline-none focus:ring-2 focus:ring-ring
 active:scale-95
 disabled:opacity-50 disabled:cursor-not-allowed
 
 <!-- Group hover -->
 <div class="group">
-  <span class="group-hover:text-blue-500">...</span>
+  <span class="group-hover:text-primary">...</span>
 </div>
 
-<!-- Dark mode -->
-<div class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-
 <!-- Odd/Even -->
-<tr class="odd:bg-gray-50 even:bg-white">
+<tr class="odd:bg-card even:bg-secondary">
 ```
 
 ---
@@ -211,19 +232,25 @@ translate-x-4 | -translate-x-1/2
 
 ```html
 <!-- Card -->
-<div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+<div class="bg-card rounded-lg border border-border p-4">
 
 <!-- Primary button -->
-<button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+<button class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
 
 <!-- Input -->
-<input class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+<input class="w-full px-4 py-2 bg-secondary border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
 
 <!-- Badge -->
-<span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+<span class="px-2 py-1 text-xs font-medium bg-secondary text-foreground rounded-lg">
+
+<!-- Label -->
+<label class="text-xs uppercase tracking-wide text-muted-foreground">
+
+<!-- Data Display -->
+<span class="font-mono text-sm tabular-nums text-foreground">
 
 <!-- Avatar -->
-<div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
+<div class="w-10 h-10 rounded-full bg-gradient-to-br from-mars-amber to-mars-red flex items-center justify-center text-white font-medium">
 
 <!-- sr-only -->
 <span class="sr-only">Accessible text</span>

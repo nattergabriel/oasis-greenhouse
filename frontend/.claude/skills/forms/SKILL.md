@@ -149,14 +149,14 @@ function Input({ label, error, ...props }) {
   return (
     <div className="mb-4">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <label className="block text-xs uppercase tracking-wide text-muted-foreground mb-1">{label}</label>
       )}
       <input
-        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
-          ${error ? 'border-red-500' : 'border-gray-300'}`}
+        className={`w-full px-4 py-2 bg-secondary border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring
+          ${error ? 'border-destructive' : 'border-input'}`}
         {...props}
       />
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>
   );
 }
@@ -168,11 +168,11 @@ function Select({ label, options, error, ...props }) {
   return (
     <div className="mb-4">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <label className="block text-xs uppercase tracking-wide text-muted-foreground mb-1">{label}</label>
       )}
       <select
-        className={`w-full px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500
-          ${error ? 'border-red-500' : 'border-gray-300'}`}
+        className={`w-full px-4 py-2 bg-secondary border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring
+          ${error ? 'border-destructive' : 'border-input'}`}
         {...props}
       >
         <option value="">Select...</option>
@@ -192,10 +192,10 @@ function Toggle({ checked, onChange, label }) {
     <label className="flex items-center gap-3 cursor-pointer">
       <div className="relative">
         <input type="checkbox" checked={checked} onChange={onChange} className="sr-only peer" />
-        <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition-colors" />
-        <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5" />
+        <div className="w-11 h-6 bg-border rounded-full peer-checked:bg-primary transition-colors" />
+        <div className="absolute left-1 top-1 w-4 h-4 bg-foreground rounded-full transition-transform peer-checked:translate-x-5" />
       </div>
-      {label && <span className="text-sm text-gray-700">{label}</span>}
+      {label && <span className="text-sm text-foreground">{label}</span>}
     </label>
   );
 }

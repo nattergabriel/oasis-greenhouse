@@ -1,173 +1,410 @@
 ---
 name: api-patterns
-description: API integration patterns for React and JavaScript apps. Use when making HTTP requests, building API clients, implementing data fetching hooks, handling loading/error states, pagination, infinite scroll, caching, optimistic updates, file uploads, WebSockets, SSE, polling, or authentication flows.
+description: Mock-first API pattern with centralized client for Mars Greenhouse Command Center. Shows namespaced API object, mock-to-real switching, data fetching hooks, loading/error states, and simulation polling. No auth needed (single-operator system).
 ---
 
-# API Patterns Quick Reference
+# API Patterns for Mars Greenhouse Command Center
 
-## Fetch API Basics
+## Core Principles
 
-### GET Request
-```jsx
-const fetchData = async () => {
-  try {
-    const response = await fetch('https://api.example.com/data');
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Fetch error:', error);
-    throw error;
-  }
-};
-```
+- **Mock-first development**: Start with mock data, swap to real API when backend is ready
+- **Centralized client**: Single `api.ts` file maps 1:1 to contract endpoints
+- **No authentication**: Single-operator system (no tokens/auth needed)
+- **Base URL**: `http://localhost:<PORT>/api`
+- **JSON everywhere**: All request/response bodies are JSON
+- **Standard status codes**: 200, 201, 400, 404, 500, etc.
+- **ISO 8601 timestamps**: All dates/times use ISO 8601 format
+- **UUID identifiers**: All IDs are UUIDs
 
-### POST Request
-```jsx
-const createItem = async (data) => {
-  const response = await fetch('https://api.example.com/items', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
+---
+
+## Centralized API Client (`src/lib/api.ts`)
+
+### Mock-to-Real Switching Pattern
+```typescript
+// Feature flag to toggle between mock and real API
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+
+// Helper for real API calls
+async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message);
+    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    throw new Error(error.message || `HTTP ${response.status}`);
   }
 
   return response.json();
-};
+}
 ```
 
-### PUT / PATCH / DELETE
-```jsx
-// PUT - Replace entire resource
-const updateItem = async (id, data) => {
-  const response = await fetch(`/api/items/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  return response.json();
-};
+### API Object Structure
+```typescript
+export const api = {
+  greenhouses: {
+    list: async () => {
+      if (USE_MOCK_DATA) return mockData.greenhouses;
+      return fetchAPI<Greenhouse[]>('/greenhouses');
+    },
 
-// PATCH - Partial update
-const patchItem = async (id, updates) => {
-  const response = await fetch(`/api/items/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updates),
-  });
-  return response.json();
-};
+    get: async (id: string) => {
+      if (USE_MOCK_DATA) {
+        return mockData.greenhouses.find(g => g.id === id) || null;
+      }
+      return fetchAPI<Greenhouse>(`/greenhouses/${id}`);
+    },
 
-// DELETE
-const deleteItem = async (id) => {
-  const response = await fetch(`/api/items/${id}`, { method: 'DELETE' });
-  if (!response.ok) throw new Error('Delete failed');
-  return true;
-};
-```
+    create: async (body: CreateGreenhouseRequest) => {
+      if (USE_MOCK_DATA) {
+        const newGreenhouse = { id: crypto.randomUUID(), ...body };
+        mockData.greenhouses.push(newGreenhouse);
+        return newGreenhouse;
+      }
+      return fetchAPI<Greenhouse>('/greenhouses', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+    },
 
-### Query Parameters
-```jsx
-const fetchWithParams = async (filters) => {
-  const params = new URLSearchParams({
-    page: filters.page,
-    limit: filters.limit,
-    search: filters.search,
-    sort: filters.sort,
-  });
+    sensorsLatest: async (id: string) => {
+      if (USE_MOCK_DATA) return mockData.sensorReadings;
+      return fetchAPI<SensorReading[]>(`/greenhouses/${id}/sensors/latest`);
+    },
 
-  const response = await fetch(`/api/items?${params}`);
-  return response.json();
+    sensorsHistory: async (id: string, params: { start: string; end: string; interval?: string }) => {
+      if (USE_MOCK_DATA) return mockData.sensorHistory;
+      const query = new URLSearchParams(params as any);
+      return fetchAPI<SensorReading[]>(`/greenhouses/${id}/sensors/history?${query}`);
+    },
+  },
+
+  slots: {
+    get: async (slotId: string) => {
+      if (USE_MOCK_DATA) return mockData.slots.find(s => s.id === slotId);
+      return fetchAPI<Slot>(`/slots/${slotId}`);
+    },
+
+    update: async (slotId: string, body: UpdateSlotRequest) => {
+      if (USE_MOCK_DATA) {
+        const slot = mockData.slots.find(s => s.id === slotId);
+        if (slot) Object.assign(slot, body);
+        return slot;
+      }
+      return fetchAPI<Slot>(`/slots/${slotId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+    },
+
+    history: async (slotId: string) => {
+      if (USE_MOCK_DATA) return mockData.slotHistory;
+      return fetchAPI<SlotHistory[]>(`/slots/${slotId}/history`);
+    },
+  },
+
+  weather: {
+    current: async () => {
+      if (USE_MOCK_DATA) return mockData.weather;
+      return fetchAPI<WeatherData>('/weather/current');
+    },
+  },
+
+  agent: {
+    log: async (params?: { limit?: number; offset?: number }) => {
+      if (USE_MOCK_DATA) return mockData.agentLog;
+      const query = params ? `?${new URLSearchParams(params as any)}` : '';
+      return fetchAPI<AgentLog>(`/agent/log${query}`);
+    },
+
+    recommendations: async () => {
+      if (USE_MOCK_DATA) return mockData.recommendations;
+      return fetchAPI<Recommendation[]>('/agent/recommendations');
+    },
+
+    approveRecommendation: async (id: string) => {
+      if (USE_MOCK_DATA) {
+        const rec = mockData.recommendations.find(r => r.id === id);
+        if (rec) rec.status = 'approved';
+        return rec;
+      }
+      return fetchAPI<Recommendation>(`/agent/recommendations/${id}/approve`, {
+        method: 'POST',
+      });
+    },
+
+    dismissRecommendation: async (id: string, reason?: string) => {
+      if (USE_MOCK_DATA) {
+        const rec = mockData.recommendations.find(r => r.id === id);
+        if (rec) rec.status = 'dismissed';
+        return rec;
+      }
+      return fetchAPI<Recommendation>(`/agent/recommendations/${id}/dismiss`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      });
+    },
+
+    config: async () => {
+      if (USE_MOCK_DATA) return mockData.agentConfig;
+      return fetchAPI<AgentConfig>('/agent/config');
+    },
+
+    updateConfig: async (body: UpdateAgentConfigRequest) => {
+      if (USE_MOCK_DATA) {
+        Object.assign(mockData.agentConfig, body);
+        return mockData.agentConfig;
+      }
+      return fetchAPI<AgentConfig>('/agent/config', {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+    },
+  },
+
+  simulations: {
+    list: async () => {
+      if (USE_MOCK_DATA) return mockData.simulations;
+      return fetchAPI<Simulation[]>('/simulations');
+    },
+
+    create: async (body: CreateSimulationRequest) => {
+      if (USE_MOCK_DATA) {
+        const newSim = {
+          id: crypto.randomUUID(),
+          status: 'running',
+          createdAt: new Date().toISOString(),
+          ...body,
+        };
+        mockData.simulations.push(newSim);
+        return newSim;
+      }
+      return fetchAPI<Simulation>('/simulations', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+    },
+
+    get: async (id: string) => {
+      if (USE_MOCK_DATA) {
+        return mockData.simulations.find(s => s.id === id);
+      }
+      return fetchAPI<Simulation>(`/simulations/${id}`);
+    },
+
+    pause: async (id: string) => {
+      if (USE_MOCK_DATA) {
+        const sim = mockData.simulations.find(s => s.id === id);
+        if (sim) sim.status = 'paused';
+        return sim;
+      }
+      return fetchAPI<Simulation>(`/simulations/${id}/pause`, { method: 'POST' });
+    },
+
+    resume: async (id: string) => {
+      if (USE_MOCK_DATA) {
+        const sim = mockData.simulations.find(s => s.id === id);
+        if (sim) sim.status = 'running';
+        return sim;
+      }
+      return fetchAPI<Simulation>(`/simulations/${id}/resume`, { method: 'POST' });
+    },
+
+    stop: async (id: string) => {
+      if (USE_MOCK_DATA) {
+        const sim = mockData.simulations.find(s => s.id === id);
+        if (sim) sim.status = 'stopped';
+        return sim;
+      }
+      return fetchAPI<Simulation>(`/simulations/${id}/stop`, { method: 'POST' });
+    },
+  },
 };
 ```
 
 ---
 
-## React Data Fetching Hooks
+## React Hooks for API Calls
 
-### Basic Fetch Hook
-```jsx
-function useFetch(url) {
-  const [data, setData] = useState(null);
+### Basic Data Fetching Hook
+```typescript
+function useAPIData<T>(
+  fetcher: () => Promise<T>,
+  dependencies: any[] = []
+) {
+  const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let cancelled = false;
 
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(url, { signal: controller.signal });
-        if (!response.ok) throw new Error('Request failed');
-        const json = await response.json();
-        setData(json);
         setError(null);
+        const result = await fetcher();
+        if (!cancelled) {
+          setData(result);
+        }
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          setError(err.message);
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch data');
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
-    return () => controller.abort();
-  }, [url]);
+    return () => { cancelled = true; };
+  }, dependencies);
 
   return { data, loading, error };
 }
 
 // Usage
-function UserList() {
-  const { data: users, loading, error } = useFetch('/api/users');
+function GreenhouseList() {
+  const { data: greenhouses, loading, error } = useAPIData(
+    () => api.greenhouses.list(),
+    []
+  );
 
-  if (loading) return <Spinner />;
-  if (error) return <Error message={error} />;
-  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>;
+  if (loading) {
+    return <div className="p-4 text-center text-muted-foreground">Loading greenhouses...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-center text-destructive">Error: {error}</div>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {greenhouses?.map(gh => (
+        <GreenhouseCard key={gh.id} greenhouse={gh} />
+      ))}
+    </div>
+  );
 }
 ```
 
-### Fetch with Refetch & Mutation
-```jsx
-function useAPI(url) {
-  const [state, setState] = useState({
-    data: null, loading: true, error: null,
-  });
+### Hook with Refetch
+```typescript
+function useAPIDataWithRefetch<T>(fetcher: () => Promise<T>) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
-      setState(s => ({ ...s, loading: true }));
-      const response = await fetch(url);
-      const data = await response.json();
-      setState({ data, loading: false, error: null });
-    } catch (error) {
-      setState({ data: null, loading: false, error: error.message });
+      setLoading(true);
+      setError(null);
+      const result = await fetcher();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed');
+    } finally {
+      setLoading(false);
     }
-  }, [url]);
+  }, [fetcher]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const mutate = useCallback(async (method, body) => {
-    const response = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const data = await response.json();
-    setState(s => ({ ...s, data }));
-    return data;
-  }, [url]);
+  return { data, loading, error, refetch: fetchData };
+}
 
-  return { ...state, refetch: fetchData, mutate };
+// Usage
+function AgentRecommendations() {
+  const { data: recommendations, loading, error, refetch } = useAPIDataWithRefetch(
+    () => api.agent.recommendations()
+  );
+
+  const handleApprove = async (id: string) => {
+    await api.agent.approveRecommendation(id);
+    refetch(); // Refresh list after approval
+  };
+
+  // ... render logic
+}
+```
+
+---
+
+## Simulation Polling Pattern
+
+```typescript
+function useSimulationPolling(simulationId: string | null, intervalMs = 2000) {
+  const [simulation, setSimulation] = useState<Simulation | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!simulationId) return;
+
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const data = await api.simulations.get(simulationId);
+        if (!cancelled) {
+          setSimulation(data);
+          setError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Polling failed');
+        }
+      }
+    };
+
+    // Initial fetch
+    setLoading(true);
+    poll().finally(() => setLoading(false));
+
+    // Poll only if simulation is still active
+    const shouldPoll = () => {
+      return simulation?.status === 'running' || simulation?.status === 'paused';
+    };
+
+    const interval = setInterval(() => {
+      if (shouldPoll()) {
+        poll();
+      }
+    }, intervalMs);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [simulationId, intervalMs, simulation?.status]);
+
+  return { simulation, loading, error };
+}
+
+// Usage
+function SimulationMonitor({ simulationId }: { simulationId: string }) {
+  const { simulation, loading } = useSimulationPolling(simulationId, 3000);
+
+  return (
+    <div className="rounded-lg border bg-card p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">Status</span>
+        <span className="font-mono text-sm">{simulation?.status || 'unknown'}</span>
+      </div>
+      {simulation?.status === 'running' && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          Polling every 3 seconds...
+        </div>
+      )}
+    </div>
+  );
 }
 ```
 
@@ -175,110 +412,73 @@ function useAPI(url) {
 
 ## Loading & Error States
 
-### Component Pattern
-```jsx
-function DataLoader({ loading, error, data, children }) {
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage error={error} />;
-  if (!data) return <EmptyState />;
+### Inline Pattern (Dark Theme)
+```tsx
+function DataView({ data, loading, error, children }: any) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8 text-muted-foreground">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Loading...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/50 bg-card p-4 text-destructive">
+        <p className="font-semibold">Error loading data</p>
+        <p className="mt-1 text-sm">{error}</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="rounded-lg border border-dashed bg-card p-8 text-center text-muted-foreground">
+        No data available
+      </div>
+    );
+  }
+
   return children(data);
 }
-
-<DataLoader loading={loading} error={error} data={users}>
-  {(users) => (
-    <ul>
-      {users.map(user => <UserCard key={user.id} user={user} />)}
-    </ul>
-  )}
-</DataLoader>
 ```
 
-### Error Boundary
-```jsx
-class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null };
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-8 text-center">
-          <h2 className="text-xl font-bold text-red-600">Something went wrong</h2>
-          <p className="text-gray-600 mt-2">{this.state.error?.message}</p>
-          <button
-            onClick={() => this.setState({ hasError: false })}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg"
-          >
-            Try again
-          </button>
+### Skeleton Loading Pattern
+```tsx
+function GreenhouseSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map(i => (
+        <div key={i} className="rounded-lg border bg-card p-4">
+          <Skeleton className="h-5 w-1/3" />
+          <Skeleton className="mt-2 h-4 w-1/2" />
+          <Skeleton className="mt-2 h-4 w-2/3" />
         </div>
-      );
-    }
-    return this.props.children;
-  }
+      ))}
+    </div>
+  );
+}
+
+function GreenhouseList() {
+  const { data, loading, error } = useAPIData(() => api.greenhouses.list());
+
+  if (loading) return <GreenhouseSkeleton />;
+  if (error) return <ErrorAlert message={error} />;
+
+  return <div>{/* render greenhouses */}</div>;
 }
 ```
 
 ---
 
-## API Service Layer
+## Environment Variables
 
-### Base API Class
-```jsx
-const BASE_URL = process.env.REACT_APP_API_URL || '/api';
-
-class APIClient {
-  constructor(baseURL = BASE_URL) {
-    this.baseURL = baseURL;
-  }
-
-  async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    };
-
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    const response = await fetch(url, config);
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `Request failed: ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  get(endpoint, params) {
-    const query = params ? `?${new URLSearchParams(params)}` : '';
-    return this.request(`${endpoint}${query}`);
-  }
-
-  post(endpoint, data) {
-    return this.request(endpoint, { method: 'POST', body: JSON.stringify(data) });
-  }
-
-  put(endpoint, data) {
-    return this.request(endpoint, { method: 'PUT', body: JSON.stringify(data) });
-  }
-
-  delete(endpoint) {
-    return this.request(endpoint, { method: 'DELETE' });
-  }
-}
-
-export const api = new APIClient();
+```bash
+# .env.local
+VITE_USE_MOCK_DATA=true           # Set to 'false' to use real API
+VITE_API_BASE_URL=http://localhost:3000/api
 ```
 
-For infinite scroll, pagination, caching, optimistic updates, real-time data (polling, WebSocket, SSE), file uploads, and auth patterns, see [reference.md](reference.md).
+Toggle between mock and real API by changing `VITE_USE_MOCK_DATA` without modifying code.
