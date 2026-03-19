@@ -56,9 +56,25 @@ import {
   mockInjections,
 } from "./mock-data";
 
+import { useState, useEffect, useRef } from "react";
+
 // Toggle this to switch between mock and real API
-const USE_MOCK = true;
+const USE_MOCK = false;
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+// Hook: returns fallback immediately, swaps to real data when API responds.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useApi<T>(fetcher: () => Promise<T>, fallback: T, deps: any[] = []): T {
+  const [data, setData] = useState<T>(fallback);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    fetcher().then((result) => { if (mounted.current) setData(result); }).catch(() => {});
+    return () => { mounted.current = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return data;
+}
 
 // --- HTTP helpers ---
 

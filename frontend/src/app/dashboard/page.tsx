@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { useSimulation } from "@/providers/simulation-provider";
 import { mockSensorSnapshot, mockWeather, mockStockpile, mockStoredFood, mockNutritionEntries } from "@/lib/mock-data";
+import { api, useApi } from "@/lib/api";
 import { GreenhouseCrossSection } from "@/components/greenhouse-cross-section";
 import { Droplet, Leaf, Zap, Sun, AlertTriangle, Thermometer, Gauge, SunDim, Moon } from "lucide-react";
 import type { RiskLevel } from "@/lib/types";
@@ -23,12 +24,15 @@ function riskColor(risk: RiskLevel): string {
 export default function DashboardPage() {
   const { state } = useSimulation();
   const { resources } = state;
-  const sensor = mockSensorSnapshot;
-  const weather = mockWeather;
-  const totalCalories = mockStockpile.reduce((s, i) => s + i.estimatedCalories, 0);
-  const latestNutrition = mockNutritionEntries[mockNutritionEntries.length - 1];
+  const sensor = useApi(() => api.greenhouses.sensorsLatest(state.selectedGreenhouseId ?? ""), mockSensorSnapshot, [state.selectedGreenhouseId]);
+  const weather = useApi(() => api.weather.current(), mockWeather);
+  const stockpile = useApi(() => api.crops.stockpile().then(r => r.items), mockStockpile);
+  const storedFood = useApi(() => api.nutrition.storedFood(), mockStoredFood);
+  const nutritionEntries = useApi(() => api.nutrition.consumption("", "").then(r => r.dailyEntries), mockNutritionEntries);
+  const totalCalories = stockpile.reduce((s, i) => s + i.estimatedCalories, 0);
+  const latestNutrition = nutritionEntries[nutritionEntries.length - 1];
   const ghFractionPct = Math.round(latestNutrition.calorieGhFraction * 100);
-  const storedPct = Math.round((mockStoredFood.remainingCalories / mockStoredFood.totalCalories) * 100);
+  const storedPct = Math.round((storedFood.remainingCalories / storedFood.totalCalories) * 100);
 
   const openAlerts = state.alerts.filter((a) => a.status === "OPEN");
   const criticalAlert = openAlerts.find((a) => a.severity === "CRITICAL");
@@ -221,7 +225,7 @@ export default function DashboardPage() {
               <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted border border-border">
                 <div className="h-full rounded-full" style={{ width: `${storedPct}%`, backgroundColor: storedPct > 50 ? "var(--color-status-healthy)" : storedPct > 25 ? "var(--color-status-warning)" : "var(--color-status-critical)" }} />
               </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">{(mockStoredFood.remainingCalories / 1000).toFixed(0)}k / {(mockStoredFood.totalCalories / 1000).toFixed(0)}k kcal stored</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">{(storedFood.remainingCalories / 1000).toFixed(0)}k / {(storedFood.totalCalories / 1000).toFixed(0)}k kcal stored</p>
             </div>
             <div className="border-t border-border pt-3">
               <div className="flex items-center justify-between text-sm">
@@ -229,7 +233,7 @@ export default function DashboardPage() {
                 <span className="font-mono tabular-nums">{totalCalories.toLocaleString()} kcal</span>
               </div>
               <div className="mt-2 space-y-1.5">
-                {mockStockpile.slice(0, 3).map((item) => (
+                {stockpile.slice(0, 3).map((item) => (
                   <div key={item.cropId} className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{item.cropName}</span>
                     <span className="font-mono tabular-nums">{item.quantityKg} kg</span>

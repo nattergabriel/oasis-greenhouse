@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { mockSimulations, mockSimulationDetail, mockScenarios } from "@/lib/mock-data"
+import { api, useApi } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -102,8 +103,10 @@ function InlineSimControls({ simId }: { simId: string }) {
 
 export default function SimulationPage() {
   const [activeTab, setActiveTab] = useState<TabValue>("current")
-  const simulation = mockSimulationDetail
-  const runningSimulations = mockSimulations.filter((s) => s.status === "RUNNING")
+  const simulations = useApi(() => api.simulations.list().then(r => r.simulations), mockSimulations)
+  const simulation = useApi(() => api.simulations.get(mockSimulationDetail.id), mockSimulationDetail)
+  const scenarios = useApi(() => api.scenarios.list().then(r => r.scenarios), mockScenarios)
+  const runningSimulations = simulations.filter((s) => s.status === "RUNNING")
 
   // Scenario detail dialog
   const [scenarioDetailOpen, setScenarioDetailOpen] = useState(false)
@@ -167,7 +170,7 @@ export default function SimulationPage() {
       {/* Current Run — per-simulation cards with inline controls */}
       {activeTab === "current" && (
         <div className="space-y-4">
-          {mockSimulations
+          {simulations
             .filter((s) => s.status === "RUNNING" || s.status === "PAUSED")
             .map((sim) => {
               // Use the detail object if this sim matches, otherwise fall back to summary
@@ -265,7 +268,7 @@ export default function SimulationPage() {
       {/* Scenarios — redesigned cards */}
       {activeTab === "scenarios" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockScenarios.map((scenario) => (
+          {scenarios.map((scenario) => (
             <Card
               key={scenario.id}
               className="flex flex-col h-full p-4 cursor-pointer hover:bg-secondary/50 transition-colors"
@@ -323,7 +326,7 @@ export default function SimulationPage() {
               </tr>
             </thead>
             <tbody>
-              {mockSimulations.map((sim) => (
+              {simulations.map((sim) => (
                 <tr
                   key={sim.id}
                   className="border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 transition-colors"

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { mockAgentConfig, mockAgentPerformance } from "@/lib/mock-data"
+import { api, useApi } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -18,7 +19,8 @@ const TABS: { value: TabValue; label: string }[] = [
 // === Agent Config ===
 
 function AgentConfigSection() {
-  const [config, setConfig] = useState(mockAgentConfig)
+  const initialConfig = useApi(() => api.agent.config(), mockAgentConfig)
+  const [config, setConfig] = useState(initialConfig)
 
   const handleSave = () => {
     console.log("Saving agent config:", config)
@@ -148,7 +150,7 @@ function scoreStatus(score: number, good = 80, ok = 60) {
 }
 
 function AnalyticsSection() {
-  const perf = mockAgentPerformance
+  const perf = useApi(() => api.analytics.agentPerformance(), mockAgentPerformance)
   const totalDecisions = perf.autonomousActionsCount + perf.humanOverridesCount
   const autoPercent = Math.round((perf.autonomousActionsCount / totalDecisions) * 100)
   const accuracyStatus = scoreStatus(perf.decisionAccuracyPercent)

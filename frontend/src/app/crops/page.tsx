@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Thermometer, Sprout, Droplets, Sun, Leaf, Flower2 } from "lucide-react";
 import { mockCrops, mockPlantingQueue, mockHarvestJournal, mockStockpile, mockStoredFood, mockGreenhouseDetails } from "@/lib/mock-data";
 import { useSimulation } from "@/providers/simulation-provider";
+import { api, useApi } from "@/lib/api";
 import type { Crop, CropCategory, PlantingQueueItem, HarvestEntry, StockpileItem, PlantSlot } from "@/lib/types";
 
 // === Helpers ===
@@ -216,13 +217,14 @@ function ExpansionDetail({ crop }: { crop: Crop }) {
 // === Catalog View (row grouping + full-width expansion) ===
 
 function CatalogView() {
+  const crops = useApi(() => api.crops.list().then(r => r.crops), mockCrops);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [rowDisplay, setRowDisplay] = useState<Record<number, string>>({});
 
   // Group into rows of 3
   const rows: Crop[][] = [];
-  for (let i = 0; i < mockCrops.length; i += 3) {
-    rows.push(mockCrops.slice(i, i + 3));
+  for (let i = 0; i < crops.length; i += 3) {
+    rows.push(crops.slice(i, i + 3));
   }
 
   function handleToggle(cropId: string, rowIdx: number) {
@@ -239,7 +241,7 @@ function CatalogView() {
       {rows.map((rowCrops, rowIdx) => {
         const isRowExpanded = rowCrops.some((c) => c.id === expandedId);
         const displayCropId = rowDisplay[rowIdx];
-        const displayCrop = displayCropId ? mockCrops.find((c) => c.id === displayCropId) : null;
+        const displayCrop = displayCropId ? crops.find((c) => c.id === displayCropId) : null;
 
         return (
           <div key={rowIdx}>
@@ -399,7 +401,7 @@ function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots
 
 // === Stockpile View (with headers + legend) ===
 
-function StockpileView({ items }: { items: StockpileItem[] }) {
+function StockpileView({ items, storedFood }: { items: StockpileItem[]; storedFood: { totalCalories: number; remainingCalories: number } }) {
   const totalCalories = items.reduce((sum, item) => sum + item.estimatedCalories, 0);
   const totalDays = items.reduce((sum, item) => sum + item.daysOfSupply, 0);
 
@@ -492,17 +494,17 @@ function StockpileView({ items }: { items: StockpileItem[] }) {
           <div>
             <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wide">Mission Reserves (Stored Food)</div>
             <div className="text-xl font-bold font-mono tabular-nums mt-0.5">
-              {(mockStoredFood.remainingCalories / 1000000).toFixed(1)}M <span className="text-sm text-muted-foreground">/ {(mockStoredFood.totalCalories / 1000000).toFixed(1)}M kcal</span>
+              {(storedFood.remainingCalories / 1000000).toFixed(1)}M <span className="text-sm text-muted-foreground">/ {(storedFood.totalCalories / 1000000).toFixed(1)}M kcal</span>
             </div>
           </div>
           <div className="text-right">
             <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wide">Remaining</div>
             <div className="text-xl font-bold font-mono tabular-nums mt-0.5">
-              {Math.round(mockStoredFood.remainingCalories / mockStoredFood.totalCalories * 100)}%
+              {Math.round(storedFood.remainingCalories / storedFood.totalCalories * 100)}%
             </div>
           </div>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Crew arrived with {(mockStoredFood.totalCalories / 1000000).toFixed(1)}M kcal. Greenhouse supplements stored food -- crew never starves.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Crew arrived with {(storedFood.totalCalories / 1000000).toFixed(1)}M kcal. Greenhouse supplements stored food -- crew never starves.</p>
       </Card>
     </div>
   );
@@ -554,8 +556,11 @@ const TABS: { value: TabValue; label: string }[] = [
 export default function CropsPage() {
   const { state } = useSimulation();
   const [activeTab, setActiveTab] = useState<TabValue>("catalog");
-
-  const ghDetail = state.selectedGreenhouseId ? mockGreenhouseDetails[state.selectedGreenhouseId] : null;
+  const plantingQueue = useApi(() => api.crops.plantingQueue().then(r => r.queue), mockPlantingQueue);
+  const harvestJournal = useApi(() => api.crops.harvestJournal().then(r => r.harvests), mockHarvestJournal);
+  const stockpileItems = useApi(() => api.crops.stockpile().then(r => r.items), mockStockpile);
+  const storedFood = useApi(() => api.nutrition.storedFood(), mockStoredFood);
+  const ghDetail = useApi(() => state.selectedGreenhouseId ? api.greenhouses.get(state.selectedGreenhouseId) : Promise.resolve(null), state.selectedGreenhouseId ? mockGreenhouseDetails[state.selectedGreenhouseId] ?? null : null, [state.selectedGreenhouseId]);
   const slots = ghDetail?.slots || [];
 
   return (
@@ -583,15 +588,15 @@ export default function CropsPage() {
       {activeTab === "catalog" && <CatalogView />}
 
       {activeTab === "queue" && (
-        <PlantingQueueView items={mockPlantingQueue} slots={slots} />
+        <PlantingQueueView items={plantingQueue} slots={slots} />
       )}
 
       {activeTab === "journal" && (
-        <HarvestJournalTable entries={mockHarvestJournal} />
+        <HarvestJournalTable entries={harvestJournal} />
       )}
 
       {activeTab === "stockpile" && (
-        <StockpileView items={mockStockpile} />
+        <StockpileView items={stockpileItems} storedFood={storedFood} />
       )}
     </div>
   );

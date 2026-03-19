@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { mockResourceForecast, mockMissionTimeline, mockWeather } from "@/lib/mock-data";
+import { api, useApi } from "@/lib/api";
 import type { MilestoneType, RiskLevel } from "@/lib/types";
 import {
   AreaChart,
@@ -113,9 +114,9 @@ function generatePastData(forecastStart: number, count: number) {
 
 export default function ForecastingPage() {
   const [weatherMetric, setWeatherMetric] = useState<WeatherMetric>("solar");
-  const forecast = mockResourceForecast;
-  const timeline = mockMissionTimeline;
-  const weather = mockWeather;
+  const forecast = useApi(() => api.forecast.resources().then(r => r.projections), mockResourceForecast);
+  const timeline = useApi(() => api.forecast.missionTimeline(), mockMissionTimeline);
+  const weather = useApi(() => api.weather.current(), mockWeather);
   const todayDay = timeline.currentMissionDay;
 
   // 30-day chart: 15 past + today bridge + 14 future

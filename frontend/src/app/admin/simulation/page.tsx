@@ -1,12 +1,14 @@
 "use client"
 
 import { mockSimulations, mockSimulationDetail } from "@/lib/mock-data"
+import { api, useApi } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { SimControls } from "@/components/layout/sim-controls"
 
 export default function SimulationManagementPage() {
-  const simulation = mockSimulationDetail
+  const simulations = useApi(() => api.simulations.list().then(r => r.simulations), mockSimulations)
+  const simulation = useApi(() => api.simulations.get(mockSimulationDetail.id), mockSimulationDetail)
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -104,7 +106,7 @@ export default function SimulationManagementPage() {
             </tr>
           </thead>
           <tbody>
-            {mockSimulations.map((sim) => (
+            {simulations.map((sim) => (
               <tr key={sim.id} className="border-b border-border last:border-0">
                 <td className="py-3">{sim.name}</td>
                 <td className="py-3">

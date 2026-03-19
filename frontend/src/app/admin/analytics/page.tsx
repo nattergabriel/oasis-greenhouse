@@ -1,6 +1,7 @@
 "use client"
 
 import { mockAgentPerformance } from "@/lib/mock-data"
+import { api, useApi } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 
 function scoreStatus(score: number, good = 80, ok = 60) {
@@ -10,7 +11,7 @@ function scoreStatus(score: number, good = 80, ok = 60) {
 }
 
 export default function AgentAnalyticsPage() {
-  const perf = mockAgentPerformance
+  const perf = useApi(() => api.analytics.agentPerformance(), mockAgentPerformance)
 
   const totalDecisions = perf.autonomousActionsCount + perf.humanOverridesCount
   const autoPercent = Math.round((perf.autonomousActionsCount / totalDecisions) * 100)
