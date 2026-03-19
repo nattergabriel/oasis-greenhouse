@@ -262,6 +262,7 @@ class AgentState(TypedDict, total=False):
 
 class TrainingRunRequest(BaseModel):
     """Request to run a training simulation."""
+    simulation_id: Optional[str] = None  # management-backend's ID; if set, used as run_id
     seed: int = 42
     crop_assignments: dict[int, str] = Field(default_factory=dict)
     inject_events: list[dict[str, Any]] = Field(default_factory=list)
