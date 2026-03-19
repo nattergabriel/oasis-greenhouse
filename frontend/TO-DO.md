@@ -23,7 +23,7 @@
 - add the alerts above the activity log
 - if agents needs more than one decision make it to a stack where you can expand to see all choice needed to free up space
 
-## /Greenhouse
+## /greenhouse
 - Move sun to always above/outside greenhouse
 - Option to view the past of the plants to see progress in a quick way
 - Top view of greenhouse change to a circular visualization to match greenhouse design, also make it smaller

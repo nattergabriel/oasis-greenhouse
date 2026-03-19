@@ -15,7 +15,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSimulation } from "@/providers/simulation-provider";
-import { X, AlertTriangle } from "lucide-react";
+import { X, AlertTriangle, ChevronDown } from "lucide-react";
 
 // === Astronaut profiles (from doc: 4 astronauts, ~75kg avg, 3000 kcal/day each) ===
 const CREW = [
@@ -119,13 +119,14 @@ function generateAdvisories(selectedCrew: string): { id: string; severity: "warn
     advisories.push({ id: `adv-${selectedCrew}-protein`, severity: "warning", nutrient: "Protein", message: "Protein intake is below 75% of target. Sustained deficiency causes muscle wasting and impaired recovery.", suggestion: "Increase beans & peas zone allocation for higher protein yield." });
   }
 
-  return advisories;
+  return advisories.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "critical" ? -1 : 1));
 }
 
 export default function NutritionPage() {
   const { state } = useSimulation();
   const [selectedCrew, setSelectedCrew] = useState("all");
   const [dismissedAdvisories, setDismissedAdvisories] = useState<Set<string>>(new Set());
+  const [advisoriesExpanded, setAdvisoriesExpanded] = useState(false);
   const latestEntry = mockNutritionEntries[mockNutritionEntries.length - 1];
 
   const crew = CREW.find((c) => c.id === selectedCrew)!;
@@ -225,49 +226,106 @@ export default function NutritionPage() {
         </div>
       </div>
 
-      {/* Nutrition advisories */}
-      {visibleAdvisories.length > 0 && (
-        <div className="space-y-2">
-          {visibleAdvisories.map((advisory) => (
-            <div
-              key={advisory.id}
-              className="flex items-start gap-3 rounded-lg border p-3"
-              style={{
-                borderColor: advisory.severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)",
-                borderLeftWidth: 3,
-              }}
-            >
-              <AlertTriangle
-                className="mt-0.5 h-4 w-4 shrink-0"
-                style={{ color: advisory.severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)" }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{advisory.nutrient} Deficiency</span>
-                  <Badge
-                    variant="outline"
-                    className="text-[10px]"
-                    style={{
-                      borderColor: advisory.severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)",
-                      color: advisory.severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)",
-                    }}
-                  >
-                    {advisory.severity}
-                  </Badge>
-                </div>
-                <p className="mt-0.5 text-xs text-muted-foreground">{advisory.message}</p>
-                <p className="mt-1 text-xs text-foreground/80">{advisory.suggestion}</p>
-              </div>
-              <button
-                onClick={() => setDismissedAdvisories(prev => new Set(prev).add(advisory.id))}
-                className="shrink-0 rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+      {/* Nutrition advisories — collapsible stack when multiple */}
+      {visibleAdvisories.length === 1 && (
+        <div
+          className="flex items-start gap-3 rounded-lg border p-3"
+          style={{
+            borderColor: visibleAdvisories[0].severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)",
+            borderLeftWidth: 3,
+          }}
+        >
+          <AlertTriangle
+            className="mt-0.5 h-4 w-4 shrink-0"
+            style={{ color: visibleAdvisories[0].severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)" }}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{visibleAdvisories[0].nutrient} Deficiency</span>
+              <Badge
+                variant="outline"
+                className="text-[10px]"
+                style={{
+                  borderColor: visibleAdvisories[0].severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)",
+                  color: visibleAdvisories[0].severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)",
+                }}
               >
-                <X className="h-3.5 w-3.5" />
-              </button>
+                {visibleAdvisories[0].severity}
+              </Badge>
             </div>
-          ))}
+            <p className="mt-0.5 text-xs text-muted-foreground">{visibleAdvisories[0].message}</p>
+            <p className="mt-1 text-xs text-foreground/80">{visibleAdvisories[0].suggestion}</p>
+          </div>
+          <button
+            onClick={() => setDismissedAdvisories(prev => new Set(prev).add(visibleAdvisories[0].id))}
+            className="shrink-0 rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
+      {visibleAdvisories.length > 1 && (() => {
+        const critCount = visibleAdvisories.filter(a => a.severity === "critical").length;
+        const warnCount = visibleAdvisories.length - critCount;
+        const worstSeverity = critCount > 0 ? "critical" : "warning";
+        const severityColor = worstSeverity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)";
+        return (
+          <div className="rounded-lg border overflow-hidden" style={{ borderColor: severityColor, borderLeftWidth: 3 }}>
+            <button
+              onClick={() => setAdvisoriesExpanded(prev => !prev)}
+              className="flex w-full items-center gap-3 p-3 text-left hover:bg-secondary/50 transition-colors"
+            >
+              <AlertTriangle className="h-4 w-4 shrink-0" style={{ color: severityColor }} />
+              <div className="flex-1 flex items-center gap-2">
+                <span className="text-sm font-medium">Nutritional Advisories</span>
+                {critCount > 0 && (
+                  <Badge variant="outline" className="text-[10px]" style={{ borderColor: "var(--color-status-critical)", color: "var(--color-status-critical)" }}>
+                    {critCount} critical
+                  </Badge>
+                )}
+                {warnCount > 0 && (
+                  <Badge variant="outline" className="text-[10px]" style={{ borderColor: "var(--color-status-warning)", color: "var(--color-status-warning)" }}>
+                    {warnCount} warning
+                  </Badge>
+                )}
+              </div>
+              <ChevronDown
+                className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
+                style={{ transform: advisoriesExpanded ? "rotate(180deg)" : undefined }}
+              />
+            </button>
+            {advisoriesExpanded && (
+              <div className="border-t border-border">
+                {visibleAdvisories.map((advisory) => (
+                  <div
+                    key={advisory.id}
+                    className="flex items-start gap-3 border-b border-border last:border-b-0 px-3 py-2.5"
+                  >
+                    <div
+                      className="mt-1 h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: advisory.severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)" }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{advisory.nutrient}</span>
+                        <span className="text-[10px] text-muted-foreground">{advisory.severity}</span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{advisory.message}</p>
+                      <p className="mt-1 text-xs text-foreground/80">{advisory.suggestion}</p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDismissedAdvisories(prev => new Set(prev).add(advisory.id)); }}
+                      className="shrink-0 rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Astronaut profile card (individual only) */}
       {!isAll && (
