@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mars Greenhouse Command Center
+
+Frontend for the Syngenta x AWS hackathon project (START Hack 2026, St. Gallen). A cockpit-style interface for astronauts managing an autonomous greenhouse on Mars during a 450-day surface mission.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Next.js 16** (App Router) + React 19 + TypeScript
+- **Tailwind CSS v4** with dark-only Mars theme
+- **shadcn/ui v4** (base-ui) component library
+- **Recharts 3** for resource/nutrition charts
+- **Framer Motion** for animations
+- **Lucide React** for icons
 
-## Learn More
+## Pages
 
-To learn more about Next.js, take a look at the following resources:
+| Route | Description |
+|-------|-------------|
+| `/dashboard` | Overview — animated greenhouse SVG, resource meters, environment sensors, weather, stockpile |
+| `/greenhouse` | Greenhouse detail — cross-section visualization, sensor heatmap grid |
+| `/crops` | Crop catalog — expandable rows with growth profiles, nutrition data, environment requirements |
+| `/alerts` | Alert management — severity-sorted expandable rows, acknowledge/resolve actions |
+| `/agent` | AI agent — pending decisions (approve/dismiss) + activity log |
+| `/nutrition` | Crew nutrition — per-astronaut tracking, macro/micro coverage, risk hierarchy, caloric heatmap |
+| `/forecasting` | Resource forecasting — 30-day projection charts, resource status, weather conditions |
+| `/admin/simulation` | Simulation controls — speed, pause/resume, reset, scenario injection |
+| `/admin/scenarios` | Scenario management |
+| `/admin/agent-config` | Agent configuration |
+| `/admin/analytics` | Analytics dashboard |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Design
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Dark-only theme inspired by Mars mission control. Warm amber/brown palette with semantic status colors (green/yellow/red). No shadows — borders only. Monospace numbers throughout. Cockpit-style information density.
 
-## Deploy on Vercel
+The animated greenhouse cross-section is a custom SVG component showing a Mars dome with growing plants, LED grow lights, dust particles, and real-time status indicators.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/          → Pages (Next.js App Router)
+  components/
+    ui/         → shadcn/ui primitives
+    layout/     → Navbar, app shell, sim controls
+  lib/          → Types, mock data, simulation logic, API client
+  providers/    → Simulation context provider
+```
+
+## Scripts
+
+```bash
+npm run dev     # Start dev server
+npm run build   # Production build
+npm run start   # Start production server
+npm run lint    # Run ESLint
+```
