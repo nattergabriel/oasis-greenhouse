@@ -13,6 +13,7 @@ import type {
   PlantingQueueItem,
   HarvestEntry,
   StockpileItem,
+  StoredFood,
   DailyNutritionEntry,
   CoverageHeatmap,
   ResourceProjection,
@@ -22,29 +23,26 @@ import type {
   Scenario,
   AgentPerformance,
   SimulationState,
+  Zone,
 } from "./types";
 
 // === Helper ===
 const uuid = () => crypto.randomUUID();
 
-// Pre-generated stable IDs
-const GH_ALPHA_ID = "a1000000-0000-0000-0000-000000000001";
-const GH_BETA_ID = "a1000000-0000-0000-0000-000000000002";
+// Single greenhouse (spec: 1 greenhouse, 4 zones × 15 m²)
+const GH_ID = "a1000000-0000-0000-0000-000000000001";
 const SIM_ID = "b1000000-0000-0000-0000-000000000001";
 
-// Crop IDs
+// 5 spec crops (all KB-backed)
 const CROP_IDS = {
   lettuce: "c1000000-0000-0000-0000-000000000001",
-  tomato: "c1000000-0000-0000-0000-000000000002",
-  potato: "c1000000-0000-0000-0000-000000000003",
-  spinach: "c1000000-0000-0000-0000-000000000004",
-  soybean: "c1000000-0000-0000-0000-000000000005",
-  wheat: "c1000000-0000-0000-0000-000000000006",
-  radish: "c1000000-0000-0000-0000-000000000007",
-  basil: "c1000000-0000-0000-0000-000000000008",
+  potato: "c1000000-0000-0000-0000-000000000002",
+  radish: "c1000000-0000-0000-0000-000000000003",
+  beans_peas: "c1000000-0000-0000-0000-000000000004",
+  herbs: "c1000000-0000-0000-0000-000000000005",
 };
 
-// === Crops ===
+// === Crops (spec-accurate: SIMULATION-SPEC.md) ===
 export const mockCrops: Crop[] = [
   {
     id: CROP_IDS.lettuce,
@@ -52,7 +50,7 @@ export const mockCrops: Crop[] = [
     category: "VEGETABLE",
     growthDays: 30,
     harvestIndex: 0.85,
-    typicalYieldPerM2Kg: 3.2,
+    typicalYieldPerM2Kg: 4.0,
     waterRequirement: "HIGH",
     environmentalRequirements: {
       optimalTempMinC: 15, optimalTempMaxC: 22, heatStressThresholdC: 25,
@@ -65,27 +63,6 @@ export const mockCrops: Crop[] = [
     nutritionalProfile: {
       caloriesPer100g: 15, proteinG: 1.4, carbsG: 2.9, fatG: 0.2, fiberG: 1.3,
       micronutrients: { vitaminAMcg: 370, vitaminCMg: 9.2, vitaminKMcg: 126, folateMcg: 38, ironMg: 0.9, potassiumMg: 194, magnesiumMg: 13 },
-    },
-  },
-  {
-    id: CROP_IDS.tomato,
-    name: "Tomato",
-    category: "VEGETABLE",
-    growthDays: 80,
-    harvestIndex: 0.65,
-    typicalYieldPerM2Kg: 8.5,
-    waterRequirement: "HIGH",
-    environmentalRequirements: {
-      optimalTempMinC: 20, optimalTempMaxC: 28, heatStressThresholdC: 35,
-      optimalHumidityMinPct: 60, optimalHumidityMaxPct: 80,
-      lightRequirementParMin: 300, lightRequirementParMax: 600,
-      optimalCo2PpmMin: 800, optimalCo2PpmMax: 1200,
-      optimalPhMin: 5.5, optimalPhMax: 6.8,
-    },
-    stressSensitivities: ["COLD", "NUTRIENT_DEFICIENCY_K"],
-    nutritionalProfile: {
-      caloriesPer100g: 18, proteinG: 0.9, carbsG: 3.9, fatG: 0.2, fiberG: 1.2,
-      micronutrients: { vitaminAMcg: 42, vitaminCMg: 14, vitaminKMcg: 7.9, folateMcg: 15, ironMg: 0.3, potassiumMg: 237, magnesiumMg: 11 },
     },
   },
   {
@@ -110,78 +87,15 @@ export const mockCrops: Crop[] = [
     },
   },
   {
-    id: CROP_IDS.spinach,
-    name: "Spinach",
-    category: "VEGETABLE",
-    growthDays: 35,
-    harvestIndex: 0.9,
-    typicalYieldPerM2Kg: 2.8,
-    waterRequirement: "MEDIUM",
-    environmentalRequirements: {
-      optimalTempMinC: 10, optimalTempMaxC: 20, heatStressThresholdC: 25,
-      optimalHumidityMinPct: 45, optimalHumidityMaxPct: 65,
-      lightRequirementParMin: 200, lightRequirementParMax: 400,
-      optimalCo2PpmMin: 800, optimalCo2PpmMax: 1200,
-      optimalPhMin: 6.0, optimalPhMax: 7.0,
-    },
-    stressSensitivities: ["HEAT", "LIGHT_EXCESSIVE"],
-    nutritionalProfile: {
-      caloriesPer100g: 23, proteinG: 2.9, carbsG: 3.6, fatG: 0.4, fiberG: 2.2,
-      micronutrients: { vitaminAMcg: 469, vitaminCMg: 28, vitaminKMcg: 483, folateMcg: 194, ironMg: 2.7, potassiumMg: 558, magnesiumMg: 79 },
-    },
-  },
-  {
-    id: CROP_IDS.soybean,
-    name: "Soybean",
-    category: "LEGUME",
-    growthDays: 60,
-    harvestIndex: 0.55,
-    typicalYieldPerM2Kg: 3.0,
-    waterRequirement: "MEDIUM",
-    environmentalRequirements: {
-      optimalTempMinC: 18, optimalTempMaxC: 25, heatStressThresholdC: 32,
-      optimalHumidityMinPct: 60, optimalHumidityMaxPct: 80,
-      lightRequirementParMin: 300, lightRequirementParMax: 600,
-      optimalCo2PpmMin: 800, optimalCo2PpmMax: 1200,
-      optimalPhMin: 6.0, optimalPhMax: 6.8,
-    },
-    stressSensitivities: ["DROUGHT", "COLD"],
-    nutritionalProfile: {
-      caloriesPer100g: 100, proteinG: 7.0, carbsG: 15.0, fatG: 1.5, fiberG: 5.0,
-      micronutrients: { vitaminAMcg: 1, vitaminCMg: 6, vitaminKMcg: 47, folateMcg: 375, ironMg: 15.7, potassiumMg: 1797, magnesiumMg: 280 },
-    },
-  },
-  {
-    id: CROP_IDS.wheat,
-    name: "Wheat",
-    category: "GRAIN",
-    growthDays: 120,
-    harvestIndex: 0.4,
-    typicalYieldPerM2Kg: 3.5,
-    waterRequirement: "LOW",
-    environmentalRequirements: {
-      optimalTempMinC: 15, optimalTempMaxC: 24, heatStressThresholdC: 32,
-      optimalHumidityMinPct: 40, optimalHumidityMaxPct: 60,
-      lightRequirementParMin: 300, lightRequirementParMax: 600,
-      optimalCo2PpmMin: 800, optimalCo2PpmMax: 1200,
-      optimalPhMin: 6.0, optimalPhMax: 7.0,
-    },
-    stressSensitivities: ["DROUGHT", "NUTRIENT_DEFICIENCY_N"],
-    nutritionalProfile: {
-      caloriesPer100g: 340, proteinG: 13.2, carbsG: 72, fatG: 2.5, fiberG: 10.7,
-      micronutrients: { vitaminAMcg: 0, vitaminCMg: 0, vitaminKMcg: 1.9, folateMcg: 38, ironMg: 3.2, potassiumMg: 363, magnesiumMg: 126 },
-    },
-  },
-  {
     id: CROP_IDS.radish,
     name: "Radish",
     category: "VEGETABLE",
     growthDays: 25,
     harvestIndex: 0.7,
     typicalYieldPerM2Kg: 3.0,
-    waterRequirement: "MEDIUM",
+    waterRequirement: "LOW",
     environmentalRequirements: {
-      optimalTempMinC: 15, optimalTempMaxC: 22, heatStressThresholdC: 25,
+      optimalTempMinC: 15, optimalTempMaxC: 22, heatStressThresholdC: 26,
       optimalHumidityMinPct: 40, optimalHumidityMaxPct: 60,
       lightRequirementParMin: 200, lightRequirementParMax: 400,
       optimalCo2PpmMin: 800, optimalCo2PpmMax: 1200,
@@ -194,15 +108,36 @@ export const mockCrops: Crop[] = [
     },
   },
   {
-    id: CROP_IDS.basil,
-    name: "Basil",
+    id: CROP_IDS.beans_peas,
+    name: "Beans & Peas",
+    category: "LEGUME",
+    growthDays: 55,
+    harvestIndex: 0.55,
+    typicalYieldPerM2Kg: 3.0,
+    waterRequirement: "MEDIUM",
+    environmentalRequirements: {
+      optimalTempMinC: 18, optimalTempMaxC: 25, heatStressThresholdC: 30,
+      optimalHumidityMinPct: 60, optimalHumidityMaxPct: 80,
+      lightRequirementParMin: 300, lightRequirementParMax: 600,
+      optimalCo2PpmMin: 800, optimalCo2PpmMax: 1200,
+      optimalPhMin: 6.0, optimalPhMax: 6.8,
+    },
+    stressSensitivities: ["DROUGHT", "COLD", "NUTRIENT_DEFICIENCY_FE"],
+    nutritionalProfile: {
+      caloriesPer100g: 100, proteinG: 7.0, carbsG: 15.0, fatG: 1.5, fiberG: 5.0,
+      micronutrients: { vitaminAMcg: 1, vitaminCMg: 6, vitaminKMcg: 47, folateMcg: 375, ironMg: 15.7, potassiumMg: 1797, magnesiumMg: 280 },
+    },
+  },
+  {
+    id: CROP_IDS.herbs,
+    name: "Herbs",
     category: "HERB",
     growthDays: 28,
     harvestIndex: 0.8,
     typicalYieldPerM2Kg: 1.5,
-    waterRequirement: "MEDIUM",
+    waterRequirement: "LOW",
     environmentalRequirements: {
-      optimalTempMinC: 20, optimalTempMaxC: 28, heatStressThresholdC: 35,
+      optimalTempMinC: 18, optimalTempMaxC: 24, heatStressThresholdC: 28,
       optimalHumidityMinPct: 50, optimalHumidityMaxPct: 70,
       lightRequirementParMin: 250, lightRequirementParMax: 500,
       optimalCo2PpmMin: 800, optimalCo2PpmMax: 1200,
@@ -210,13 +145,13 @@ export const mockCrops: Crop[] = [
     },
     stressSensitivities: ["COLD", "DROUGHT"],
     nutritionalProfile: {
-      caloriesPer100g: 23, proteinG: 3.2, carbsG: 2.7, fatG: 0.6, fiberG: 1.6,
+      caloriesPer100g: 15, proteinG: 1.0, carbsG: 2.7, fatG: 0.6, fiberG: 1.6,
       micronutrients: { vitaminAMcg: 264, vitaminCMg: 18, vitaminKMcg: 415, folateMcg: 68, ironMg: 3.2, potassiumMg: 295, magnesiumMg: 64 },
     },
   },
 ];
 
-// === Slots for Greenhouse Alpha (4x6 = 24 slots) ===
+// === Slots (4 zones × 4 cols = 16 slots) ===
 function makeSlot(row: number, col: number, cropKey?: keyof typeof CROP_IDS, growth?: number, stress?: string[]): PlantSlot {
   const crop = cropKey ? mockCrops.find(c => c.id === CROP_IDS[cropKey]) : null;
   const growthPct = growth ?? 0;
@@ -227,80 +162,70 @@ function makeSlot(row: number, col: number, cropKey?: keyof typeof CROP_IDS, gro
     position: { row, col },
     cropId: crop?.id ?? null,
     cropName: crop?.name ?? null,
-    status: !crop ? "EMPTY" : (stress && stress.length > 0) ? "NEEDS_ATTENTION" : growthPct > 90 ? "HEALTHY" : "HEALTHY",
+    status: !crop ? "EMPTY" : (stress && stress.length > 0) ? "NEEDS_ATTENTION" : "HEALTHY",
     growthStagePercent: cropKey ? growthPct : 0,
     daysUntilHarvest,
-    plantedAt: cropKey ? "2026-01-15T08:00:00Z" : null,
+    plantedAt: cropKey ? "2026-01-25T08:00:00Z" : null,
     activeStressTypes: (stress ?? []) as PlantSlot["activeStressTypes"],
     estimatedYieldKg: crop ? +(crop.typicalYieldPerM2Kg * 0.5 * (growthPct / 100)).toFixed(2) : null,
   };
 }
 
-const alphaSlots: PlantSlot[] = [
-  makeSlot(0, 0, "lettuce", 85), makeSlot(0, 1, "lettuce", 78), makeSlot(0, 2, "spinach", 62),
-  makeSlot(0, 3, "spinach", 55), makeSlot(0, 4, "basil", 90), makeSlot(0, 5, "basil", 88),
-  makeSlot(1, 0, "tomato", 45), makeSlot(1, 1, "tomato", 42, ["NUTRIENT_DEFICIENCY_K"]),
-  makeSlot(1, 2, "tomato", 40), makeSlot(1, 3, "tomato", 38), makeSlot(1, 4, "radish", 70),
-  makeSlot(1, 5, "radish", 65),
-  makeSlot(2, 0, "potato", 30), makeSlot(2, 1, "potato", 28), makeSlot(2, 2, "potato", 25),
-  makeSlot(2, 3, "soybean", 20), makeSlot(2, 4, "soybean", 18), makeSlot(2, 5),
-  makeSlot(3, 0, "wheat", 15), makeSlot(3, 1, "wheat", 12), makeSlot(3, 2, "wheat", 10),
-  makeSlot(3, 3, "wheat", 8), makeSlot(3, 4), makeSlot(3, 5),
+// Zone 1 (row 0): 60% potato, 40% beans_peas
+// Zone 2 (row 1): 50% lettuce, 30% radish, 20% herbs
+// Zone 3 (row 2): 40% beans_peas, 40% potato, 20% radish
+// Zone 4 (row 3): 50% herbs, 30% lettuce, 20% radish
+const greenhouseSlots: PlantSlot[] = [
+  makeSlot(0, 0, "potato", 72), makeSlot(0, 1, "potato", 68),
+  makeSlot(0, 2, "beans_peas", 45), makeSlot(0, 3, "beans_peas", 42, ["DROUGHT"]),
+  makeSlot(1, 0, "lettuce", 85), makeSlot(1, 1, "lettuce", 78),
+  makeSlot(1, 2, "radish", 70), makeSlot(1, 3, "herbs", 90),
+  makeSlot(2, 0, "beans_peas", 30), makeSlot(2, 1, "potato", 28),
+  makeSlot(2, 2, "potato", 25), makeSlot(2, 3, "radish", 55),
+  makeSlot(3, 0, "herbs", 88), makeSlot(3, 1, "herbs", 82),
+  makeSlot(3, 2, "lettuce", 60), makeSlot(3, 3),
 ];
 
-const betaSlots: PlantSlot[] = [
-  makeSlot(0, 0, "lettuce", 95), makeSlot(0, 1, "spinach", 80, ["LIGHT_INSUFFICIENT"]),
-  makeSlot(0, 2, "radish", 50), makeSlot(0, 3, "basil", 70),
-  makeSlot(1, 0, "tomato", 60), makeSlot(1, 1, "soybean", 35),
-  makeSlot(1, 2, "potato", 45), makeSlot(1, 3),
-  makeSlot(2, 0, "wheat", 25), makeSlot(2, 1, "wheat", 22),
-  makeSlot(2, 2), makeSlot(2, 3),
-].map(s => ({ ...s, id: s.id.replace("s1-", "s2-") }));
+// === Zones ===
+const mockZones: Zone[] = [
+  { id: 1, areaM2: 15, cropPlan: { potato: 0.6, beans_peas: 0.4 }, artificialLight: true, waterAllocation: 1.2 },
+  { id: 2, areaM2: 15, cropPlan: { lettuce: 0.5, radish: 0.3, herbs: 0.2 }, artificialLight: true, waterAllocation: 1.0 },
+  { id: 3, areaM2: 15, cropPlan: { beans_peas: 0.4, potato: 0.4, radish: 0.2 }, artificialLight: false, waterAllocation: 0.8 },
+  { id: 4, areaM2: 15, cropPlan: { herbs: 0.5, lettuce: 0.3, radish: 0.2 }, artificialLight: true, waterAllocation: 1.0 },
+];
 
-// === Greenhouses ===
+// === Greenhouse (single — spec: 4 zones × 15 m² = 60 m²) ===
 export const mockGreenhouses: GreenhouseSummary[] = [
   {
-    id: GH_ALPHA_ID,
-    name: "Greenhouse Alpha",
-    description: "Primary growing facility — mixed crops",
-    rows: 4, cols: 6, totalSlots: 24,
-    occupiedSlots: alphaSlots.filter(s => s.cropId).length,
-    overallStatus: "NEEDS_ATTENTION",
-  },
-  {
-    id: GH_BETA_ID,
-    name: "Greenhouse Beta",
-    description: "Secondary facility — fast-cycle crops",
-    rows: 3, cols: 4, totalSlots: 12,
-    occupiedSlots: betaSlots.filter(s => s.cropId).length,
+    id: GH_ID,
+    name: "Mars Greenhouse",
+    description: "4 zones x 15 m2 — 60 m2 total growing area",
+    rows: 4, cols: 4, totalSlots: 16,
+    occupiedSlots: greenhouseSlots.filter(s => s.cropId).length,
     overallStatus: "NEEDS_ATTENTION",
   },
 ];
 
 export const mockGreenhouseDetails: Record<string, GreenhouseDetail> = {
-  [GH_ALPHA_ID]: {
+  [GH_ID]: {
     ...mockGreenhouses[0],
-    slots: alphaSlots,
+    slots: greenhouseSlots,
     resources: { waterReservePercent: 73, nutrientReservePercent: 58, energyReservePercent: 84 },
-  },
-  [GH_BETA_ID]: {
-    ...mockGreenhouses[1],
-    slots: betaSlots,
-    resources: { waterReservePercent: 68, nutrientReservePercent: 62, energyReservePercent: 79 },
+    zones: mockZones,
   },
 };
 
 // === Sensors ===
 export const mockSensorSnapshot: SensorSnapshot = {
   timestamp: "2026-06-15T14:32:00Z",
-  temperature: { value: 24.2, status: "NORMAL" },
-  humidity: { value: 68, status: "NORMAL" },
+  temperature: { value: 20.0, status: "NORMAL" },
+  humidity: { value: 62, status: "NORMAL" },
   lightIntensity: { value: 18500, status: "NORMAL" },
-  par: { value: 420, status: "NORMAL" },
+  par: { value: 320, status: "NORMAL" },
   lightCyclePhase: "DAY",
-  co2: { value: 1050, status: "NORMAL" },
+  co2: { value: 1000, status: "NORMAL" },
   waterFlowRate: { value: 2.4, status: "NORMAL" },
-  waterRecyclingEfficiency: { value: 94, status: "NORMAL" },
+  waterRecyclingEfficiency: { value: 90, status: "NORMAL" },
   nutrientSolution: {
     ph: { value: 6.1, status: "NORMAL" },
     ec: { value: 2.1, status: "WARNING" },
@@ -310,13 +235,13 @@ export const mockSensorSnapshot: SensorSnapshot = {
 
 export const mockSensorHistory: SensorHistoryReading[] = Array.from({ length: 24 }, (_, i) => ({
   timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString(),
-  temperature: 23 + Math.sin(i / 4) * 2 + Math.random() * 0.5,
-  humidity: 65 + Math.sin(i / 6) * 5 + Math.random() * 2,
+  temperature: 19 + Math.sin(i / 4) * 1.5 + Math.random() * 0.5,
+  humidity: 60 + Math.sin(i / 6) * 5 + Math.random() * 2,
   lightIntensity: i >= 6 && i <= 18 ? 15000 + Math.random() * 5000 : 200 + Math.random() * 100,
-  par: i >= 6 && i <= 18 ? 380 + Math.random() * 80 : 10 + Math.random() * 5,
-  co2: 1000 + Math.sin(i / 3) * 100 + Math.random() * 30,
+  par: i >= 6 && i <= 18 ? 280 + Math.random() * 80 : 10 + Math.random() * 5,
+  co2: 980 + Math.sin(i / 3) * 40 + Math.random() * 20,
   waterFlowRate: 2.2 + Math.random() * 0.5,
-  waterRecyclingEfficiency: 93 + Math.random() * 2,
+  waterRecyclingEfficiency: 88 + Math.random() * 4,
   nutrientSolutionPh: 6.0 + Math.random() * 0.3,
   nutrientSolutionEc: 1.9 + Math.random() * 0.4,
   nutrientSolutionDissolvedOxygen: 7.0 + Math.random() * 0.5,
@@ -340,58 +265,58 @@ export const mockWeather: MarsWeather = {
   ],
 };
 
-// === Agent Log ===
+// === Agent Log (real action types: set_zone_plan, water_adjust, light_toggle, set_temperature, remove) ===
 export const mockAgentLog: AgentLogEntry[] = [
   {
-    id: uuid(), timestamp: "2026-06-15T14:30:00Z", actionType: "IRRIGATION_ADJUSTED",
-    description: "Increased water flow to Zone 1 by 12% — lettuce showing early drought indicators",
-    reasoning: "Sensor EC reading 2.1 mS/cm exceeds optimal 1.8 for lettuce at 85% growth. KB #3 Crop Profiles: lettuce at harvest stage requires increased water uptake. Increasing flow to compensate.",
+    id: uuid(), timestamp: "2026-06-15T14:30:00Z", actionType: "water_adjust",
+    description: "Increased water multiplier to 1.3x for Zone 2 — lettuce showing early drought stress",
+    reasoning: "Lettuce at 85% growth requires increased water uptake. KB Crop Profiles: lettuce at harvest stage is sensitive to drought. Zone 2 water allocation adjusted from 1.0 to 1.3.",
     knowledgeBaseSource: "Crop Profiles — Lettuce hydration requirements", outcome: "SUCCESS",
   },
   {
-    id: uuid(), timestamp: "2026-06-15T13:15:00Z", actionType: "LIGHT_CYCLE_MODIFIED",
-    description: "Extended day cycle by 30 minutes for tomato section",
-    reasoning: "Tomato growth at 42% is 3 days behind projected schedule. PAR readings averaging 380 µmol/m²/s, below optimal 450 for fruiting stage. Extending photoperiod to compensate.",
-    knowledgeBaseSource: "Crop Profiles — Tomato light requirements", outcome: "SUCCESS",
+    id: uuid(), timestamp: "2026-06-15T13:15:00Z", actionType: "light_toggle",
+    description: "Enabled artificial lighting for Zone 3 — beans & peas below PAR minimum",
+    reasoning: "Beans & peas in Zone 3 at 30% growth receiving PAR 280 umol/m2/s, below optimal 300 minimum. Enabling artificial lighting to supplement solar irradiance during low-light season.",
+    knowledgeBaseSource: "Crop Profiles — Beans/Peas light requirements", outcome: "SUCCESS",
   },
   {
-    id: uuid(), timestamp: "2026-06-15T11:00:00Z", actionType: "NUTRIENT_DOSED",
-    description: "Added potassium supplement to tomato section nutrient feed",
-    reasoning: "Slot 1-1 tomato showing potassium deficiency stress. Leaf edge browning detected at sensor zone. KB #4: K deficiency in tomatoes requires immediate supplementation at 150ppm K₂O.",
-    knowledgeBaseSource: "Plant Stress Guide — Potassium deficiency", outcome: "PENDING",
+    id: uuid(), timestamp: "2026-06-15T11:00:00Z", actionType: "set_zone_plan",
+    description: "Adjusted Zone 4 plan: increased lettuce from 20% to 30%, reduced radish from 30% to 20%",
+    reasoning: "Micronutrient analysis shows vitamin A and K coverage dropping below 60%. Lettuce is the primary source for both. Reallocating Zone 4 to prioritize lettuce over radish.",
+    knowledgeBaseSource: "Human Nutritional Strategy — Micronutrient targets", outcome: "PENDING",
   },
   {
-    id: uuid(), timestamp: "2026-06-15T08:00:00Z", actionType: "IRRIGATION_ADJUSTED",
-    description: "Morning irrigation cycle — standard routine adjustment for all zones",
-    reasoning: "Daily morning irrigation based on overnight evapotranspiration calculations. All zones within normal parameters. Standard 2.4 L/min flow rate maintained.",
+    id: uuid(), timestamp: "2026-06-15T08:00:00Z", actionType: "set_temperature",
+    description: "Adjusted greenhouse temperature target from 22C to 20C",
+    reasoning: "Energy deficit detected for 2 consecutive days. Reducing temperature target by 2C lowers heating cost. All crops within optimal range at 20C. KB: potato optimal 16-20C, beans 18-25C.",
     knowledgeBaseSource: null, outcome: "SUCCESS",
   },
   {
-    id: uuid(), timestamp: "2026-06-14T22:00:00Z", actionType: "LIGHT_CYCLE_MODIFIED",
-    description: "Switched all zones to night cycle — LEDs off, UV supplementation standby",
-    reasoning: "Standard 16h/8h photoperiod schedule. Solar irradiance below threshold at 22:00 Mars local time. Switching to night mode.",
-    knowledgeBaseSource: null, outcome: "SUCCESS",
+    id: uuid(), timestamp: "2026-06-14T22:00:00Z", actionType: "remove",
+    description: "Removed severely stressed beans_peas crop in Zone 1 (crop_1_4)",
+    reasoning: "Crop health at 22%, below recovery threshold of 30. Prolonged drought stress has irreversibly damaged the plant. Removing to free space for auto-replant per zone plan.",
+    knowledgeBaseSource: "Plant Stress Guide — Recovery thresholds", outcome: "SUCCESS",
   },
 ];
 
-// === Recommendations ===
+// === Recommendations (real action types) ===
 export const mockRecommendations: Recommendation[] = [
   {
-    id: uuid(), createdAt: "2026-06-15T14:00:00Z", actionType: "CROP_REMOVAL_SUGGESTED",
-    description: "Consider harvesting lettuce in slots 0-0 and 0-1 early — growth at 85% and 78%",
-    reasoning: "Dust storm forecast for days 146-147 may reduce energy reserves. Harvesting now locks in ~2.7kg yield rather than risking stress damage during storm. However, waiting 3 more days could add 0.4kg yield if storm passes quickly.",
+    id: uuid(), createdAt: "2026-06-15T14:00:00Z", actionType: "set_zone_plan",
+    description: "Consider reallocating Zone 1 to 70% potato, 30% beans_peas for calorie boost",
+    reasoning: "Calorie greenhouse fraction at 16.9%, near lower bound of 15-25% target. Increasing potato allocation in Zone 1 could raise fraction to ~19%. However, this reduces protein from beans_peas.",
     confidence: 0.62, urgency: "MEDIUM", expiresAt: "2026-06-16T14:00:00Z", status: "PENDING",
   },
   {
-    id: uuid(), createdAt: "2026-06-15T12:00:00Z", actionType: "IRRIGATION_INCREASE",
-    description: "Increase base irrigation rate by 8% for next 48 hours",
-    reasoning: "Forecast indicates dust storm approaching. Reduced solar irradiance will lower greenhouse temperature, but crops may need pre-hydration buffer. Confidence is below threshold because the storm severity is uncertain.",
+    id: uuid(), createdAt: "2026-06-15T12:00:00Z", actionType: "water_adjust",
+    description: "Increase water multiplier to 1.4x for Zone 1 ahead of dust storm",
+    reasoning: "Forecast indicates dust storm approaching on SOL 146-147. Pre-hydrating potato zone provides buffer against potential water recycling degradation event.",
     confidence: 0.55, urgency: "LOW", expiresAt: "2026-06-17T12:00:00Z", status: "PENDING",
   },
   {
-    id: uuid(), createdAt: "2026-06-15T10:00:00Z", actionType: "PLANTING_SUGGESTED",
-    description: "Plant radish in empty slots 2-5 and 3-4 — fast harvest before storm window",
-    reasoning: "Radish has 25-day growth cycle. If planted now, harvest by SOL 167. This fills a vitamin C gap identified in nutritional analysis. However, planting during pre-storm period carries resource risk.",
+    id: uuid(), createdAt: "2026-06-15T10:00:00Z", actionType: "light_toggle",
+    description: "Disable artificial lighting in Zone 4 during peak solar hours to conserve energy",
+    reasoning: "Energy reserves at 84% but dust storm forecast may reduce solar generation. Herbs and lettuce in Zone 4 can tolerate reduced light for 6-hour window. Saves ~2.5 kWh/day.",
     confidence: 0.48, urgency: "LOW", expiresAt: "2026-06-18T10:00:00Z", status: "PENDING",
   },
 ];
@@ -400,27 +325,27 @@ export const mockRecommendations: Recommendation[] = [
 export const mockAlerts: Alert[] = [
   {
     id: uuid(), createdAt: "2026-06-15T13:45:00Z", resolvedAt: null,
-    severity: "WARNING", type: "NUTRIENT_DEFICIENCY", cropId: CROP_IDS.tomato,
-    slotId: "s1-1-1", greenhouseId: GH_ALPHA_ID,
-    diagnosis: "Potassium deficiency detected in tomato at slot 1-1. Leaf edge browning and weak stem development observed. EC reading 2.1 mS/cm indicates nutrient imbalance.",
+    severity: "WARNING", type: "NUTRIENT_DEFICIENCY", cropId: CROP_IDS.beans_peas,
+    slotId: "s1-0-3", greenhouseId: GH_ID,
+    diagnosis: "Drought stress detected in beans & peas at Zone 1 slot 0-3. Soil moisture below 40% threshold. Water allocation may be insufficient for current growth stage.",
     confidence: 0.82, status: "OPEN", escalatedToHuman: false,
-    suggestedAction: "Apply potassium supplement at 150ppm K₂O concentration. Monitor EC levels for 24 hours.",
+    suggestedAction: "Increase Zone 1 water multiplier from 1.2x to 1.4x. Monitor for 24 hours.",
   },
   {
     id: uuid(), createdAt: "2026-06-15T11:20:00Z", resolvedAt: null,
-    severity: "INFO", type: "ENVIRONMENTAL_STRESS", cropId: CROP_IDS.spinach,
-    slotId: "s2-0-1", greenhouseId: GH_BETA_ID,
-    diagnosis: "Spinach in Beta greenhouse slot 0-1 receiving suboptimal light. PAR reading 180 µmol/m²/s, below minimum 200 for spinach.",
+    severity: "INFO", type: "ENVIRONMENTAL_STRESS", cropId: CROP_IDS.herbs,
+    slotId: "s1-3-0", greenhouseId: GH_ID,
+    diagnosis: "Herbs in Zone 4 showing minor cold stress. Internal temperature at 18C after overnight temperature adjustment. Within acceptable range but suboptimal for herbs (optimal 18-24C).",
     confidence: 0.91, status: "OPEN", escalatedToHuman: false,
-    suggestedAction: "Reposition supplemental LED panel or swap slot with less light-sensitive crop.",
+    suggestedAction: "Monitor — temperature target already at 20C, should recover during solar hours.",
   },
   {
     id: uuid(), createdAt: "2026-06-14T16:00:00Z", resolvedAt: "2026-06-14T18:30:00Z",
     severity: "CRITICAL", type: "EQUIPMENT_FAILURE", cropId: null,
-    slotId: null, greenhouseId: GH_ALPHA_ID,
-    diagnosis: "Water flow sensor in Alpha greenhouse reported intermittent readings. Flow rate oscillating between 0 and 4.8 L/min — possible pump cavitation or sensor malfunction.",
+    slotId: null, greenhouseId: GH_ID,
+    diagnosis: "Water recycling rate dropped from 90% to 75%. Water recycling degradation event active since SOL 139. Gradual recovery underway.",
     confidence: 0.74, status: "RESOLVED", escalatedToHuman: true,
-    suggestedAction: "Inspect pump intake for debris. Recalibrate flow sensor. If sensor fault, switch to backup.",
+    suggestedAction: "Reduce water consumption across all zones. Agent decreased water multipliers automatically.",
   },
 ];
 
@@ -434,61 +359,68 @@ export const mockAgentConfig: AgentConfig = {
 
 // === Planting Queue ===
 export const mockPlantingQueue: PlantingQueueItem[] = [
-  { rank: 1, cropId: CROP_IDS.radish, cropName: "Radish", greenhouseId: GH_ALPHA_ID, recommendedPlantDate: "2026-06-16T08:00:00Z", missionDay: 143, reason: "Fast 25-day cycle fills vitamin C gap before dust storm window", nutritionalGapsAddressed: ["Vitamin C"] },
-  { rank: 2, cropId: CROP_IDS.spinach, cropName: "Spinach", greenhouseId: GH_ALPHA_ID, recommendedPlantDate: "2026-06-18T08:00:00Z", missionDay: 145, reason: "Iron and folate coverage dropping below 60%. Spinach is the highest-density source available.", nutritionalGapsAddressed: ["Iron", "Folate", "Vitamin K"] },
-  { rank: 3, cropId: CROP_IDS.soybean, cropName: "Soybean", greenhouseId: GH_BETA_ID, recommendedPlantDate: "2026-06-20T08:00:00Z", missionDay: 147, reason: "Protein intake projected to fall below target by SOL 200. Soybean provides 36g protein per 100g.", nutritionalGapsAddressed: ["Protein", "Iron"] },
+  { rank: 1, cropId: CROP_IDS.radish, cropName: "Radish", greenhouseId: GH_ID, recommendedPlantDate: "2026-06-16T08:00:00Z", missionDay: 143, reason: "Fast 25-day cycle fills vitamin C gap before dust storm window", nutritionalGapsAddressed: ["Vitamin C"] },
+  { rank: 2, cropId: CROP_IDS.beans_peas, cropName: "Beans & Peas", greenhouseId: GH_ID, recommendedPlantDate: "2026-06-18T08:00:00Z", missionDay: 145, reason: "Protein greenhouse fraction at 15%, below 20% target. Beans/peas are the highest protein density crop available.", nutritionalGapsAddressed: ["Protein", "Iron", "Folate"] },
+  { rank: 3, cropId: CROP_IDS.lettuce, cropName: "Lettuce", greenhouseId: GH_ID, recommendedPlantDate: "2026-06-20T08:00:00Z", missionDay: 147, reason: "Vitamin A and K coverage dropping. Lettuce provides both plus folate. Fast 30-day cycle fits before next review.", nutritionalGapsAddressed: ["Vitamin A", "Vitamin K", "Folate"] },
 ];
 
 // === Harvest Journal ===
 export const mockHarvestJournal: HarvestEntry[] = [
-  { id: uuid(), harvestedAt: "2026-06-10T10:00:00Z", missionDay: 137, cropId: CROP_IDS.lettuce, cropName: "Lettuce", yieldKg: 1.8, slotId: "s1-0-4", greenhouseId: GH_ALPHA_ID, notes: "Excellent quality, no stress indicators" },
-  { id: uuid(), harvestedAt: "2026-06-08T10:00:00Z", missionDay: 135, cropId: CROP_IDS.radish, cropName: "Radish", yieldKg: 0.9, slotId: "s2-0-2", greenhouseId: GH_BETA_ID, notes: null },
-  { id: uuid(), harvestedAt: "2026-06-05T10:00:00Z", missionDay: 132, cropId: CROP_IDS.spinach, cropName: "Spinach", yieldKg: 1.4, slotId: "s1-0-2", greenhouseId: GH_ALPHA_ID, notes: "Slight iron deficiency signs in older leaves" },
-  { id: uuid(), harvestedAt: "2026-06-01T10:00:00Z", missionDay: 128, cropId: CROP_IDS.basil, cropName: "Basil", yieldKg: 0.6, slotId: "s2-0-3", greenhouseId: GH_BETA_ID, notes: null },
-  { id: uuid(), harvestedAt: "2026-05-28T10:00:00Z", missionDay: 124, cropId: CROP_IDS.lettuce, cropName: "Lettuce", yieldKg: 1.6, slotId: "s1-0-0", greenhouseId: GH_ALPHA_ID, notes: null },
+  { id: uuid(), harvestedAt: "2026-06-10T10:00:00Z", missionDay: 137, cropId: CROP_IDS.lettuce, cropName: "Lettuce", yieldKg: 1.8, slotId: "s1-1-0", greenhouseId: GH_ID, notes: "Excellent quality, no stress indicators" },
+  { id: uuid(), harvestedAt: "2026-06-08T10:00:00Z", missionDay: 135, cropId: CROP_IDS.radish, cropName: "Radish", yieldKg: 0.9, slotId: "s1-2-3", greenhouseId: GH_ID, notes: null },
+  { id: uuid(), harvestedAt: "2026-06-05T10:00:00Z", missionDay: 132, cropId: CROP_IDS.herbs, cropName: "Herbs", yieldKg: 0.6, slotId: "s1-3-0", greenhouseId: GH_ID, notes: "Good aroma, crew appreciated fresh herbs in meals" },
+  { id: uuid(), harvestedAt: "2026-06-01T10:00:00Z", missionDay: 128, cropId: CROP_IDS.beans_peas, cropName: "Beans & Peas", yieldKg: 2.1, slotId: "s1-0-2", greenhouseId: GH_ID, notes: "First beans harvest of this cycle, good protein contribution" },
+  { id: uuid(), harvestedAt: "2026-05-28T10:00:00Z", missionDay: 124, cropId: CROP_IDS.lettuce, cropName: "Lettuce", yieldKg: 1.6, slotId: "s1-1-1", greenhouseId: GH_ID, notes: null },
 ];
 
-// === Stockpile ===
+// === Stockpile (greenhouse-harvested food in storage) ===
 export const mockStockpile: StockpileItem[] = [
   { cropId: CROP_IDS.potato, cropName: "Potato", quantityKg: 12.4, estimatedCalories: 9548, daysOfSupply: 4.2, expiresInDays: 30 },
-  { cropId: CROP_IDS.wheat, cropName: "Wheat", quantityKg: 8.6, estimatedCalories: 29240, daysOfSupply: 12.8, expiresInDays: 180 },
-  { cropId: CROP_IDS.soybean, cropName: "Soybean", quantityKg: 5.2, estimatedCalories: 23192, daysOfSupply: 10.1, expiresInDays: 120 },
+  { cropId: CROP_IDS.beans_peas, cropName: "Beans & Peas", quantityKg: 5.2, estimatedCalories: 5200, daysOfSupply: 2.3, expiresInDays: 14 },
   { cropId: CROP_IDS.lettuce, cropName: "Lettuce", quantityKg: 3.4, estimatedCalories: 510, daysOfSupply: 0.2, expiresInDays: 5 },
-  { cropId: CROP_IDS.spinach, cropName: "Spinach", quantityKg: 2.1, estimatedCalories: 483, daysOfSupply: 0.2, expiresInDays: 4 },
   { cropId: CROP_IDS.radish, cropName: "Radish", quantityKg: 1.5, estimatedCalories: 240, daysOfSupply: 0.1, expiresInDays: 7 },
+  { cropId: CROP_IDS.herbs, cropName: "Herbs", quantityKg: 0.8, estimatedCalories: 120, daysOfSupply: 0.05, expiresInDays: 3 },
 ];
 
-// === Nutrition ===
+// === Stored Food (crew arrives with 5.4M kcal, consumed daily) ===
+export const mockStoredFood: StoredFood = {
+  totalCalories: 5400000,
+  remainingCalories: 4200000,
+};
+
+// === Nutrition (crew of 4, 12,000 kcal/day target) ===
 export const mockNutritionEntries: DailyNutritionEntry[] = Array.from({ length: 7 }, (_, i) => {
-  const day = 136 + i;
-  const baseCalories = 8500 + Math.random() * 2500;
+  const ghFraction = 0.15 + Math.random() * 0.08;
+  const ghKcal = Math.round(12000 * ghFraction);
   return {
     date: new Date(2026, 5, 9 + i).toISOString(),
-    totalCalories: Math.round(baseCalories),
-    proteinG: Math.round(50 + Math.random() * 40),
-    carbsG: Math.round(200 + Math.random() * 100),
-    fatG: Math.round(30 + Math.random() * 20),
-    fiberG: Math.round(20 + Math.random() * 10),
-    targetCalories: 10000,
-    coveragePercent: Math.round(baseCalories / 100),
+    totalCalories: 12000,
+    proteinG: Math.round(380 + Math.random() * 40),
+    carbsG: Math.round(1200 + Math.random() * 200),
+    fatG: Math.round(380 + Math.random() * 60),
+    fiberG: Math.round(90 + Math.random() * 30),
+    targetCalories: 12000,
+    coveragePercent: 100,
     micronutrients: {
-      vitaminAMcg: Math.round(600 + Math.random() * 300),
-      vitaminCMg: Math.round(50 + Math.random() * 40),
-      vitaminKMcg: Math.round(80 + Math.random() * 40),
-      folateMcg: Math.round(200 + Math.random() * 200),
-      ironMg: Math.round(10 + Math.random() * 8),
-      potassiumMg: Math.round(2000 + Math.random() * 1500),
-      magnesiumMg: Math.round(200 + Math.random() * 150),
+      vitaminAMcg: Math.round(2400 + Math.random() * 1200),
+      vitaminCMg: Math.round(240 + Math.random() * 120),
+      vitaminKMcg: Math.round(320 + Math.random() * 160),
+      folateMcg: Math.round(1200 + Math.random() * 400),
+      ironMg: Math.round(50 + Math.random() * 22),
+      potassiumMg: Math.round(10000 + Math.random() * 3600),
+      magnesiumMg: Math.round(1200 + Math.random() * 400),
     },
+    calorieGhFraction: +ghFraction.toFixed(3),
+    proteinGhFraction: +(0.12 + Math.random() * 0.08).toFixed(3),
+    micronutrientsCovered: Math.random() > 0.3 ? 7 : 5 + Math.floor(Math.random() * 2),
   };
 });
 
+// === Coverage Heatmap (7 micronutrients × 14 days) ===
 export const mockCoverageHeatmap: CoverageHeatmap = {
-  nutrients: ["Calories", "Protein", "Vitamin A", "Vitamin C", "Vitamin K", "Folate", "Iron", "Potassium", "Magnesium"],
+  nutrients: ["Vitamin A", "Vitamin C", "Vitamin K", "Folate", "Iron", "Potassium", "Magnesium"],
   missionDays: Array.from({ length: 14 }, (_, i) => 129 + i),
   coverage: [
-    [82, 85, 78, 91, 88, 84, 79, 92, 87, 83, 80, 86, 90, 85],
-    [65, 70, 58, 72, 68, 64, 60, 75, 71, 66, 62, 69, 73, 68],
     [88, 92, 85, 95, 90, 87, 84, 93, 89, 86, 83, 91, 94, 89],
     [52, 48, 55, 61, 57, 50, 45, 58, 54, 49, 46, 53, 59, 55],
     [90, 94, 87, 96, 92, 89, 85, 95, 91, 88, 84, 93, 97, 92],
@@ -518,12 +450,12 @@ export const mockMissionTimeline: MissionTimeline = {
   currentMissionDay: 142,
   totalMissionDays: 450,
   milestones: [
-    { missionDay: 145, date: "2026-06-18T00:00:00Z", type: "HARVEST_WINDOW", label: "Lettuce harvest window (Alpha 0-0, 0-1)", cropId: CROP_IDS.lettuce },
-    { missionDay: 148, date: "2026-06-21T00:00:00Z", type: "HARVEST_WINDOW", label: "Basil harvest ready (Alpha 0-4, 0-5)", cropId: CROP_IDS.basil },
-    { missionDay: 155, date: "2026-06-28T00:00:00Z", type: "HARVEST_WINDOW", label: "Radish harvest (Alpha 1-4, 1-5)", cropId: CROP_IDS.radish },
-    { missionDay: 170, date: "2026-07-13T00:00:00Z", type: "PLANTING_DEADLINE", label: "Last wheat planting for pre-mission-end harvest", cropId: CROP_IDS.wheat },
+    { missionDay: 145, date: "2026-06-18T00:00:00Z", type: "HARVEST_WINDOW", label: "Lettuce harvest window (Zone 2)", cropId: CROP_IDS.lettuce },
+    { missionDay: 148, date: "2026-06-21T00:00:00Z", type: "HARVEST_WINDOW", label: "Herbs harvest ready (Zone 4)", cropId: CROP_IDS.herbs },
+    { missionDay: 155, date: "2026-06-28T00:00:00Z", type: "HARVEST_WINDOW", label: "Radish harvest (Zone 2, Zone 3)", cropId: CROP_IDS.radish },
+    { missionDay: 165, date: "2026-07-08T00:00:00Z", type: "HARVEST_WINDOW", label: "Beans & peas harvest (Zone 1, Zone 3)", cropId: CROP_IDS.beans_peas },
     { missionDay: 200, date: "2026-08-12T00:00:00Z", type: "RESOURCE_CRITICAL", label: "Water reserves projected below 30%", cropId: null },
-    { missionDay: 330, date: "2026-12-20T00:00:00Z", type: "PLANTING_DEADLINE", label: "Last planting window for any 120-day crop", cropId: null },
+    { missionDay: 360, date: "2026-12-20T00:00:00Z", type: "PLANTING_DEADLINE", label: "Last planting window for 90-day potato crop", cropId: CROP_IDS.potato },
     { missionDay: 450, date: "2027-04-19T00:00:00Z", type: "TRIP_END", label: "Mission end — surface departure", cropId: null },
   ],
 };
@@ -548,13 +480,10 @@ export const mockSimulationDetail: SimulationDetail = {
   },
 };
 
-// === Scenarios ===
+// === Scenarios (2 core events from sim engine) ===
 export const mockScenarios: Scenario[] = [
-  { id: uuid(), name: "Water Leak", type: "WATER_LEAK", description: "Sudden loss of water reserves from pipe rupture or seal failure. Tests agent water conservation triage.", severity: "HIGH", defaultDurationMinutes: 120 },
-  { id: uuid(), name: "Solar Panel Failure", type: "SOLAR_PANEL_FAILURE", description: "Energy input drops significantly. Agent must manage lighting and heating priorities.", severity: "HIGH", defaultDurationMinutes: 480 },
-  { id: uuid(), name: "Disease Outbreak", type: "DISEASE_OUTBREAK", description: "Pathogen spreading through crop zone. Agent must decide: quarantine, treat, or destroy and replant.", severity: "MEDIUM", defaultDurationMinutes: 1440 },
-  { id: uuid(), name: "Dust Storm", type: "DUST_STORM", description: "Extended period of reduced solar energy and increased heating demand from Mars dust storm.", severity: "MEDIUM", defaultDurationMinutes: 2880 },
-  { id: uuid(), name: "Equipment Malfunction", type: "EQUIPMENT_MALFUNCTION", description: "Sensor or actuation hardware failure requiring workaround.", severity: "LOW", defaultDurationMinutes: 60 },
+  { id: uuid(), name: "Water Recycling Degradation", type: "WATER_RECYCLING_DEGRADATION", description: "Water recycling efficiency drops to 70-80% for 5-15 sols. Tests agent water conservation and crop prioritization under resource constraints.", severity: "HIGH", defaultDurationMinutes: null },
+  { id: uuid(), name: "Temperature Control Failure", type: "TEMPERATURE_FAILURE", description: "Internal temperature drifts +/-5C from target for 1-3 sols. Agent must manage crop stress thresholds and energy allocation for heating.", severity: "MEDIUM", defaultDurationMinutes: null },
 ];
 
 // === Analytics ===
@@ -573,7 +502,7 @@ export const initialSimulationState: SimulationState = {
   speed: 0,
   isRunning: false,
   greenhouses: mockGreenhouses,
-  selectedGreenhouseId: GH_ALPHA_ID,
+  selectedGreenhouseId: GH_ID,
   resources: { waterReservePercent: 73, nutrientReservePercent: 58, energyReservePercent: 84 },
   weather: mockWeather,
   alerts: mockAlerts,

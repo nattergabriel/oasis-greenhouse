@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Thermometer, Sprout, Droplets, Sun, CalendarDays } from "lucide-react";
-import { mockCrops, mockPlantingQueue, mockHarvestJournal, mockStockpile } from "@/lib/mock-data";
+import { mockCrops, mockPlantingQueue, mockHarvestJournal, mockStockpile, mockStoredFood } from "@/lib/mock-data";
 import { useSimulation } from "@/providers/simulation-provider";
-import type { Crop, CropCategory, WaterRequirement, PlantingQueueItem, HarvestEntry, StockpileItem } from "@/lib/types";
+import type { Crop, CropCategory, PlantingQueueItem, HarvestEntry, StockpileItem } from "@/lib/types";
 
 // === Helpers ===
 
@@ -14,7 +14,6 @@ function getCategoryColor(category: CropCategory): string {
   switch (category) {
     case "VEGETABLE": return "#4ead6b";
     case "LEGUME": return "#d4924a";
-    case "GRAIN": return "#d4aa30";
     case "HERB": return "#7c6aad";
   }
 }
@@ -24,14 +23,11 @@ function formatDate(isoString: string): string {
 }
 
 const MISSION_ROLES: Record<string, { role: string; desc: string }> = {
-  Lettuce: { role: "Micronutrient Stabilizer", desc: "Fast-cycle leafy green, rich in Vitamin K and A. Low caloric density but essential for micronutrient coverage and dietary diversity." },
-  Tomato: { role: "Dietary Diversity", desc: "Moderate cycle, good potassium and vitamin C source. High yield per m² makes it efficient for supplementing diet variety." },
-  Potato: { role: "Energy Backbone", desc: "Primary caloric security crop with high yield per m². Relatively stable storage potential. The energy foundation of the mission diet." },
-  Spinach: { role: "Micronutrient Density", desc: "Exceptional folate, iron, and vitamin K content. Short cycle allows rapid nutritional correction when deficits are detected." },
-  Soybean: { role: "Protein Security", desc: "Primary plant-based protein source for the crew. Moderate cycle with nitrogen fixation capability. Critical for muscle mass preservation." },
-  Wheat: { role: "Caloric Reserve", desc: "High calorie density grain for long-term energy storage. Longest growth cycle but highest caloric return per harvest." },
-  Radish: { role: "Fast Buffer", desc: "Very short cycle system feedback and variety crop. Used as rapid response crop when system stability needs verification." },
-  Basil: { role: "Crew Morale", desc: "Psychological well-being enhancer. Minimal caloric contribution but improves palatability and supports crew satisfaction." },
+  Lettuce: { role: "Micronutrient Stabilizer", desc: "Fast-cycle leafy green, rich in Vitamin A, K, and folate. Essential for micronutrient coverage. 30-day growth cycle allows rapid nutritional correction." },
+  Potato: { role: "Energy Backbone", desc: "Primary caloric security crop. High yield per m2 with 77 kcal/100g. The energy foundation of the mission diet, providing consistent caloric output across 90-day cycles." },
+  Radish: { role: "Fast Buffer", desc: "Shortest growth cycle (25 days). Primary vitamin C source. Used as rapid-response crop when system stability needs verification or nutrient gaps emerge." },
+  "Beans & Peas": { role: "Protein Security", desc: "Primary plant-based protein source at 7g/100g. Also provides iron, folate, potassium, and magnesium. Nitrogen-fixing capability supports soil ecosystem." },
+  Herbs: { role: "Crew Morale", desc: "Psychological well-being enhancer. Provides vitamins A, C, and K. Minimal caloric contribution but improves palatability and supports crew satisfaction over 450 sols." },
 };
 
 type TabValue = "catalog" | "queue" | "journal" | "stockpile";
@@ -228,7 +224,7 @@ function HarvestJournalTable({ entries }: { entries: HarvestEntry[] }) {
           <span className="font-mono tabular-nums text-sm text-primary">{entry.missionDay}</span>
           <span className="font-medium">{entry.cropName}</span>
           <span className="font-mono tabular-nums text-sm text-[#4ead6b]">{entry.yieldKg} kg</span>
-          <span className="text-sm text-muted-foreground">{entry.greenhouseId === "a1000000-0000-0000-0000-000000000001" ? "Alpha" : "Beta"}</span>
+          <span className="text-sm text-muted-foreground">Zone {parseInt(entry.slotId.split("-")[1]) + 1}</span>
           <span className="text-sm text-muted-foreground italic truncate">{entry.notes || "—"}</span>
         </div>
       ))}
@@ -280,7 +276,7 @@ function StockpileList({ items }: { items: StockpileItem[] }) {
       <Card className="bg-primary/10 border-primary/30 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs text-primary/70 uppercase font-semibold tracking-wide">Total Stockpile</div>
+            <div className="text-xs text-primary/70 uppercase font-semibold tracking-wide">Harvested Stockpile</div>
             <div className="text-xl font-bold font-mono tabular-nums text-primary mt-0.5">
               {totalCalories.toLocaleString()} <span className="text-sm text-primary/70">kcal</span>
             </div>
@@ -292,6 +288,24 @@ function StockpileList({ items }: { items: StockpileItem[] }) {
             </div>
           </div>
         </div>
+      </Card>
+
+      <Card className="border-border p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wide">Mission Reserves (Stored Food)</div>
+            <div className="text-xl font-bold font-mono tabular-nums mt-0.5">
+              {(mockStoredFood.remainingCalories / 1000000).toFixed(1)}M <span className="text-sm text-muted-foreground">/ {(mockStoredFood.totalCalories / 1000000).toFixed(1)}M kcal</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wide">Remaining</div>
+            <div className="text-xl font-bold font-mono tabular-nums mt-0.5">
+              {Math.round(mockStoredFood.remainingCalories / mockStoredFood.totalCalories * 100)}%
+            </div>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">Crew arrived with {(mockStoredFood.totalCalories / 1000000).toFixed(1)}M kcal. Greenhouse supplements stored food — crew never starves.</p>
       </Card>
     </div>
   );

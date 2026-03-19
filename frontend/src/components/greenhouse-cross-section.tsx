@@ -36,21 +36,19 @@ function leafDark(status: string) {
 
 // Crop-specific fruit color
 function fruitColor(name: string) {
-  if (name === "Tomato") return "#c75a3a";
-  if (name === "Basil") return "#7c6aad";
+  if (name === "Herbs") return "#7c6aad";
   if (name === "Radish") return "#c75a6a";
-  if (name === "Wheat") return "#d4aa30";
-  if (name === "Soybean") return "#8a9a44";
-  return "#d4924a";
+  if (name === "Beans & Peas") return "#8a9a44";
+  if (name === "Potato") return "#d4aa30";
+  return "#d4924a"; // Lettuce
 }
 
 // Crop-specific shape variation
 function cropShape(name: string): "round" | "tall" | "bushy" | "rosette" {
-  if (name === "Lettuce" || name === "Spinach") return "rosette";
-  if (name === "Tomato") return "tall";
-  if (name === "Wheat" || name === "Soybean") return "tall";
-  if (name === "Basil") return "bushy";
-  return "round";
+  if (name === "Lettuce") return "rosette";
+  if (name === "Beans & Peas") return "tall";
+  if (name === "Herbs") return "bushy";
+  return "round"; // Potato, Radish
 }
 
 function Plant({

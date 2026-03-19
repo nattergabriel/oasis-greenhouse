@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { useSimulation } from "@/providers/simulation-provider";
-import { mockSensorSnapshot, mockWeather, mockStockpile } from "@/lib/mock-data";
+import { mockSensorSnapshot, mockWeather, mockStockpile, mockStoredFood, mockNutritionEntries } from "@/lib/mock-data";
 import { GreenhouseCrossSection } from "@/components/greenhouse-cross-section";
 
 function statusColor(status: string) {
@@ -18,6 +18,9 @@ export default function DashboardPage() {
   const sensor = mockSensorSnapshot;
   const weather = mockWeather;
   const totalCalories = mockStockpile.reduce((s, i) => s + i.estimatedCalories, 0);
+  const latestNutrition = mockNutritionEntries[mockNutritionEntries.length - 1];
+  const ghFractionPct = Math.round(latestNutrition.calorieGhFraction * 100);
+  const storedPct = Math.round((mockStoredFood.remainingCalories / mockStoredFood.totalCalories) * 100);
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
@@ -72,16 +75,40 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="p-4">
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">Stockpile</span>
-          <p className="mt-2 font-mono text-2xl tabular-nums">{totalCalories.toLocaleString()} kcal</p>
-          <p className="text-xs text-muted-foreground">{mockStockpile.length} crop types stored</p>
-          <div className="mt-3 space-y-1">
-            {mockStockpile.slice(0, 3).map((item) => (
-              <div key={item.cropId} className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{item.cropName}</span>
-                <span className="font-mono tabular-nums">{item.quantityKg} kg</span>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Food Supply</span>
+          <div className="mt-3 space-y-3">
+            <div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">GH Fraction</span>
+                <span className="font-mono tabular-nums text-primary">{ghFractionPct}%</span>
               </div>
-            ))}
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted border border-border">
+                <div className="h-full rounded-full" style={{ width: `${ghFractionPct}%`, backgroundColor: ghFractionPct >= 15 ? "var(--color-status-healthy)" : "var(--color-status-warning)" }} />
+              </div>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">Target: 15-25% of calories from greenhouse</p>
+            </div>
+            <div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Mission Reserves</span>
+                <span className="font-mono tabular-nums">{storedPct}%</span>
+              </div>
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted border border-border">
+                <div className="h-full rounded-full" style={{ width: `${storedPct}%`, backgroundColor: storedPct > 50 ? "var(--color-status-healthy)" : storedPct > 25 ? "var(--color-status-warning)" : "var(--color-status-critical)" }} />
+              </div>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">{(mockStoredFood.remainingCalories / 1000).toFixed(0)}k / {(mockStoredFood.totalCalories / 1000).toFixed(0)}k kcal stored</p>
+            </div>
+            <div className="border-t border-border pt-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Harvested</span>
+                <span className="font-mono tabular-nums">{totalCalories.toLocaleString()} kcal</span>
+              </div>
+              {mockStockpile.slice(0, 3).map((item) => (
+                <div key={item.cropId} className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                  <span>{item.cropName}</span>
+                  <span className="font-mono tabular-nums">{item.quantityKg} kg</span>
+                </div>
+              ))}
+            </div>
           </div>
         </Card>
       </div>

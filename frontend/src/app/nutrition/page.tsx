@@ -174,6 +174,36 @@ export default function NutritionPage() {
         </Card>
       )}
 
+      {/* Greenhouse Fraction — the core success metric */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <Card className="p-4">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Calorie GH Fraction</span>
+          <p className="mt-2 font-mono text-2xl tabular-nums text-primary">{Math.round(latestEntry.calorieGhFraction * 100)}%</p>
+          <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted border border-border">
+            <div className="h-full rounded-full" style={{ width: `${Math.min(latestEntry.calorieGhFraction * 100 * 4, 100)}%`, backgroundColor: latestEntry.calorieGhFraction >= 0.15 ? "var(--color-status-healthy)" : "var(--color-status-warning)" }} />
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground">Target: 15-25% from greenhouse</p>
+        </Card>
+        <Card className="p-4">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Protein GH Fraction</span>
+          <p className="mt-2 font-mono text-2xl tabular-nums text-primary">{Math.round(latestEntry.proteinGhFraction * 100)}%</p>
+          <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted border border-border">
+            <div className="h-full rounded-full" style={{ width: `${Math.min(latestEntry.proteinGhFraction * 100 * 4, 100)}%`, backgroundColor: latestEntry.proteinGhFraction >= 0.15 ? "var(--color-status-healthy)" : "var(--color-status-warning)" }} />
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground">Target: 15-25% from greenhouse</p>
+        </Card>
+        <Card className="p-4">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Micronutrients Covered</span>
+          <p className="mt-2 font-mono text-2xl tabular-nums text-primary">{latestEntry.micronutrientsCovered}<span className="text-lg text-muted-foreground"> / 7</span></p>
+          <div className="mt-1 flex gap-1">
+            {Array.from({ length: 7 }, (_, i) => (
+              <div key={i} className="h-2 flex-1 rounded-full" style={{ backgroundColor: i < latestEntry.micronutrientsCovered ? "var(--color-status-healthy)" : "var(--border)" }} />
+            ))}
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground">Vit A, C, K, Folate, Fe, K, Mg</p>
+        </Card>
+      </div>
+
       {/* Row 1: Calorie chart + Risk hierarchy — matched height */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3" style={{ alignItems: "stretch" }}>
         <div className="lg:col-span-2 flex">

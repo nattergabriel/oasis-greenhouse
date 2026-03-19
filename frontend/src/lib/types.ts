@@ -23,14 +23,11 @@ export type AutonomyLevel =
 export type RiskTolerance = "CONSERVATIVE" | "MODERATE" | "AGGRESSIVE";
 export type SimulationStatus = "RUNNING" | "PAUSED" | "COMPLETED";
 export type ScenarioType =
-  | "WATER_LEAK"
-  | "SOLAR_PANEL_FAILURE"
-  | "DISEASE_OUTBREAK"
-  | "DUST_STORM"
-  | "EQUIPMENT_MALFUNCTION";
+  | "WATER_RECYCLING_DEGRADATION"
+  | "TEMPERATURE_FAILURE";
 export type ScenarioSeverity = "LOW" | "MEDIUM" | "HIGH" | "CATASTROPHIC";
 export type InjectionStatus = "ACTIVE" | "RESOLVED";
-export type CropCategory = "VEGETABLE" | "LEGUME" | "GRAIN" | "HERB";
+export type CropCategory = "VEGETABLE" | "LEGUME" | "HERB";
 export type WaterRequirement = "LOW" | "MEDIUM" | "HIGH";
 export type StressType =
   | "DROUGHT"
@@ -98,6 +95,14 @@ export interface GreenhouseResources {
   energyReservePercent: number;
 }
 
+export interface Zone {
+  id: number;
+  areaM2: number;
+  cropPlan: Record<string, number>;
+  artificialLight: boolean;
+  waterAllocation: number;
+}
+
 export interface GreenhouseDetail {
   id: string;
   name: string;
@@ -107,6 +112,7 @@ export interface GreenhouseDetail {
   overallStatus: GreenhouseStatus;
   slots: PlantSlot[];
   resources: GreenhouseResources;
+  zones: Zone[];
 }
 
 export interface NutrientSolution {
@@ -288,6 +294,11 @@ export interface StockpileItem {
   expiresInDays: number | null;
 }
 
+export interface StoredFood {
+  totalCalories: number;
+  remainingCalories: number;
+}
+
 // NutritionController
 export interface DailyNutritionEntry {
   date: string;
@@ -299,6 +310,9 @@ export interface DailyNutritionEntry {
   targetCalories: number;
   coveragePercent: number;
   micronutrients: Micronutrients;
+  calorieGhFraction: number;
+  proteinGhFraction: number;
+  micronutrientsCovered: number;
 }
 
 export interface CoverageHeatmap {
