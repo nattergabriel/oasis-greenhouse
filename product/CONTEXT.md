@@ -4,7 +4,7 @@
 **Michael** — PM / Design / Demo Lead
 
 ## Current Phase
-**Day 2 of hackathon.** Simulation engine complete. Backend integrated. Moving to presentation and brand.
+**Day 2 of hackathon.** Simulation engine complete. Backend integrated. Grid being updated to 4×4. Moving to presentation and brand.
 
 ## What Exists Right Now
 
@@ -19,26 +19,35 @@
 
 ## The Current Design (Source of Truth)
 
-**Greenhouse:** Grid of 2×2m slots (configurable). Each slot holds one crop type. Agent assigns crops to slots. Engine auto-fills and auto-replants.
+**Greenhouse:** 4×4 grid of 4 m² slots = 64 m² total (being updated from 2×2). Each slot holds one crop type. Agent assigns crops to slots. Engine auto-fills and auto-replants.
 
 **Crops (5, all KB-backed):** potato, lettuce, radish, beans_peas, herbs
 
-**Agent actions:** assign crop to slot, water_adjust, light_toggle, set_temperature, remove
+**Agent actions:** assign crop type to slot, water_adjust, light_toggle, set_temperature, remove
 
 **Agent loop:** init → plan (LLM) → simulate (30 days) → [react if crisis / plan if batch done / reflect if day 450]
 
 **Learning:** Strategy document rewritten after each 450-day run. Gets sharper, not longer.
 
+## Key Source Files
+
+| Document | Location | Purpose |
+|---|---|---|
+| **Sim spec** | `simulation/docs/SIMULATION-SPEC.md` | Full simulation specification |
+| **Sim config** | `simulation/src/config.py` | All constants (crops, stress, events, thresholds) |
+| **Sim models** | `simulation/src/models.py` | State dataclasses + API models |
+| **Backend agent** | `backend/src/graph.py` | LangGraph state machine |
+| **Backend models** | `backend/src/models/state.py` | Pydantic models (aligned with sim) |
+| **Backend sim client** | `backend/src/sim_client.py` | HTTP client for sim engine |
+
 ## Key Product Documents
 
 | Document | Location | Purpose |
 |---|---|---|
+| **Product index** | `product/INDEX.md` | Map of everything in product/ |
 | **Project Definition** | `product/PROJECT-DEFINITION.md` | What the project is, how to talk about it |
 | **Pitch Script** | `product/pitch/PITCH-SCRIPT.md` | 7-slide, 3-minute pitch with exact words |
 | **Brand Identity** | `product/brand/IDENTITY.md` | Colors, fonts, design guidelines |
 | **Business Case** | `product/research/BUSINESS-CASE.md` | Why this matters commercially |
 | **Partner Analysis** | `product/research/PARTNER-ANALYSIS.md` | Syngenta deep dive |
-| **Market Fit** | `product/research/MARKET-FIT.md` | Competitive landscape, value prop |
-| **Value Roadmap** | `product/research/VALUE-ROADMAP.md` | Hackathon → pilot → scale |
 | **Case Brief** | `product/research/CASE-BRIEF.md` | Original challenge requirements |
-| **Sim API Reference** | `simulation/API-REFERENCE.md` | Exact JSON schemas |
