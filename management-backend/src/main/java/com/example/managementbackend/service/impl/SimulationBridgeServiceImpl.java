@@ -218,9 +218,9 @@ public class SimulationBridgeServiceImpl implements SimulationBridgeService {
         List<PlantSlot> slots = plantSlotRepository.findByGreenhouseId(greenhouse.getId());
 
         for (SlotSnapshotPayload simSlot : snapshot.slots()) {
-            // Match by row/col position
-            int row = simSlot.position() != null ? simSlot.position().getOrDefault("row", simSlot.id() / 4) : simSlot.id() / 4;
-            int col = simSlot.position() != null ? simSlot.position().getOrDefault("col", simSlot.id() % 4) : simSlot.id() % 4;
+            // Match by row/col position (directly from Python's SlotSnapshot fields)
+            int row = simSlot.row();
+            int col = simSlot.col();
 
             PlantSlot dbSlot = slots.stream()
                     .filter(s -> s.getSlotRow() == row && s.getSlotCol() == col)
