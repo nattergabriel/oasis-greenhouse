@@ -1,0 +1,117 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Mars palette */
+  --color-mars-base: #0f0e0d;
+  --color-mars-surface: #1a1917;
+  --color-mars-elevated: #252320;
+  --color-mars-border: #2e2b27;
+  --color-mars-text: #e8e2d9;
+  --color-mars-text-secondary: #9c9488;
+  --color-mars-text-tertiary: #6b6560;
+  --color-mars-amber: #d4924a;
+  --color-mars-red: #c75a3a;
+  --color-mars-green: #5a9a6b;
+  --color-mars-yellow: #c4a344;
+  --color-mars-blue: #4a7c9e;
+  --color-mars-purple: #7c6aad;
+
+  /* Status aliases */
+  --color-status-healthy: #5a9a6b;
+  --color-status-warning: #c4a344;
+  --color-status-critical: #c75a3a;
+}
+
+/* Dark-only app — Mars greenhouse theme */
+:root {
+  --background: #0f0e0d;
+  --foreground: #e8e2d9;
+  --card: #1a1917;
+  --card-foreground: #e8e2d9;
+  --popover: #1a1917;
+  --popover-foreground: #e8e2d9;
+  --primary: #d4924a;
+  --primary-foreground: #0f0e0d;
+  --secondary: #252320;
+  --secondary-foreground: #e8e2d9;
+  --muted: #1a1917;
+  --muted-foreground: #9c9488;
+  --accent: #252320;
+  --accent-foreground: #e8e2d9;
+  --destructive: #c75a3a;
+  --border: #2e2b27;
+  --input: #2e2b27;
+  --ring: #d4924a;
+  --chart-1: #d4924a;
+  --chart-2: #5a9a6b;
+  --chart-3: #4a7c9e;
+  --chart-4: #c4a344;
+  --chart-5: #7c6aad;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}

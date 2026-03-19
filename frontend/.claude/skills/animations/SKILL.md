@@ -1,9 +1,27 @@
 ---
 name: animations
-description: Animation patterns for web apps including CSS keyframes, transitions, Framer Motion (React), and common animation recipes. Use when adding animations, transitions, hover effects, loading spinners, skeleton loaders, page transitions, scroll-triggered animations, parallax, or any motion/animation work.
+description: Animation patterns for Mars Greenhouse Command Center including CSS keyframes, transitions, Framer Motion (React), and greenhouse-specific animations. Dark theme optimized. Use when adding animations, transitions, hover effects, loading spinners, skeleton loaders, page transitions, plant growth effects, sensor transitions, status indicators, or any motion/animation work.
 ---
 
 # Animations Quick Reference
+
+## Theme Colors
+```css
+/* Mars Dark Theme */
+--background: #0f0e0c      /* Main background */
+--card: #1a1917            /* Card background */
+--secondary: #2e2b27       /* Secondary elements */
+--elevated: #3a3530        /* Elevated surfaces */
+--border: #2e2b27          /* Borders */
+--muted-foreground: #9e968b /* Muted text */
+--foreground: #e8e2d9      /* Primary text */
+
+/* Status Colors */
+--success: #4ade80         /* Healthy/optimal */
+--warning: #fbbf24         /* Warning states */
+--critical: #ef4444        /* Critical/danger */
+--info: #3b82f6            /* Info states */
+```
 
 ## CSS Animations (No Library)
 
@@ -64,6 +82,12 @@ description: Animation patterns for web apps including CSS keyframes, transition
   75% { transform: translateX(5px); }
 }
 
+/* Shimmer (for data loading) */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 /* Usage */
 .element {
   animation: fadeIn 0.3s ease-out;
@@ -88,13 +112,16 @@ description: Animation patterns for web apps including CSS keyframes, transition
 
 ### Hover Transitions
 ```css
-/* Smooth hover */
+/* Smooth hover (dark theme) */
 .card {
   transition: all 0.3s ease;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
 }
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+  border-color: hsl(var(--muted-foreground) / 0.3);
 }
 
 /* Button press */
@@ -220,16 +247,203 @@ For page transitions, scroll-triggered animations, drag, layout animations, para
 
 ---
 
+## Greenhouse-Specific Animations
+
+### Plant Growth Animation
+```jsx
+// Simulates plant sprouting and growing
+<motion.div
+  initial={{ scale: 0, opacity: 0 }}
+  animate={{ scale: 1, opacity: 1 }}
+  transition={{
+    type: "spring",
+    stiffness: 100,
+    damping: 15,
+    duration: 2
+  }}
+  className="origin-bottom"
+>
+  🌱
+</motion.div>
+
+// Multi-stage growth
+const growthStages = {
+  seed: { scale: 0.3, opacity: 0.5 },
+  sprout: { scale: 0.6, opacity: 0.8 },
+  mature: { scale: 1, opacity: 1 }
+};
+
+<motion.div
+  variants={growthStages}
+  initial="seed"
+  animate="mature"
+  transition={{ duration: 3, ease: "easeOut" }}
+  className="origin-bottom"
+/>
+```
+
+### Sensor Value Transition
+```jsx
+// Smooth number counting animation
+import { useSpring, animated } from '@react-spring/web';
+
+function SensorValue({ value }) {
+  const props = useSpring({
+    number: value,
+    from: { number: 0 },
+    config: { tension: 50, friction: 20 }
+  });
+
+  return (
+    <animated.span className="text-2xl font-mono text-foreground">
+      {props.number.to(n => n.toFixed(1))}
+    </animated.span>
+  );
+}
+
+// Framer Motion variant
+<motion.span
+  key={value}
+  initial={{ opacity: 0, y: -10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+  className="text-2xl font-mono text-foreground"
+>
+  {value}
+</motion.span>
+```
+
+### Status Dot Pulse
+```jsx
+// Warning pulse
+<span className="relative flex h-3 w-3">
+  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75" />
+  <span className="relative inline-flex rounded-full h-3 w-3 bg-warning" />
+</span>
+
+// Critical pulse (faster)
+@keyframes pulseCritical {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+<span
+  className="inline-flex h-3 w-3 rounded-full bg-critical"
+  style={{ animation: 'pulseCritical 1s ease-in-out infinite' }}
+/>
+
+// Status with label
+<div className="flex items-center gap-2">
+  <span className="relative flex h-2 w-2">
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+    <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+  </span>
+  <span className="text-sm text-muted-foreground">Optimal</span>
+</div>
+```
+
+### Weather Particle Drift
+```jsx
+// Dust storm particle effect
+@keyframes dustDrift {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(100vw, 50vh) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+<div className="absolute inset-0 pointer-events-none overflow-hidden">
+  {[...Array(20)].map((_, i) => (
+    <div
+      key={i}
+      className="absolute w-1 h-1 bg-warning/30 rounded-full"
+      style={{
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        animation: `dustDrift ${8 + Math.random() * 4}s linear infinite`,
+        animationDelay: `${Math.random() * 5}s`
+      }}
+    />
+  ))}
+</div>
+
+// Framer Motion variant
+<motion.div
+  animate={{
+    x: ['0vw', '100vw'],
+    y: ['0vh', '50vh'],
+    rotate: [0, 180],
+    opacity: [0, 0.6, 0.3, 0]
+  }}
+  transition={{
+    duration: 10,
+    repeat: Infinity,
+    ease: "linear",
+    times: [0, 0.1, 0.9, 1]
+  }}
+  className="absolute w-1 h-1 bg-warning/30 rounded-full"
+/>
+```
+
+### Light Ray Sweep
+```jsx
+// Ambient greenhouse lighting effect
+@keyframes lightSweep {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateX(200%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+
+<div className="relative overflow-hidden">
+  <div
+    className="absolute inset-0 bg-gradient-to-r from-transparent via-success/10 to-transparent"
+    style={{ animation: 'lightSweep 8s ease-in-out infinite' }}
+  />
+  {/* Your content */}
+</div>
+
+// Pulsing grow light indicator
+@keyframes growLightPulse {
+  0%, 100% { opacity: 0.4; filter: brightness(1); }
+  50% { opacity: 0.8; filter: brightness(1.3); }
+}
+
+<div
+  className="h-1 bg-gradient-to-r from-transparent via-success to-transparent"
+  style={{ animation: 'growLightPulse 3s ease-in-out infinite' }}
+/>
+```
+
+---
+
 ## Animation Recipes
 
 ### Loading Spinner
 ```jsx
-// CSS
-<div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+// CSS (dark theme)
+<div className="w-8 h-8 border-4 border-secondary border-t-foreground rounded-full animate-spin" />
 
 // Framer Motion
 <motion.div
-  className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full"
+  className="w-8 h-8 border-4 border-secondary border-t-foreground rounded-full"
   animate={{ rotate: 360 }}
   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
 />
@@ -237,34 +451,61 @@ For page transitions, scroll-triggered animations, drag, layout animations, para
 
 ### Skeleton Loader
 ```jsx
-<div className="animate-pulse">
-  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-  <div className="h-4 bg-gray-200 rounded w-1/2" />
+// Dark theme skeleton
+<div className="animate-pulse space-y-2">
+  <div className="h-4 bg-secondary rounded w-3/4" />
+  <div className="h-4 bg-secondary rounded w-1/2" />
+</div>
+
+// Elevated variant (for cards)
+<div className="animate-pulse space-y-3 p-4 bg-card border border-border rounded-lg">
+  <div className="h-6 bg-elevated rounded w-1/3" />
+  <div className="h-4 bg-elevated rounded w-2/3" />
+  <div className="h-4 bg-elevated rounded w-1/2" />
+</div>
+
+// Shimmer effect
+<div className="relative overflow-hidden bg-secondary rounded h-4">
+  <div
+    className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/10 to-transparent"
+    style={{
+      backgroundSize: '200% 100%',
+      animation: 'shimmer 2s infinite'
+    }}
+  />
 </div>
 ```
 
 ### Notification Badge Ping
 ```jsx
+// Critical alert (dark theme)
 <span className="relative flex h-3 w-3">
-  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-critical opacity-75" />
+  <span className="relative inline-flex rounded-full h-3 w-3 bg-critical" />
+</span>
+
+// Warning badge
+<span className="relative flex h-3 w-3">
+  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75" />
+  <span className="relative inline-flex rounded-full h-3 w-3 bg-warning" />
 </span>
 ```
 
 ### Modal Overlay
 ```jsx
+// Dark theme modal
 <AnimatePresence>
   {isOpen && (
     <>
       <motion.div
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       />
       <motion.div
-        className="fixed top-1/2 left-1/2 z-50 bg-white rounded-xl p-6"
+        className="fixed top-1/2 left-1/2 z-50 bg-card border border-border rounded-xl p-6 shadow-2xl"
         initial={{ opacity: 0, scale: 0.95, x: "-50%", y: "-50%" }}
         animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
         exit={{ opacity: 0, scale: 0.95 }}

@@ -1,87 +1,91 @@
 ---
 name: ui-components
-description: Ready-to-use React UI component implementations including modals, dropdowns, tabs, accordions, toasts, tooltips, sidebars, search autocomplete, avatar groups, badges, empty states, and confirmation dialogs. Use when building common UI components or need copy-paste-ready component code for React with Tailwind CSS.
+description: Ready-to-use React UI component implementations for Mars Greenhouse Command Center. Uses shadcn/ui as the primary component library with Tailwind CSS dark theme. Includes reference for shadcn Dialog, DropdownMenu, Tabs, and custom patterns like PillTabs for metric selectors and toast notifications.
 ---
 
 # UI Components Quick Reference
 
+> **Note:** This project uses shadcn/ui as the primary component library. Prefer shadcn components over custom implementations. Import from `@/components/ui/`.
+
 ## Modal / Dialog
 
-```jsx
-function Modal({ isOpen, onClose, title, children }) {
-  if (!isOpen) return null;
+**Use shadcn Dialog component instead of custom implementations.**
 
+```jsx
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
+function MyDialog() {
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={onClose} />
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-            ✕
-          </button>
-          {title && <h2 className="text-xl font-semibold mb-4">{title}</h2>}
-          {children}
-        </div>
-      </div>
-    </div>
-  );
+    <Dialog>
+      <DialogTrigger asChild>
+        <button>Open Dialog</button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Dialog Title</DialogTitle>
+          <DialogDescription>
+            Dialog description or content goes here.
+          </DialogDescription>
+        </DialogHeader>
+        {/* Additional dialog content */}
+      </DialogContent>
+    </Dialog>
+  )
 }
 ```
 
-### Modal with Portal
+For controlled dialogs:
 ```jsx
-import { createPortal } from 'react-dom';
+const [open, setOpen] = useState(false);
 
-function Modal({ isOpen, onClose, children }) {
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-50">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6">
-        {children}
-      </div>
-    </div>,
-    document.body
-  );
-}
+<Dialog open={open} onOpenChange={setOpen}>
+  <DialogContent>
+    {/* ... */}
+  </DialogContent>
+</Dialog>
 ```
 
 ---
 
 ## Dropdown / Select
 
+**Use shadcn DropdownMenu component instead of custom implementations.**
+
 ```jsx
-function Dropdown({ trigger, items, onSelect }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef();
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
+function MyDropdown() {
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button onClick={() => setIsOpen(!isOpen)}>{trigger}</button>
-      {isOpen && (
-        <div className="absolute top-full mt-1 w-48 bg-white rounded-lg shadow-lg border py-1 z-50">
-          {items.map((item, i) => (
-            <button
-              key={i}
-              onClick={() => { onSelect(item); setIsOpen(false); }}
-              className="w-full px-4 py-2 text-left hover:bg-gray-100"
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button>Open Menu</button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>Options</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => console.log('Item 1')}>
+          Item 1
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => console.log('Item 2')}>
+          Item 2
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 ```
 
@@ -89,47 +93,49 @@ function Dropdown({ trigger, items, onSelect }) {
 
 ## Tabs
 
-```jsx
-function Tabs({ tabs, defaultTab }) {
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs[0].id);
-  const activeContent = tabs.find(t => t.id === activeTab)?.content;
+**Use shadcn Tabs component instead of custom implementations.**
 
+```jsx
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+function MyTabs() {
   return (
-    <div>
-      <div className="flex border-b">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 font-medium transition-colors ${
-              activeTab === tab.id
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      <div className="p-4">{activeContent}</div>
-    </div>
-  );
+    <Tabs defaultValue="tab1">
+      <TabsList>
+        <TabsTrigger value="tab1">Tab 1</TabsTrigger>
+        <TabsTrigger value="tab2">Tab 2</TabsTrigger>
+        <TabsTrigger value="tab3">Tab 3</TabsTrigger>
+      </TabsList>
+      <TabsContent value="tab1">
+        Content for Tab 1
+      </TabsContent>
+      <TabsContent value="tab2">
+        Content for Tab 2
+      </TabsContent>
+      <TabsContent value="tab3">
+        Content for Tab 3
+      </TabsContent>
+    </Tabs>
+  )
 }
 ```
 
-### Pill Tabs
+### Pill Tabs (Custom Pattern)
+
+For metric selectors or compact toggle groups (e.g., switching between temperature units, time ranges):
+
 ```jsx
 function PillTabs({ tabs, value, onChange }) {
   return (
-    <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+    <div className="flex gap-1 p-1 bg-secondary rounded-lg">
       {tabs.map(tab => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
           className={`px-4 py-2 rounded-md font-medium transition-all ${
             value === tab.id
-              ? 'bg-white shadow text-gray-900'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-card border border-border text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {tab.label}
@@ -138,11 +144,23 @@ function PillTabs({ tabs, value, onChange }) {
     </div>
   );
 }
+
+// Usage:
+<PillTabs
+  tabs={[
+    { id: 'celsius', label: '°C' },
+    { id: 'fahrenheit', label: '°F' },
+  ]}
+  value={tempUnit}
+  onChange={setTempUnit}
+/>
 ```
 
 ---
 
 ## Toast / Notifications
+
+Custom toast implementation using dark Mars theme:
 
 ```jsx
 const ToastContext = createContext();
@@ -166,8 +184,10 @@ export function ToastProvider({ children }) {
   };
 
   const colors = {
-    info: 'bg-blue-500', success: 'bg-green-500',
-    error: 'bg-red-500', warning: 'bg-yellow-500',
+    info: 'bg-primary border-primary',
+    success: 'bg-green-600 border-green-600',
+    error: 'bg-red-600 border-red-600',
+    warning: 'bg-yellow-600 border-yellow-600',
   };
 
   return (
@@ -175,7 +195,10 @@ export function ToastProvider({ children }) {
       {children}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
         {toasts.map(t => (
-          <div key={t.id} className={`${colors[t.type]} text-white px-4 py-3 rounded-lg shadow-lg`}>
+          <div
+            key={t.id}
+            className={`${colors[t.type]} text-white px-4 py-3 rounded-lg border`}
+          >
             {t.message}
           </div>
         ))}
@@ -187,4 +210,69 @@ export function ToastProvider({ children }) {
 export const useToast = () => useContext(ToastContext);
 ```
 
-For accordion, tooltip, sidebar/drawer, search autocomplete, avatar group, badge, empty state, and confirmation dialog, see [reference.md](reference.md).
+---
+
+## Dark Mars Theme Color Reference
+
+Use these Tailwind classes for consistent dark theme styling:
+
+| Purpose | Class |
+|---------|-------|
+| Card/panel background | `bg-card` |
+| Secondary background | `bg-secondary` |
+| Body text | `text-foreground` |
+| Muted/secondary text | `text-muted-foreground` |
+| Borders | `border-border` |
+| Primary accent | `text-primary` or `bg-primary` |
+| Hover state | `hover:bg-secondary` |
+
+**Important:** Avoid light theme classes:
+- ~~bg-white~~ → `bg-card`
+- ~~bg-gray-100~~ → `bg-secondary`
+- ~~text-gray-500~~ → `text-muted-foreground`
+- ~~text-gray-900~~ → `text-foreground`
+- ~~border-gray-200~~ → `border-border`
+- ~~shadow-lg~~ → use borders instead: `border border-border`
+
+---
+
+## Component Examples
+
+### Card with Dark Theme
+```jsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
+<Card className="border border-border">
+  <CardHeader>
+    <CardTitle>Card Title</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p className="text-muted-foreground">Card content goes here</p>
+  </CardContent>
+</Card>
+```
+
+### Button Variants
+```jsx
+import { Button } from "@/components/ui/button"
+
+<Button variant="default">Primary</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="destructive">Destructive</Button>
+```
+
+### Badge
+```jsx
+import { Badge } from "@/components/ui/badge"
+
+<Badge>Default</Badge>
+<Badge variant="secondary">Secondary</Badge>
+<Badge variant="outline">Outline</Badge>
+<Badge variant="destructive">Alert</Badge>
+```
+
+---
+
+For additional components (tooltip, scroll-area, separator), refer to shadcn/ui documentation or check installed components in `/components/ui/`.
