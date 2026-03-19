@@ -252,6 +252,7 @@ class AgentState(TypedDict, total=False):
     calorie_fractions: list[float]
     protein_fractions: list[float]
     micronutrient_counts: list[int]
+    loop_iterations: int
 
 
 # ============================================================================

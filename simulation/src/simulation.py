@@ -427,9 +427,13 @@ def simulate_tick(
     state = copy.deepcopy(state)
 
     rng = random_module.Random(state.seed)
-    # Advance RNG to current day to maintain determinism across calls
-    for _ in range(state.day):
-        rng.random()
+    if state.rng_state:
+        # Restore exact RNG state for determinism across tick calls
+        rng.setstate(state.rng_state)
+    else:
+        # First tick: advance RNG to current day (backward compat)
+        for _ in range(state.day):
+            rng.random()
 
     daily_logs: list[dict[str, Any]] = []
     stopped_early = False
@@ -466,25 +470,9 @@ def simulate_tick(
             day_log["events_started"].append(evt.type)
 
         # -- EARLY STOP: new random event fires → return to orchestrator --
-        if new_events and tick > 0:
-            # Complete this day's log before stopping
-            day_log["calorie_gh_fraction"] = state.daily_nutrition.calorie_gh_fraction
-            day_log["protein_gh_fraction"] = state.daily_nutrition.protein_gh_fraction
-            day_log["micronutrient_count"] = state.daily_nutrition.micronutrient_count
-            day_log["water_remaining"] = state.resources.water
-            day_log["stored_food_remaining"] = state.stored_food.remaining_calories
-            day_log["active_events"] = [e.type for e in state.active_events]
-            day_log["crop_count"] = sum(len(s.crops) for s in state.slots)
-            daily_logs.append(day_log)
-            days_simulated += 1
-            stopped_early = True
-            stop_reason = {
-                "type": "event_fired",
-                "trigger": "random_event",
-                "events": [e.type for e in new_events],
-                "detail": f"New event(s) fired: {[e.type for e in new_events]}",
-            }
-            break
+        # We still run the full day's simulation so the state is consistent,
+        # but mark stopped_early so the orchestrator can react.
+        event_early_stop = bool(new_events and tick > 0)
 
         # -- 2. Apply event effects --
         apply_events(state.active_events, state.environment, state.resources)
@@ -579,7 +567,18 @@ def simulate_tick(
         daily_logs.append(day_log)
         days_simulated += 1
 
-        # -- 15. Early stop: threshold breaches --
+        # -- 15. Early stop: new event fired (after running full day) --
+        if event_early_stop:
+            stopped_early = True
+            stop_reason = {
+                "type": "event_fired",
+                "trigger": "random_event",
+                "events": [e.type for e in new_events],
+                "detail": f"New event(s) fired: {[e.type for e in new_events]}",
+            }
+            break
+
+        # -- 16. Early stop: threshold breaches --
         threshold_breach = _check_threshold_breaches(state)
         if threshold_breach:
             stopped_early = True
@@ -595,6 +594,9 @@ def simulate_tick(
                 "detail": "Both stored food and greenhouse food exhausted",
             }
             break
+
+    # Save RNG state for deterministic continuation in the next tick call
+    state.rng_state = rng.getstate()
 
     return {
         "state": state_to_dict(state),

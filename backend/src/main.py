@@ -1,6 +1,7 @@
 """FastAPI application for Mars greenhouse agent."""
 import json
 import logging
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -126,6 +127,8 @@ async def list_simulations() -> list[SimulationListItem]:
 @app.get("/api/simulations/{simulation_id}")
 async def get_simulation(simulation_id: str) -> SimulationResult:
     """Get full simulation result by ID."""
+    if not re.match(r'^[a-zA-Z0-9\-]+$', simulation_id):
+        raise HTTPException(status_code=400, detail="Invalid simulation ID")
     fp = Path(settings.simulations_dir) / f"{simulation_id}.json"
     if not fp.exists():
         raise HTTPException(status_code=404, detail="Simulation not found")

@@ -11,10 +11,18 @@ from .nodes.react import react_node
 from .nodes.reflect import reflect_node
 
 
+MAX_LOOP_ITERATIONS = 30
+
+
 def route_after_simulate(state: AgentState) -> Literal["reflect", "react", "plan"]:
     """Route after simulate based on mission status."""
     gh = state.get("greenhouse")
     if gh and gh.day >= 450:
+        return "reflect"
+
+    # Guard against infinite loops (persistent events, etc.)
+    iterations = state.get("loop_iterations", 0)
+    if iterations >= MAX_LOOP_ITERATIONS:
         return "reflect"
 
     sim_result = state.get("sim_result") or {}

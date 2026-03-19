@@ -80,4 +80,5 @@ async def simulate_node(state: AgentState) -> dict[str, Any]:
         "micronutrient_counts": micronutrient_counts,
         "total_harvested_kg": total_harvested_kg,
         "crops_lost": crops_lost,
+        "loop_iterations": state.get("loop_iterations", 0) + 1,
     }

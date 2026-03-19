@@ -71,7 +71,7 @@ def fill_slot(
         return [], next_crop_id_counter
 
     footprint = config.CROP_FOOTPRINT.get(slot.crop_type)
-    if footprint is None:
+    if not footprint or footprint <= 0:
         return [], next_crop_id_counter
 
     new_crops: list[Crop] = []

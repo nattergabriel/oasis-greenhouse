@@ -213,6 +213,7 @@ class GreenhouseState:
     next_crop_id: int = 1
     seed: int = 42
     consecutive_energy_deficit_days: int = 0
+    rng_state: tuple | None = None  # saved Random.getstate() for determinism across ticks
 
 
 # ===========================================================================
@@ -448,6 +449,7 @@ def state_to_dict(state: GreenhouseState) -> dict[str, Any]:
         "next_crop_id": state.next_crop_id,
         "seed": state.seed,
         "consecutive_energy_deficit_days": state.consecutive_energy_deficit_days,
+        "rng_state": list(state.rng_state) if state.rng_state else None,
     }
 
 
@@ -466,6 +468,7 @@ def dict_to_state(d: dict[str, Any]) -> GreenhouseState:
         next_crop_id=d["next_crop_id"],
         seed=d["seed"],
         consecutive_energy_deficit_days=d.get("consecutive_energy_deficit_days", 0),
+        rng_state=tuple(d["rng_state"]) if d.get("rng_state") else None,
     )
 
 
