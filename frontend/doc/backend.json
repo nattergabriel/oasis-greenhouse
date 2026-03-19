@@ -1,0 +1,4570 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "OpenAPI definition",
+        "version": "v0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Generated server url"
+        }
+    ],
+    "paths": {
+        "/api/greenhouses/{id}": {
+            "get": {
+                "tags": [
+                    "greenhouse-controller"
+                ],
+                "operationId": "getGreenhouseDetail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "slotStatus",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GreenhouseDetailResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "greenhouse-controller"
+                ],
+                "operationId": "updateGreenhouse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateGreenhouseRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateGreenhouseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "greenhouse-controller"
+                ],
+                "operationId": "deleteGreenhouse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/forecast/mission-timeline": {
+            "get": {
+                "tags": [
+                    "forecast-controller"
+                ],
+                "operationId": "getMissionTimeline",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MissionTimelineResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "forecast-controller"
+                ],
+                "operationId": "setMissionDates",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetMissionDatesRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SetMissionDatesResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/agent/config": {
+            "get": {
+                "tags": [
+                    "agent-controller"
+                ],
+                "operationId": "getConfig",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentConfigResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "agent-controller"
+                ],
+                "operationId": "updateConfig",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAgentConfigRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentConfigResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/simulations": {
+            "get": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "listSimulations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SimulationListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "createSimulation",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateSimulationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateSimulationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/simulations/{id}/stop": {
+            "post": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "stopSimulation",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StopSimulationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/simulations/{id}/resume": {
+            "post": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "resumeSimulation",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SimulationStatusResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/simulations/{id}/pause": {
+            "post": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "pauseSimulation",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SimulationStatusResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/simulations/{id}/injections": {
+            "get": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "listInjections",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InjectionListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "injectScenario",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InjectScenarioRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateInjectionResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/simulations/{id}/injections/{injectionId}/cancel": {
+            "post": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "cancelInjection",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "injectionId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CancelInjectionResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/onboarding/steps/{stepKey}/complete": {
+            "post": {
+                "tags": [
+                    "onboarding-controller"
+                ],
+                "operationId": "markStepComplete",
+                "parameters": [
+                    {
+                        "name": "stepKey",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompleteStepResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/onboarding/complete": {
+            "post": {
+                "tags": [
+                    "onboarding-controller"
+                ],
+                "operationId": "markComplete",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompleteOnboardingResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/nutrition/consumption": {
+            "get": {
+                "tags": [
+                    "nutrition-controller"
+                ],
+                "operationId": "getConsumptionLog",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConsumptionLogResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "nutrition-controller"
+                ],
+                "operationId": "logConsumption",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogConsumptionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LogConsumptionResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/greenhouses": {
+            "get": {
+                "tags": [
+                    "greenhouse-controller"
+                ],
+                "operationId": "listGreenhouses",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GreenhouseListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "greenhouse-controller"
+                ],
+                "operationId": "createGreenhouse",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateGreenhouseRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateGreenhouseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/crops/planting-queue": {
+            "get": {
+                "tags": [
+                    "crop-controller"
+                ],
+                "operationId": "getPlantingQueue",
+                "parameters": [
+                    {
+                        "name": "greenhouseId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlantingQueueResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "crop-controller"
+                ],
+                "operationId": "publishPlantingQueue",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PublishPlantingQueueRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PublishPlantingQueueResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/crops/harvest-journal": {
+            "get": {
+                "tags": [
+                    "crop-controller"
+                ],
+                "operationId": "getHarvestJournal",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "maximum": 200,
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "greenhouseId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cropId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HarvestListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "crop-controller"
+                ],
+                "operationId": "logHarvest",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogHarvestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HarvestEntryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/alerts": {
+            "get": {
+                "tags": [
+                    "alert-controller"
+                ],
+                "operationId": "listAlerts",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "maximum": 200,
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "alert-controller"
+                ],
+                "operationId": "createAlert",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateAlertRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/alerts/{id}/resolve": {
+            "post": {
+                "tags": [
+                    "alert-controller"
+                ],
+                "operationId": "resolveAlert",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResolveAlertRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResolveAlertResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/alerts/{id}/acknowledge": {
+            "post": {
+                "tags": [
+                    "alert-controller"
+                ],
+                "operationId": "acknowledgeAlert",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcknowledgeAlertRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AcknowledgeAlertResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/agent/recommendations": {
+            "get": {
+                "tags": [
+                    "agent-controller"
+                ],
+                "operationId": "getRecommendations",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "maximum": 200,
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RecommendationListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "agent-controller"
+                ],
+                "operationId": "pushRecommendation",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PushRecommendationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RecommendationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/agent/recommendations/{id}/dismiss": {
+            "post": {
+                "tags": [
+                    "agent-controller"
+                ],
+                "operationId": "dismissRecommendation",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DismissRecommendationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DismissRecommendationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/agent/recommendations/{id}/approve": {
+            "post": {
+                "tags": [
+                    "agent-controller"
+                ],
+                "operationId": "approveRecommendation",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApproveRecommendationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/agent/log": {
+            "get": {
+                "tags": [
+                    "agent-controller"
+                ],
+                "operationId": "getLog",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "maximum": 200,
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "simulationId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentLogListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "agent-controller"
+                ],
+                "operationId": "appendLog",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AppendAgentLogRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentLogEntryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/seed/mission-config": {
+            "post": {
+                "tags": [
+                    "data-seeder-controller"
+                ],
+                "operationId": "seedMissionConfig",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/seed/greenhouse": {
+            "post": {
+                "tags": [
+                    "data-seeder-controller"
+                ],
+                "operationId": "seedGreenhouse",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/seed/crops": {
+            "post": {
+                "tags": [
+                    "data-seeder-controller"
+                ],
+                "operationId": "seedCrops",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/seed/all": {
+            "post": {
+                "tags": [
+                    "data-seeder-controller"
+                ],
+                "operationId": "seedAll",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/simulations/{id}": {
+            "get": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "getSimulationDetail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SimulationDetailResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "updateSimulation",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSimulationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateSimulationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/greenhouses/{greenhouseId}/slots/{slotId}": {
+            "get": {
+                "tags": [
+                    "slot-controller"
+                ],
+                "operationId": "getSlot",
+                "parameters": [
+                    {
+                        "name": "greenhouseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "slotId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlantSlotResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "slot-controller"
+                ],
+                "operationId": "updateSlot",
+                "parameters": [
+                    {
+                        "name": "greenhouseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "slotId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSlotRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlantSlotResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/crops/harvest-journal/{id}": {
+            "patch": {
+                "tags": [
+                    "crop-controller"
+                ],
+                "operationId": "updateHarvest",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateHarvestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HarvestEntryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/agent/log/{id}": {
+            "patch": {
+                "tags": [
+                    "agent-controller"
+                ],
+                "operationId": "updateLogOutcome",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAgentLogOutcomeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentLogEntryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/weather/current": {
+            "get": {
+                "tags": [
+                    "weather-controller"
+                ],
+                "operationId": "getCurrentWeather",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WeatherResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/simulations/{id}/timeline": {
+            "get": {
+                "tags": [
+                    "simulation-controller"
+                ],
+                "operationId": "getTimeline",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "types",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "maximum": 200,
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TimelineResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/scenarios": {
+            "get": {
+                "tags": [
+                    "scenario-controller"
+                ],
+                "operationId": "listScenarios",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ScenarioListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/onboarding/status": {
+            "get": {
+                "tags": [
+                    "onboarding-controller"
+                ],
+                "operationId": "getStatus",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OnboardingStatusResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "onboarding-controller"
+                ],
+                "operationId": "resetOnboarding",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/nutrition/stored-food": {
+            "get": {
+                "tags": [
+                    "nutrition-controller"
+                ],
+                "operationId": "getStoredFood",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoredFoodResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/nutrition/coverage-heatmap": {
+            "get": {
+                "tags": [
+                    "nutrition-controller"
+                ],
+                "operationId": "getCoverageHeatmap",
+                "parameters": [
+                    {
+                        "name": "fromDay",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    },
+                    {
+                        "name": "toDay",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CoverageHeatmapResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/greenhouses/{id}/sensors/latest": {
+            "get": {
+                "tags": [
+                    "greenhouse-controller"
+                ],
+                "operationId": "getLatestSensorSnapshot",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SensorSnapshotResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/greenhouses/{id}/sensors/history": {
+            "get": {
+                "tags": [
+                    "greenhouse-controller"
+                ],
+                "operationId": "getSensorHistory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "interval",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SensorHistoryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/greenhouses/{greenhouseId}/slots/{slotId}/history": {
+            "get": {
+                "tags": [
+                    "slot-controller"
+                ],
+                "operationId": "getSlotHistory",
+                "parameters": [
+                    {
+                        "name": "greenhouseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "slotId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "interval",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "1d"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SlotHistoryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/forecast/resources": {
+            "get": {
+                "tags": [
+                    "forecast-controller"
+                ],
+                "operationId": "getResourceForecast",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "maximum": 365,
+                            "minimum": 1,
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 30
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResourceForecastResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/crops": {
+            "get": {
+                "tags": [
+                    "crop-controller"
+                ],
+                "operationId": "listCrops",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CropListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/crops/stockpile": {
+            "get": {
+                "tags": [
+                    "crop-controller"
+                ],
+                "operationId": "getStockpile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StockpileResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/analytics/agent-performance": {
+            "get": {
+                "tags": [
+                    "analytics-controller"
+                ],
+                "operationId": "getAgentPerformance",
+                "parameters": [
+                    {
+                        "name": "simulationId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentPerformanceResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/alerts/{id}": {
+            "get": {
+                "tags": [
+                    "alert-controller"
+                ],
+                "operationId": "getAlert",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/seed/clear": {
+            "delete": {
+                "tags": [
+                    "data-seeder-controller"
+                ],
+                "operationId": "clearAll",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "UpdateGreenhouseRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "rows": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "cols": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "UpdateGreenhouseResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "rows": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "cols": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "totalSlots": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "overallStatus": {
+                        "type": "string",
+                        "enum": [
+                            "HEALTHY",
+                            "NEEDS_ATTENTION",
+                            "CRITICAL"
+                        ]
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "SetMissionDatesRequest": {
+                "required": [
+                    "missionEndDate",
+                    "missionStartDate"
+                ],
+                "type": "object",
+                "properties": {
+                    "missionStartDate": {
+                        "type": "string"
+                    },
+                    "missionEndDate": {
+                        "type": "string"
+                    }
+                }
+            },
+            "SetMissionDatesResponse": {
+                "type": "object",
+                "properties": {
+                    "missionStartDate": {
+                        "type": "string"
+                    },
+                    "missionEndDate": {
+                        "type": "string"
+                    },
+                    "totalMissionDays": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "PriorityWeightsDto": {
+                "type": "object",
+                "properties": {
+                    "yield": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "diversity": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "resourceConservation": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "UpdateAgentConfigRequest": {
+                "required": [
+                    "autonomyLevel",
+                    "certaintyThreshold",
+                    "priorityWeights",
+                    "riskTolerance"
+                ],
+                "type": "object",
+                "properties": {
+                    "autonomyLevel": {
+                        "type": "string",
+                        "enum": [
+                            "FULLY_AUTONOMOUS",
+                            "SUGGEST_ONLY",
+                            "HYBRID"
+                        ]
+                    },
+                    "certaintyThreshold": {
+                        "maximum": 1.0,
+                        "exclusiveMaximum": false,
+                        "minimum": 0.0,
+                        "exclusiveMinimum": false,
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "riskTolerance": {
+                        "type": "string",
+                        "enum": [
+                            "CONSERVATIVE",
+                            "MODERATE",
+                            "AGGRESSIVE"
+                        ]
+                    },
+                    "priorityWeights": {
+                        "$ref": "#/components/schemas/PriorityWeightsDto"
+                    }
+                }
+            },
+            "AgentConfigResponse": {
+                "type": "object",
+                "properties": {
+                    "autonomyLevel": {
+                        "type": "string",
+                        "enum": [
+                            "FULLY_AUTONOMOUS",
+                            "SUGGEST_ONLY",
+                            "HYBRID"
+                        ]
+                    },
+                    "certaintyThreshold": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "riskTolerance": {
+                        "type": "string",
+                        "enum": [
+                            "CONSERVATIVE",
+                            "MODERATE",
+                            "AGGRESSIVE"
+                        ]
+                    },
+                    "priorityWeights": {
+                        "$ref": "#/components/schemas/PriorityWeightsDto"
+                    }
+                }
+            },
+            "AgentConfigDto": {
+                "type": "object",
+                "properties": {
+                    "autonomyLevel": {
+                        "type": "string",
+                        "enum": [
+                            "FULLY_AUTONOMOUS",
+                            "SUGGEST_ONLY",
+                            "HYBRID"
+                        ]
+                    },
+                    "certaintyThreshold": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "riskTolerance": {
+                        "type": "string",
+                        "enum": [
+                            "CONSERVATIVE",
+                            "MODERATE",
+                            "AGGRESSIVE"
+                        ]
+                    },
+                    "priorityWeights": {
+                        "$ref": "#/components/schemas/PriorityWeightsDto"
+                    }
+                }
+            },
+            "CreateSimulationRequest": {
+                "required": [
+                    "agentConfig",
+                    "crewSize",
+                    "learningGoal",
+                    "missionDuration",
+                    "name",
+                    "resourceAvailability",
+                    "yieldTarget"
+                ],
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "maxLength": 200,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "learningGoal": {
+                        "maxLength": 2000,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "missionDuration": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "crewSize": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "yieldTarget": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "resourceAvailability": {
+                        "$ref": "#/components/schemas/ResourceAvailabilityRequest"
+                    },
+                    "agentConfig": {
+                        "$ref": "#/components/schemas/AgentConfigDto"
+                    }
+                }
+            },
+            "ResourceAvailabilityRequest": {
+                "required": [
+                    "energyKwh",
+                    "nutrientKg",
+                    "waterLiters"
+                ],
+                "type": "object",
+                "properties": {
+                    "waterLiters": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "nutrientKg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "energyKwh": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "CreateSimulationResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "RUNNING",
+                            "PAUSED",
+                            "COMPLETED"
+                        ]
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "StopSimulationResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "RUNNING",
+                            "PAUSED",
+                            "COMPLETED"
+                        ]
+                    },
+                    "completedAt": {
+                        "type": "string"
+                    },
+                    "outcomeScore": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "SimulationStatusResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "RUNNING",
+                            "PAUSED",
+                            "COMPLETED"
+                        ]
+                    }
+                }
+            },
+            "InjectScenarioRequest": {
+                "required": [
+                    "intensity",
+                    "scenarioId"
+                ],
+                "type": "object",
+                "properties": {
+                    "scenarioId": {
+                        "type": "string"
+                    },
+                    "intensity": {
+                        "maximum": 1.0,
+                        "exclusiveMaximum": false,
+                        "minimum": 0.0,
+                        "exclusiveMinimum": false,
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "durationMinutes": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "CreateInjectionResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "scenarioId": {
+                        "type": "string"
+                    },
+                    "triggeredAt": {
+                        "type": "string"
+                    },
+                    "estimatedResolutionAt": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "RESOLVED"
+                        ]
+                    }
+                }
+            },
+            "CancelInjectionResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "RESOLVED"
+                        ]
+                    },
+                    "resolvedAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CompleteStepResponse": {
+                "type": "object",
+                "properties": {
+                    "stepKey": {
+                        "type": "string"
+                    },
+                    "completedSteps": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "allCompleted": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "CompleteOnboardingResponse": {
+                "type": "object",
+                "properties": {
+                    "completed": {
+                        "type": "boolean"
+                    },
+                    "completedAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "LogConsumptionRequest": {
+                "required": [
+                    "cropId",
+                    "date",
+                    "quantityKg"
+                ],
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string"
+                    },
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "quantityKg": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "LogConsumptionResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "caloriesLogged": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "CreateGreenhouseRequest": {
+                "required": [
+                    "cols",
+                    "name",
+                    "rows"
+                ],
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "maxLength": 100,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "description": {
+                        "maxLength": 500,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "rows": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "cols": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "CreateGreenhouseResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "rows": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "cols": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "totalSlots": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PlantingQueueItemRequest": {
+                "required": [
+                    "cropId",
+                    "greenhouseId",
+                    "missionDay",
+                    "rank",
+                    "reason",
+                    "recommendedPlantDate"
+                ],
+                "type": "object",
+                "properties": {
+                    "rank": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "greenhouseId": {
+                        "type": "string"
+                    },
+                    "recommendedPlantDate": {
+                        "type": "string"
+                    },
+                    "missionDay": {
+                        "minimum": 0,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "nutritionalGapsAddressed": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "PublishPlantingQueueRequest": {
+                "required": [
+                    "queue"
+                ],
+                "type": "object",
+                "properties": {
+                    "queue": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PlantingQueueItemRequest"
+                        }
+                    }
+                }
+            },
+            "PublishPlantingQueueResponse": {
+                "type": "object",
+                "properties": {
+                    "replacedAt": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "LogHarvestRequest": {
+                "required": [
+                    "cropId",
+                    "harvestedAt",
+                    "slotId",
+                    "yieldKg"
+                ],
+                "type": "object",
+                "properties": {
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "slotId": {
+                        "type": "string"
+                    },
+                    "yieldKg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "harvestedAt": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    }
+                }
+            },
+            "HarvestEntryResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "harvestedAt": {
+                        "type": "string"
+                    },
+                    "missionDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "cropName": {
+                        "type": "string"
+                    },
+                    "yieldKg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "slotId": {
+                        "type": "string"
+                    },
+                    "greenhouseId": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CreateAlertRequest": {
+                "required": [
+                    "confidence",
+                    "diagnosis",
+                    "severity",
+                    "suggestedAction",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "INFO",
+                            "WARNING",
+                            "CRITICAL"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "NUTRIENT_DEFICIENCY",
+                            "DISEASE",
+                            "ENVIRONMENTAL_STRESS",
+                            "EQUIPMENT_FAILURE",
+                            "OTHER"
+                        ]
+                    },
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "slotId": {
+                        "type": "string"
+                    },
+                    "greenhouseId": {
+                        "type": "string"
+                    },
+                    "diagnosis": {
+                        "maxLength": 2000,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "confidence": {
+                        "maximum": 1.0,
+                        "exclusiveMaximum": false,
+                        "minimum": 0.0,
+                        "exclusiveMinimum": false,
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "suggestedAction": {
+                        "maxLength": 500,
+                        "minLength": 0,
+                        "type": "string"
+                    }
+                }
+            },
+            "AlertResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "resolvedAt": {
+                        "type": "string"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "INFO",
+                            "WARNING",
+                            "CRITICAL"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "NUTRIENT_DEFICIENCY",
+                            "DISEASE",
+                            "ENVIRONMENTAL_STRESS",
+                            "EQUIPMENT_FAILURE",
+                            "OTHER"
+                        ]
+                    },
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "slotId": {
+                        "type": "string"
+                    },
+                    "greenhouseId": {
+                        "type": "string"
+                    },
+                    "diagnosis": {
+                        "type": "string"
+                    },
+                    "confidence": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "OPEN",
+                            "ACKNOWLEDGED",
+                            "RESOLVED"
+                        ]
+                    },
+                    "escalatedToHuman": {
+                        "type": "boolean"
+                    },
+                    "suggestedAction": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ResolveAlertRequest": {
+                "required": [
+                    "resolution"
+                ],
+                "type": "object",
+                "properties": {
+                    "resolution": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ResolveAlertResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "OPEN",
+                            "ACKNOWLEDGED",
+                            "RESOLVED"
+                        ]
+                    },
+                    "resolvedAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AcknowledgeAlertRequest": {
+                "type": "object",
+                "properties": {
+                    "operatorNote": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AcknowledgeAlertResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "OPEN",
+                            "ACKNOWLEDGED",
+                            "RESOLVED"
+                        ]
+                    }
+                }
+            },
+            "PushRecommendationRequest": {
+                "required": [
+                    "actionType",
+                    "confidence",
+                    "description",
+                    "reasoning",
+                    "urgency"
+                ],
+                "type": "object",
+                "properties": {
+                    "actionType": {
+                        "maxLength": 100,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "description": {
+                        "maxLength": 500,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "reasoning": {
+                        "maxLength": 5000,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "confidence": {
+                        "maximum": 1.0,
+                        "exclusiveMaximum": false,
+                        "minimum": 0.0,
+                        "exclusiveMinimum": false,
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "urgency": {
+                        "type": "string",
+                        "enum": [
+                            "LOW",
+                            "MEDIUM",
+                            "HIGH",
+                            "CRITICAL"
+                        ]
+                    },
+                    "expiresAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "RecommendationResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "actionType": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "reasoning": {
+                        "type": "string"
+                    },
+                    "confidence": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "urgency": {
+                        "type": "string",
+                        "enum": [
+                            "LOW",
+                            "MEDIUM",
+                            "HIGH",
+                            "CRITICAL"
+                        ]
+                    },
+                    "expiresAt": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "APPROVED",
+                            "DISMISSED"
+                        ]
+                    }
+                }
+            },
+            "DismissRecommendationRequest": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string"
+                    }
+                }
+            },
+            "DismissRecommendationResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "APPROVED",
+                            "DISMISSED"
+                        ]
+                    }
+                }
+            },
+            "ApproveRecommendationResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "APPROVED",
+                            "DISMISSED"
+                        ]
+                    },
+                    "executedAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AppendAgentLogRequest": {
+                "required": [
+                    "actionType",
+                    "description",
+                    "outcome",
+                    "reasoning"
+                ],
+                "type": "object",
+                "properties": {
+                    "actionType": {
+                        "maxLength": 100,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "description": {
+                        "maxLength": 500,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "reasoning": {
+                        "maxLength": 5000,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "knowledgeBaseSource": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "enum": [
+                            "SUCCESS",
+                            "PENDING",
+                            "FAILED"
+                        ]
+                    }
+                }
+            },
+            "AgentLogEntryResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    },
+                    "actionType": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "reasoning": {
+                        "type": "string"
+                    },
+                    "knowledgeBaseSource": {
+                        "type": "string"
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "enum": [
+                            "SUCCESS",
+                            "PENDING",
+                            "FAILED"
+                        ]
+                    }
+                }
+            },
+            "UpdateSimulationRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "learningGoal": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UpdateSimulationResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "learningGoal": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UpdateSlotRequest": {
+                "type": "object",
+                "properties": {
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "plantedAt": {
+                        "type": "string"
+                    },
+                    "growthStagePercent": {
+                        "maximum": 100,
+                        "exclusiveMaximum": false,
+                        "minimum": 0,
+                        "exclusiveMinimum": false,
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "activeStressTypes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "DROUGHT",
+                                "OVERWATERING",
+                                "HEAT",
+                                "COLD",
+                                "NUTRIENT_DEFICIENCY_N",
+                                "NUTRIENT_DEFICIENCY_K",
+                                "NUTRIENT_DEFICIENCY_FE",
+                                "SALINITY",
+                                "LIGHT_INSUFFICIENT",
+                                "LIGHT_EXCESSIVE",
+                                "CO2_IMBALANCE",
+                                "ROOT_HYPOXIA"
+                            ]
+                        }
+                    },
+                    "estimatedYieldKg": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "PlantSlotResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "position": {
+                        "$ref": "#/components/schemas/PositionDto"
+                    },
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "cropName": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "EMPTY",
+                            "HEALTHY",
+                            "NEEDS_ATTENTION",
+                            "CRITICAL"
+                        ]
+                    },
+                    "growthStagePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "daysUntilHarvest": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "plantedAt": {
+                        "type": "string"
+                    },
+                    "activeStressTypes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "DROUGHT",
+                                "OVERWATERING",
+                                "HEAT",
+                                "COLD",
+                                "NUTRIENT_DEFICIENCY_N",
+                                "NUTRIENT_DEFICIENCY_K",
+                                "NUTRIENT_DEFICIENCY_FE",
+                                "SALINITY",
+                                "LIGHT_INSUFFICIENT",
+                                "LIGHT_EXCESSIVE",
+                                "CO2_IMBALANCE",
+                                "ROOT_HYPOXIA"
+                            ]
+                        }
+                    },
+                    "estimatedYieldKg": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "PositionDto": {
+                "type": "object",
+                "properties": {
+                    "row": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "col": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "UpdateHarvestRequest": {
+                "type": "object",
+                "properties": {
+                    "yieldKg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "notes": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UpdateAgentLogOutcomeRequest": {
+                "required": [
+                    "outcome"
+                ],
+                "type": "object",
+                "properties": {
+                    "outcome": {
+                        "type": "string",
+                        "enum": [
+                            "SUCCESS",
+                            "PENDING",
+                            "FAILED"
+                        ]
+                    }
+                }
+            },
+            "WeatherForecastDayDto": {
+                "type": "object",
+                "properties": {
+                    "missionDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "dustStormRisk": {
+                        "type": "string",
+                        "enum": [
+                            "LOW",
+                            "MODERATE",
+                            "HIGH",
+                            "CRITICAL"
+                        ]
+                    },
+                    "solarIrradiance": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "WeatherResponse": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "string"
+                    },
+                    "solarIrradiance": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "dustStormIndex": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "externalTemperature": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "atmosphericPressure": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "forecast": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WeatherForecastDayDto"
+                        }
+                    }
+                }
+            },
+            "SimulationListResponse": {
+                "type": "object",
+                "properties": {
+                    "simulations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SimulationSummaryResponse"
+                        }
+                    }
+                }
+            },
+            "SimulationSummaryResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "learningGoal": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "RUNNING",
+                            "PAUSED",
+                            "COMPLETED"
+                        ]
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "completedAt": {
+                        "type": "string"
+                    },
+                    "missionDuration": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "crewSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "yieldTarget": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "outcomeScore": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "autonomyLevel": {
+                        "type": "string",
+                        "enum": [
+                            "FULLY_AUTONOMOUS",
+                            "SUGGEST_ONLY",
+                            "HYBRID"
+                        ]
+                    },
+                    "riskTolerance": {
+                        "type": "string",
+                        "enum": [
+                            "CONSERVATIVE",
+                            "MODERATE",
+                            "AGGRESSIVE"
+                        ]
+                    }
+                }
+            },
+            "CurrentMetricsDto": {
+                "type": "object",
+                "properties": {
+                    "missionDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "waterReservePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "nutrientReservePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "energyReservePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "totalYieldKg": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "ResourceAvailabilityDto": {
+                "type": "object",
+                "properties": {
+                    "waterLiters": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "nutrientKg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "energyKwh": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "SimulationDetailResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "learningGoal": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "RUNNING",
+                            "PAUSED",
+                            "COMPLETED"
+                        ]
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "completedAt": {
+                        "type": "string"
+                    },
+                    "missionDuration": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "crewSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "yieldTarget": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "outcomeScore": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "autonomyLevel": {
+                        "type": "string",
+                        "enum": [
+                            "FULLY_AUTONOMOUS",
+                            "SUGGEST_ONLY",
+                            "HYBRID"
+                        ]
+                    },
+                    "riskTolerance": {
+                        "type": "string",
+                        "enum": [
+                            "CONSERVATIVE",
+                            "MODERATE",
+                            "AGGRESSIVE"
+                        ]
+                    },
+                    "resourceAvailability": {
+                        "$ref": "#/components/schemas/ResourceAvailabilityDto"
+                    },
+                    "agentConfig": {
+                        "$ref": "#/components/schemas/AgentConfigDto"
+                    },
+                    "currentMetrics": {
+                        "$ref": "#/components/schemas/CurrentMetricsDto"
+                    }
+                }
+            },
+            "TimelineEventDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    },
+                    "missionDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "SENSOR_SNAPSHOT",
+                            "SLOT_SNAPSHOT",
+                            "AGENT_ACTION",
+                            "STRESS_DETECTED",
+                            "STRESS_RESOLVED",
+                            "SCENARIO_INJECTED",
+                            "HARVEST"
+                        ]
+                    },
+                    "summary": {
+                        "type": "string"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "TimelineResponse": {
+                "type": "object",
+                "properties": {
+                    "simulationId": {
+                        "type": "string"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TimelineEventDto"
+                        }
+                    }
+                }
+            },
+            "InjectionListResponse": {
+                "type": "object",
+                "properties": {
+                    "injections": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/InjectionResponse"
+                        }
+                    }
+                }
+            },
+            "InjectionResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "scenarioId": {
+                        "type": "string"
+                    },
+                    "scenarioName": {
+                        "type": "string"
+                    },
+                    "triggeredAt": {
+                        "type": "string"
+                    },
+                    "resolvedAt": {
+                        "type": "string"
+                    },
+                    "intensity": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "RESOLVED"
+                        ]
+                    }
+                }
+            },
+            "ScenarioListResponse": {
+                "type": "object",
+                "properties": {
+                    "scenarios": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ScenarioResponse"
+                        }
+                    }
+                }
+            },
+            "ScenarioResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "WATER_RECYCLING_DEGRADATION",
+                            "TEMPERATURE_FAILURE"
+                        ]
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "LOW",
+                            "MEDIUM",
+                            "HIGH",
+                            "CATASTROPHIC"
+                        ]
+                    },
+                    "defaultDurationMinutes": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "OnboardingStatusResponse": {
+                "type": "object",
+                "properties": {
+                    "completed": {
+                        "type": "boolean"
+                    },
+                    "completedSteps": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "totalSteps": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "StoredFoodResponse": {
+                "type": "object",
+                "properties": {
+                    "totalCalories": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "remainingCalories": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "CoverageHeatmapResponse": {
+                "type": "object",
+                "properties": {
+                    "nutrients": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "missionDays": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    },
+                    "coverage": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "ConsumptionLogResponse": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "crewSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "dailyEntries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DailyNutritionEntryDto"
+                        }
+                    }
+                }
+            },
+            "DailyNutritionEntryDto": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string"
+                    },
+                    "totalCalories": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "proteinG": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "carbsG": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "fatG": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "fiberG": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "targetCalories": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "coveragePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "micronutrients": {
+                        "$ref": "#/components/schemas/MicronutrientsDto"
+                    },
+                    "calorieGhFraction": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "proteinGhFraction": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "micronutrientsCovered": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "MicronutrientsDto": {
+                "type": "object",
+                "properties": {
+                    "vitaminAMcg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "vitaminCMg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "vitaminKMcg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "folateMcg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "ironMg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "potassiumMg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "magnesiumMg": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "GreenhouseListResponse": {
+                "type": "object",
+                "properties": {
+                    "greenhouses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GreenhouseSummaryResponse"
+                        }
+                    }
+                }
+            },
+            "GreenhouseSummaryResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "rows": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "cols": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "totalSlots": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "occupiedSlots": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "overallStatus": {
+                        "type": "string",
+                        "enum": [
+                            "HEALTHY",
+                            "NEEDS_ATTENTION",
+                            "CRITICAL"
+                        ]
+                    }
+                }
+            },
+            "GreenhouseDetailResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "rows": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "cols": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "overallStatus": {
+                        "type": "string",
+                        "enum": [
+                            "HEALTHY",
+                            "NEEDS_ATTENTION",
+                            "CRITICAL"
+                        ]
+                    },
+                    "slots": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PlantSlotResponse"
+                        }
+                    },
+                    "resources": {
+                        "$ref": "#/components/schemas/GreenhouseResourcesDto"
+                    },
+                    "zones": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ZoneDto"
+                        }
+                    }
+                }
+            },
+            "GreenhouseResourcesDto": {
+                "type": "object",
+                "properties": {
+                    "waterReservePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "nutrientReservePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "energyReservePercent": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "ZoneDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "areaM2": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "cropPlan": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "number",
+                            "format": "double"
+                        }
+                    },
+                    "artificialLight": {
+                        "type": "boolean"
+                    },
+                    "waterAllocation": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "NutrientSolutionDto": {
+                "type": "object",
+                "properties": {
+                    "ph": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    },
+                    "ec": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    },
+                    "dissolvedOxygen": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    }
+                }
+            },
+            "SensorSnapshotResponse": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "string"
+                    },
+                    "temperature": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    },
+                    "humidity": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    },
+                    "lightIntensity": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    },
+                    "par": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    },
+                    "lightCyclePhase": {
+                        "type": "string",
+                        "enum": [
+                            "DAY",
+                            "NIGHT"
+                        ]
+                    },
+                    "co2": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    },
+                    "waterFlowRate": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    },
+                    "waterRecyclingEfficiency": {
+                        "$ref": "#/components/schemas/SensorValueDto"
+                    },
+                    "nutrientSolution": {
+                        "$ref": "#/components/schemas/NutrientSolutionDto"
+                    }
+                }
+            },
+            "SensorValueDto": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "NORMAL",
+                            "WARNING",
+                            "CRITICAL"
+                        ]
+                    }
+                }
+            },
+            "SensorHistoryReadingDto": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "string"
+                    },
+                    "temperature": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "humidity": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "lightIntensity": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "par": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "co2": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "waterFlowRate": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "waterRecyclingEfficiency": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "nutrientSolutionPh": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "nutrientSolutionEc": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "nutrientSolutionDissolvedOxygen": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "SensorHistoryResponse": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "interval": {
+                        "type": "string"
+                    },
+                    "readings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SensorHistoryReadingDto"
+                        }
+                    }
+                }
+            },
+            "SlotHistoryResponse": {
+                "type": "object",
+                "properties": {
+                    "slotId": {
+                        "type": "string"
+                    },
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "cropName": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "interval": {
+                        "type": "string"
+                    },
+                    "snapshots": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SlotHistorySnapshotDto"
+                        }
+                    }
+                }
+            },
+            "SlotHistorySnapshotDto": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "string"
+                    },
+                    "missionDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "EMPTY",
+                            "HEALTHY",
+                            "NEEDS_ATTENTION",
+                            "CRITICAL"
+                        ]
+                    },
+                    "growthStagePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "estimatedYieldKg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "activeStressTypes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "DROUGHT",
+                                "OVERWATERING",
+                                "HEAT",
+                                "COLD",
+                                "NUTRIENT_DEFICIENCY_N",
+                                "NUTRIENT_DEFICIENCY_K",
+                                "NUTRIENT_DEFICIENCY_FE",
+                                "SALINITY",
+                                "LIGHT_INSUFFICIENT",
+                                "LIGHT_EXCESSIVE",
+                                "CO2_IMBALANCE",
+                                "ROOT_HYPOXIA"
+                            ]
+                        }
+                    }
+                }
+            },
+            "ResourceForecastResponse": {
+                "type": "object",
+                "properties": {
+                    "generatedAt": {
+                        "type": "string"
+                    },
+                    "forecastDays": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "projections": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ResourceProjectionDto"
+                        }
+                    }
+                }
+            },
+            "ResourceProjectionDto": {
+                "type": "object",
+                "properties": {
+                    "missionDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "waterReservePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "nutrientReservePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "energyReservePercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "riskLevel": {
+                        "type": "string",
+                        "enum": [
+                            "LOW",
+                            "MODERATE",
+                            "HIGH",
+                            "CRITICAL"
+                        ]
+                    }
+                }
+            },
+            "MilestoneDto": {
+                "type": "object",
+                "properties": {
+                    "missionDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "date": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "HARVEST_WINDOW",
+                            "PLANTING_DEADLINE",
+                            "RESOURCE_CRITICAL",
+                            "TRIP_END"
+                        ]
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "cropId": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MissionTimelineResponse": {
+                "type": "object",
+                "properties": {
+                    "missionStartDate": {
+                        "type": "string"
+                    },
+                    "missionEndDate": {
+                        "type": "string"
+                    },
+                    "currentMissionDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "totalMissionDays": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "milestones": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MilestoneDto"
+                        }
+                    }
+                }
+            },
+            "CropListResponse": {
+                "type": "object",
+                "properties": {
+                    "crops": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CropResponse"
+                        }
+                    }
+                }
+            },
+            "CropResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "VEGETABLE",
+                            "LEGUME",
+                            "HERB"
+                        ]
+                    },
+                    "growthDays": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "harvestIndex": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "typicalYieldPerM2Kg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "waterRequirement": {
+                        "type": "string",
+                        "enum": [
+                            "LOW",
+                            "MEDIUM",
+                            "HIGH"
+                        ]
+                    },
+                    "environmentalRequirements": {
+                        "$ref": "#/components/schemas/EnvironmentalRequirementsDto"
+                    },
+                    "stressSensitivities": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "DROUGHT",
+                                "OVERWATERING",
+                                "HEAT",
+                                "COLD",
+                                "NUTRIENT_DEFICIENCY_N",
+                                "NUTRIENT_DEFICIENCY_K",
+                                "NUTRIENT_DEFICIENCY_FE",
+                                "SALINITY",
+                                "LIGHT_INSUFFICIENT",
+                                "LIGHT_EXCESSIVE",
+                                "CO2_IMBALANCE",
+                                "ROOT_HYPOXIA"
+                            ]
+                        }
+                    },
+                    "nutritionalProfile": {
+                        "$ref": "#/components/schemas/NutritionalProfileDto"
+                    }
+                }
+            },
+            "EnvironmentalRequirementsDto": {
+                "type": "object",
+                "properties": {
+                    "optimalTempMinC": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "optimalTempMaxC": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "heatStressThresholdC": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "optimalHumidityMinPct": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "optimalHumidityMaxPct": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "lightRequirementParMin": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "lightRequirementParMax": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "optimalCo2PpmMin": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "optimalCo2PpmMax": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "optimalPhMin": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "optimalPhMax": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "NutritionalProfileDto": {
+                "type": "object",
+                "properties": {
+                    "caloriesPer100g": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "proteinG": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "carbsG": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "fatG": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "fiberG": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "micronutrients": {
+                        "$ref": "#/components/schemas/MicronutrientsDto"
+                    }
+                }
+            },
+            "StockpileItemDto": {
+                "type": "object",
+                "properties": {
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "cropName": {
+                        "type": "string"
+                    },
+                    "quantityKg": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "estimatedCalories": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "daysOfSupply": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "expiresInDays": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "StockpileResponse": {
+                "type": "object",
+                "properties": {
+                    "updatedAt": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StockpileItemDto"
+                        }
+                    },
+                    "totalEstimatedCalories": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "totalDaysOfSupply": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "PlantingQueueItemDto": {
+                "type": "object",
+                "properties": {
+                    "rank": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "cropId": {
+                        "type": "string"
+                    },
+                    "cropName": {
+                        "type": "string"
+                    },
+                    "greenhouseId": {
+                        "type": "string"
+                    },
+                    "recommendedPlantDate": {
+                        "type": "string"
+                    },
+                    "missionDay": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "nutritionalGapsAddressed": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "PlantingQueueResponse": {
+                "type": "object",
+                "properties": {
+                    "queue": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PlantingQueueItemDto"
+                        }
+                    }
+                }
+            },
+            "HarvestListResponse": {
+                "type": "object",
+                "properties": {
+                    "total": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "harvests": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/HarvestEntryResponse"
+                        }
+                    }
+                }
+            },
+            "AgentPerformanceResponse": {
+                "type": "object",
+                "properties": {
+                    "simulationId": {
+                        "type": "string"
+                    },
+                    "simulationName": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "RUNNING",
+                            "PAUSED",
+                            "COMPLETED"
+                        ]
+                    },
+                    "decisionAccuracyPercent": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "avgResponseTimeMs": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "resourceEfficiencyScore": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "nutritionalTargetHitRate": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "diversityScore": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "autonomousActionsCount": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "humanOverridesCount": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "crisisResponseScore": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "AlertListResponse": {
+                "type": "object",
+                "properties": {
+                    "total": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "alerts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AlertResponse"
+                        }
+                    }
+                }
+            },
+            "RecommendationListResponse": {
+                "type": "object",
+                "properties": {
+                    "total": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "recommendations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RecommendationResponse"
+                        }
+                    }
+                }
+            },
+            "AgentLogListResponse": {
+                "type": "object",
+                "properties": {
+                    "total": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "entries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AgentLogEntryResponse"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

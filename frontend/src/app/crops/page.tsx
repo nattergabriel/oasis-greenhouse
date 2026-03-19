@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Thermometer, Sprout, Droplets, Sun, Leaf, Flower2 } from "lucide-react";
 import { mockCrops, mockPlantingQueue, mockHarvestJournal, mockStockpile, mockStoredFood, mockGreenhouseDetails } from "@/lib/mock-data";
 import { useSimulation } from "@/providers/simulation-provider";
+import { api, useApi } from "@/lib/api";
 import type { Crop, CropCategory, PlantingQueueItem, HarvestEntry, StockpileItem, PlantSlot } from "@/lib/types";
 
 // === Helpers ===
@@ -43,15 +44,21 @@ type TabValue = "catalog" | "queue" | "journal" | "stockpile";
 
 // === Crop icon per type ===
 
-function CropIcon({ name }: { name: string }) {
+function CropIcon({ name, size = "sm" }: { name: string; size?: "sm" | "lg" }) {
   const color = getCropColor(name);
-  const cls = "w-5 h-5";
+  const cls = size === "lg" ? "w-8 h-8" : "w-5 h-5";
   switch (name) {
     case "Lettuce": return <Leaf className={cls} style={{ color }} />;
     case "Herbs": return <Flower2 className={cls} style={{ color }} />;
     case "Beans & Peas": return <Sprout className={cls} style={{ color }} />;
     default: return <Leaf className={cls} style={{ color }} />;
   }
+}
+
+function getGrowthColor(percent: number): string {
+  if (percent >= 85) return "#4ead6b";
+  if (percent >= 50) return "#d4aa30";
+  return "#c75a3a";
 }
 
 // === Crop Card ===
@@ -68,35 +75,34 @@ function CropCard({ crop, isExpanded, onToggle }: { crop: Crop; isExpanded: bool
       }`}
       onClick={onToggle}
     >
-      {/* Top 2/3 */}
-      <div className="p-4 pb-3">
-        <div className="flex gap-3">
-          {/* Icon */}
+      {/* Main row: 3-col grid aligned with bottom stats */}
+      <div className="grid grid-cols-3 items-center">
+        {/* Col 1: Icon — aligns with Protein */}
+        <div className="flex items-center justify-center p-3">
           <div
-            className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0"
-            style={{ backgroundColor: cropColor + "18" }}
+            className="w-full h-full rounded-lg flex items-center justify-center min-h-[56px]"
+            style={{ backgroundColor: cropColor + "14" }}
           >
-            <CropIcon name={name} />
+            <CropIcon name={name} size="lg" />
           </div>
-          {/* Right: type label + crop name box */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{category}</span>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
-            </div>
-            <div className="mt-1.5">
-              <span
-                className="inline-flex items-center rounded-md border px-2.5 py-1 text-sm font-medium"
-                style={{ borderColor: catColor + "60", color: catColor }}
-              >
-                {name}
-              </span>
-            </div>
-          </div>
+        </div>
+        {/* Col 2: Crop name — aligns with Carbs */}
+        <div className="flex items-center justify-center">
+          <span
+            className="inline-flex items-center rounded-md border px-2.5 py-1 text-sm font-medium"
+            style={{ borderColor: catColor + "60", color: catColor }}
+          >
+            {name}
+          </span>
+        </div>
+        {/* Col 3: Category + chevron — aligns with Fat */}
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{category}</span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
         </div>
       </div>
 
-      {/* Bottom 1/3: protein / carbs / fat */}
+      {/* Bottom stats row: protein / carbs / fat */}
       <div className="border-t border-border grid grid-cols-3">
         {[
           { label: "Protein", value: `${nutritionalProfile.proteinG}g` },
@@ -211,13 +217,14 @@ function ExpansionDetail({ crop }: { crop: Crop }) {
 // === Catalog View (row grouping + full-width expansion) ===
 
 function CatalogView() {
+  const crops = useApi(() => api.crops.list().then(r => r.crops), mockCrops);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [rowDisplay, setRowDisplay] = useState<Record<number, string>>({});
 
   // Group into rows of 3
   const rows: Crop[][] = [];
-  for (let i = 0; i < mockCrops.length; i += 3) {
-    rows.push(mockCrops.slice(i, i + 3));
+  for (let i = 0; i < crops.length; i += 3) {
+    rows.push(crops.slice(i, i + 3));
   }
 
   function handleToggle(cropId: string, rowIdx: number) {
@@ -234,7 +241,7 @@ function CatalogView() {
       {rows.map((rowCrops, rowIdx) => {
         const isRowExpanded = rowCrops.some((c) => c.id === expandedId);
         const displayCropId = rowDisplay[rowIdx];
-        const displayCrop = displayCropId ? mockCrops.find((c) => c.id === displayCropId) : null;
+        const displayCrop = displayCropId ? crops.find((c) => c.id === displayCropId) : null;
 
         return (
           <div key={rowIdx}>
@@ -305,20 +312,20 @@ function SlotCell({ slot }: { slot: PlantSlot }) {
   }
 
   const cropColor = getCropColor(slot.cropName || "");
+  const growthColor = getGrowthColor(slot.growthStagePercent);
 
   return (
     <div className={`border rounded-lg p-2 min-h-[56px] ${isStressed ? "border-destructive/40" : "border-border"}`}>
-      <div className="flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cropColor }} />
-        <span className="text-[11px] font-medium truncate">{slot.cropName}</span>
+      <div className="flex items-center">
+        <span className="text-xs font-medium truncate">{slot.cropName}</span>
       </div>
       <div className="mt-1.5">
         <div className="h-1 rounded-full bg-secondary overflow-hidden">
-          <div className="h-full rounded-full" style={{ width: `${slot.growthStagePercent}%`, backgroundColor: isNearHarvest ? "#4ead6b" : cropColor }} />
+          <div className="h-full rounded-full" style={{ width: `${slot.growthStagePercent}%`, backgroundColor: growthColor }} />
         </div>
         <div className="flex items-center justify-between mt-1">
           <span className="text-[10px] font-mono tabular-nums text-muted-foreground">{slot.growthStagePercent}%</span>
-          {isNearHarvest && <span className="text-[10px] text-[#4ead6b] font-medium">harvest</span>}
+          {isNearHarvest && <span className="text-[10px] font-medium" style={{ color: growthColor }}>harvest</span>}
           {!isNearHarvest && isStressed && <span className="text-[10px] text-destructive font-medium">stress</span>}
         </div>
       </div>
@@ -372,7 +379,6 @@ function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots
               <span className="font-mono text-lg font-bold text-primary w-8 shrink-0">#{item.rank}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getCropColor(item.cropName) }} />
                   <span className="text-sm font-medium">{item.cropName}</span>
                   <Badge variant="outline" className="font-mono text-xs">SOL {item.missionDay}</Badge>
                 </div>
@@ -395,7 +401,7 @@ function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots
 
 // === Stockpile View (with headers + legend) ===
 
-function StockpileView({ items }: { items: StockpileItem[] }) {
+function StockpileView({ items, storedFood }: { items: StockpileItem[]; storedFood: { totalCalories: number; remainingCalories: number } }) {
   const totalCalories = items.reduce((sum, item) => sum + item.estimatedCalories, 0);
   const totalDays = items.reduce((sum, item) => sum + item.daysOfSupply, 0);
 
@@ -488,17 +494,17 @@ function StockpileView({ items }: { items: StockpileItem[] }) {
           <div>
             <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wide">Mission Reserves (Stored Food)</div>
             <div className="text-xl font-bold font-mono tabular-nums mt-0.5">
-              {(mockStoredFood.remainingCalories / 1000000).toFixed(1)}M <span className="text-sm text-muted-foreground">/ {(mockStoredFood.totalCalories / 1000000).toFixed(1)}M kcal</span>
+              {(storedFood.remainingCalories / 1000000).toFixed(1)}M <span className="text-sm text-muted-foreground">/ {(storedFood.totalCalories / 1000000).toFixed(1)}M kcal</span>
             </div>
           </div>
           <div className="text-right">
             <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wide">Remaining</div>
             <div className="text-xl font-bold font-mono tabular-nums mt-0.5">
-              {Math.round(mockStoredFood.remainingCalories / mockStoredFood.totalCalories * 100)}%
+              {Math.round(storedFood.remainingCalories / storedFood.totalCalories * 100)}%
             </div>
           </div>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Crew arrived with {(mockStoredFood.totalCalories / 1000000).toFixed(1)}M kcal. Greenhouse supplements stored food -- crew never starves.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Crew arrived with {(storedFood.totalCalories / 1000000).toFixed(1)}M kcal. Greenhouse supplements stored food -- crew never starves.</p>
       </Card>
     </div>
   );
@@ -550,8 +556,11 @@ const TABS: { value: TabValue; label: string }[] = [
 export default function CropsPage() {
   const { state } = useSimulation();
   const [activeTab, setActiveTab] = useState<TabValue>("catalog");
-
-  const ghDetail = state.selectedGreenhouseId ? mockGreenhouseDetails[state.selectedGreenhouseId] : null;
+  const plantingQueue = useApi(() => api.crops.plantingQueue().then(r => r.queue), mockPlantingQueue);
+  const harvestJournal = useApi(() => api.crops.harvestJournal().then(r => r.harvests), mockHarvestJournal);
+  const stockpileItems = useApi(() => api.crops.stockpile().then(r => r.items), mockStockpile);
+  const storedFood = useApi(() => api.nutrition.storedFood(), mockStoredFood);
+  const ghDetail = useApi(() => state.selectedGreenhouseId ? api.greenhouses.get(state.selectedGreenhouseId) : Promise.resolve(null), state.selectedGreenhouseId ? mockGreenhouseDetails[state.selectedGreenhouseId] ?? null : null, [state.selectedGreenhouseId]);
   const slots = ghDetail?.slots || [];
 
   return (
@@ -579,15 +588,15 @@ export default function CropsPage() {
       {activeTab === "catalog" && <CatalogView />}
 
       {activeTab === "queue" && (
-        <PlantingQueueView items={mockPlantingQueue} slots={slots} />
+        <PlantingQueueView items={plantingQueue} slots={slots} />
       )}
 
       {activeTab === "journal" && (
-        <HarvestJournalTable entries={mockHarvestJournal} />
+        <HarvestJournalTable entries={harvestJournal} />
       )}
 
       {activeTab === "stockpile" && (
-        <StockpileView items={mockStockpile} />
+        <StockpileView items={stockpileItems} storedFood={storedFood} />
       )}
     </div>
   );

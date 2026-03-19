@@ -1,0 +1,366 @@
+▗ ▗   ▖ ▖  Claude Code v2.1.79
+           Sonnet 4.5 · API Usage Billing
+  ▘▘ ▝▝    ~/Apps/start-2026/frontend
+
+❯ /clear                                                                        
+  ⎿  (no content)
+
+❯ /audit                                                                        
+
+⏺ I'll run a comprehensive audit of the frontend. Let me start by reading the
+  key files across the codebase.
+
+⏺ Let me read the key files across the codebase in parallel.
+
+  Searched for 1 pattern, read 5 files (ctrl+o to expand)
+
+⏺ Now let me read the remaining pages and key components in parallel.
+
+  Read 6 files (ctrl+o to expand)
+
+⏺ Now let me read the remaining admin pages, simulation page, and key
+  components.
+
+  Read 6 files (ctrl+o to expand)
+
+⏺ Now let me run targeted searches for common issues.
+
+  Searched for 5 patterns (ctrl+o to expand)
+
+⏺ Let me check a few more patterns.
+
+  Searched for 4 patterns, read 1 file (ctrl+o to expand)
+
+⏺ I've thoroughly reviewed all pages, components, and patterns. Here's the
+  comprehensive audit report.
+
+  ---
+  Frontend Audit Report — Mars Greenhouse Command Center
+
+  Anti-Patterns Verdict
+
+  PASS. This does not look AI-generated. The design has genuine personality — a
+  dark Mars theme with warm amber/earth tones, a hand-crafted SVG greenhouse
+  visualization, mission-specific typography, and domain-appropriate language.
+  No glassmorphism, no gradient text, no generic hero sections, no card grids of
+   3 stats with icons. The one minor tell: the admin/analytics "hero metric"
+  with a donut chart is a common dashboard pattern, but it's used appropriately
+  here.
+
+  ---
+  Executive Summary
+
+  ┌──────────┬───────┐
+  │ Severity │ Count │
+  ├──────────┼───────┤
+  │ Critical │ 2     │
+  ├──────────┼───────┤
+  │ High     │ 7     │
+  ├──────────┼───────┤
+  │ Medium   │ 8     │
+  ├──────────┼───────┤
+  │ Low      │ 5     │
+  ├──────────┼───────┤
+  │ Total    │ 22    │
+  └──────────┴───────┘
+
+  Top 5 issues:
+  1. No mobile navigation — navbar overflows and hides on small screens
+  2. Fixed-width grid tables (stockpile, harvest journal) break on mobile
+  3. Custom tab/toggle buttons lack ARIA roles (role="tablist", aria-selected)
+  4. Interactive Cards with onClick lack keyboard accessibility
+  5. Duplicate code: analytics section exists identically in two files
+
+  Overall: Strong for a hackathon. The design system is well-defined, theming is
+   consistent, and the visualization work is impressive. The main gaps are
+  accessibility and responsive design.
+
+  ---
+  Detailed Findings
+
+  Critical Issues
+
+  C1. Navbar has no mobile layout — content overflows
+  - Location: src/components/layout/navbar.tsx
+  - Category: Responsive
+  - Description: 8+ nav links in a horizontal row with no hamburger menu, no
+  overflow handling. On screens <768px the links run off-screen.
+  - Impact: App is unusable on mobile/tablet. Users can't navigate.
+  - Recommendation: Add a mobile hamburger/drawer pattern with md:hidden toggle.
+  - Suggested command: /adapt
+
+  C2. Fixed-width grid tables break below ~900px
+  - Location: src/app/crops/page.tsx:411,518 (stockpile and harvest journal
+  grids)
+  - Category: Responsive
+  - Description: gridTemplateColumns: "1fr 100px 120px 100px 80px" and "100px 
+  70px 1fr 90px 100px 1fr" use absolute pixel columns. Total minimum widths
+  exceed mobile viewport.
+  - Impact: Horizontal scroll or content clipping on mobile. Data unreadable.
+  - Recommendation: Switch to responsive stacked layout on mobile, or use a
+  horizontally scrollable container.
+  - Suggested command: /adapt
+
+  ---
+  High-Severity Issues
+
+  H1. Tab buttons lack ARIA roles throughout
+  - Location: All pages with tab buttons: crops/page.tsx:567,
+  nutrition/page.tsx:213, forecasting/page.tsx:289, activity/page.tsx:356,394,
+  simulation/page.tsx:152, admin/page.tsx:244, greenhouse/page.tsx:195
+  - Category: Accessibility
+  - Description: Custom tab buttons are plain <button> elements. Missing
+  role="tablist" on container, role="tab" on buttons, aria-selected, and
+  role="tabpanel" on content areas.
+  - Impact: Screen readers can't identify these as tabs. Violates WCAG 4.1.2
+  (Name, Role, Value).
+  - Recommendation: Add proper ARIA tab roles, or use shadcn Tabs component.
+  - Suggested command: /harden
+
+  H2. Interactive Card in CropCard lacks keyboard support
+  - Location: src/app/crops/page.tsx:71-76
+  - Category: Accessibility
+  - Description: <Card onClick={onToggle}> — a <div> with onClick but no
+  role="button", tabIndex, or onKeyDown handler. Same pattern in simulation
+  history table rows (<tr onClick>).
+  - Impact: Keyboard-only users can't expand crop cards or open history details.
+   WCAG 2.1.1 (Keyboard).
+  - Recommendation: Use <button> or add role="button" tabIndex={0} onKeyDown.
+  - Suggested command: /harden
+
+  H3. Color-only status indicators with no text alternative
+  - Location: Dashboard SensorRow, greenhouse SensorGauge, nutrition
+  micronutrient bars, activity alert/log rows
+  - Category: Accessibility
+  - Description: Small colored dots (1.5-2px) are the sole indicator of status
+  (healthy/warning/critical). No aria-label or visible text.
+  - Impact: Color-blind users and screen reader users can't determine status.
+  WCAG 1.4.1 (Use of Color).
+  - Recommendation: Add aria-label to dots or include text status alongside.
+  - Suggested command: /harden
+
+  H4. Simulation page grid-cols-5 metrics — no responsive fallback
+  - Location: src/app/simulation/page.tsx:189, config grid at :217
+  - Category: Responsive
+  - Description: grid grid-cols-5 gap-4 for metrics and grid-cols-4 for config
+  with no sm: or md: breakpoints.
+  - Impact: Metrics become unreadably cramped on mobile.
+  - Recommendation: Use grid-cols-2 md:grid-cols-5 pattern.
+  - Suggested command: /adapt
+
+  H5. Nutrition heatmap is illegible on small screens
+  - Location: src/app/nutrition/page.tsx:566
+  - Category: Responsive
+  - Description: 14-column heatmap with 100px label column. Each data cell
+  shrinks to ~15px on mobile.
+  - Impact: Data becomes unreadable; touch interaction impossible.
+  - Recommendation: Make horizontally scrollable or reduce visible days on
+  mobile.
+  - Suggested command: /adapt
+
+  H6. StatusPopover missing ARIA attributes
+  - Location: src/components/layout/status-popover.tsx
+  - Category: Accessibility
+  - Description: Custom popover with manual click-outside handling. Missing
+  aria-expanded, aria-haspopup, aria-controls on trigger. Popover panel missing
+  role="dialog" or role="menu".
+  - Impact: Screen readers don't announce popover state. WCAG 4.1.2.
+  - Recommendation: Add ARIA attributes or switch to shadcn Popover.
+  - Suggested command: /harden
+
+  H7. No skip-to-content link
+  - Location: src/components/layout/app-shell.tsx
+  - Category: Accessibility
+  - Description: No skip navigation link for keyboard users. Fixed navbar means
+  tabbing through 8+ nav links before reaching content.
+  - Impact: Keyboard users must tab through entire nav on every page. WCAG 2.4.1
+   (Bypass Blocks).
+  - Recommendation: Add visually hidden skip link that becomes visible on focus.
+  - Suggested command: /harden
+
+  ---
+  Medium-Severity Issues
+
+  M1. Duplicate analytics code across two files
+  - Location: src/app/admin/page.tsx:144-232 and
+  src/app/admin/analytics/page.tsx:1-97
+  - Category: Code quality
+  - Description: scoreStatus(), the entire metrics grid, accuracy donut, and
+  autonomy ratio are copy-pasted identically.
+  - Impact: Maintenance burden — fixes need to be applied twice.
+  - Recommendation: Extract shared AnalyticsSection component.
+  - Suggested command: /extract
+
+  M2. Hard-coded hex colors in Tailwind arbitrary values
+  - Location: src/app/crops/page.tsx:346,387, src/app/activity/page.tsx:70,
+  src/app/simulation/page.tsx:30-52
+  - Category: Theming
+  - Description: bg-[#4ead6b], text-[#4ead6b],
+  border-[var(--color-status-healthy)]/30 — colors that should use CSS custom
+  property tokens.
+  - Impact: Bypasses token system; harder to adjust palette globally.
+  - Recommendation: Use bg-[var(--color-status-healthy)] or define Tailwind
+  color aliases.
+  - Suggested command: /normalize
+
+  M3. Duplicate color helper functions across pages
+  - Location: getCropDotColor in greenhouse/page.tsx:53, getCropColor in
+  crops/page.tsx:21, statusColor in dashboard/page.tsx:11,
+  forecasting/page.tsx:76, activity/page.tsx:33
+  - Category: Code quality
+  - Description: Same mapping logic duplicated 3-5 times.
+  - Impact: Inconsistency risk (radish color is #c75a6a in greenhouse but same
+  elsewhere), maintenance overhead.
+  - Recommendation: Centralize in lib/utils.ts or lib/colors.ts.
+  - Suggested command: /extract
+
+  M4. shadow-lg on forecast tooltip violates design rules
+  - Location: src/app/forecasting/page.tsx:34
+  - Category: Theming
+  - Description: Design system says "No shadows — use border border-border for
+  depth." Forecast tooltip uses shadow-lg.
+  - Impact: Visual inconsistency with rest of app.
+  - Recommendation: Replace with border border-border and remove shadow.
+  - Suggested command: /normalize
+
+  M5. any type on Recharts tooltip props
+  - Location: src/app/nutrition/page.tsx:75, src/app/forecasting/page.tsx:28
+  - Category: Code quality
+  - Description: CustomTooltip({ active, payload, label }: any) — loose typing.
+  - Impact: No type safety on tooltip data. Could hide bugs.
+  - Recommendation: Use Recharts TooltipProps type.
+
+  M6. Touch targets too small on filter/tab buttons
+  - Location: Nutrition crew selector (px-2.5 py-0.5), greenhouse metric mode
+  buttons, all filter pill buttons
+  - Category: Responsive / Accessibility
+  - Description: Many interactive buttons are ~24-28px tall. Recommended minimum
+   is 44x44px for touch.
+  - Impact: Difficult to tap accurately on touch devices. WCAG 2.5.5 (Target
+  Size).
+  - Recommendation: Increase to at least py-2 px-3 for touch targets.
+  - Suggested command: /adapt
+
+  M7. Recharts data arrays recreated every render
+  - Location: src/app/greenhouse/page.tsx:550 (history.map((v, i) => ({ i, v }))
+   inside JSX)
+  - Category: Performance
+  - Description: New array objects created on every render for 6 sensor
+  sparklines.
+  - Impact: Unnecessary re-renders of chart components.
+  - Recommendation: Memoize with useMemo or pre-compute outside render.
+  - Suggested command: /optimize
+
+  M8. Expandable sections missing aria-expanded
+  - Location: Activity page AlertRow, LogRow, RecommendationRow; Crops page
+  CropCard; Nutrition advisories
+  - Category: Accessibility
+  - Description: Expand/collapse buttons don't communicate state to assistive
+  tech.
+  - Impact: Screen reader users can't tell if section is open or closed.
+  - Recommendation: Add aria-expanded={open} to toggle buttons.
+  - Suggested command: /harden
+
+  ---
+  Low-Severity Issues
+
+  L1. Deleted pages still have stale references
+  - Location: Git status shows D src/app/agent/page.tsx, D 
+  src/app/alerts/page.tsx
+  - Category: Code quality
+  - Description: Old route pages deleted but dashboard still links to /activity
+  (correct), no broken links detected. Minor: the old /alerts and /agent routes
+  may still be indexed.
+  - Impact: Minimal — no broken links in current nav.
+
+  L2. border-2 on admin config selection cards
+  - Location: src/app/admin/page.tsx:46,85
+  - Category: Theming
+  - Description: Uses border-2 which is thicker than the standard border used
+  everywhere else.
+  - Impact: Minor visual inconsistency.
+  - Recommendation: Use border + ring-1 ring-primary for selected state.
+  - Suggested command: /normalize
+
+  L3. Inline <style> tag in crops page
+  - Location: src/app/crops/page.tsx:279-292
+  - Category: Performance
+  - Description: @keyframes catalogExpand defined in inline <style> tag inside
+  component JSX.
+  - Impact: Injected on every render; minor performance concern.
+  - Recommendation: Move to globals.css.
+  - Suggested command: /optimize
+
+  L4. Gradient used in cross-section background
+  - Location: src/components/greenhouse-cross-section.tsx:293
+  - Category: Theming
+  - Description: linear-gradient(to bottom, #0d0806 0%, #2d1810 70%, ...) —
+  technically a gradient, but explicitly allowed for greenhouse SVG per design
+  rules.
+  - Impact: None — this is the sanctioned exception.
+
+  L5. No <main> landmark ID for skip link target
+  - Location: src/components/layout/app-shell.tsx:9
+  - Category: Accessibility
+  - Description: <main> element exists but has no id for a skip link to target.
+  - Impact: If skip link is added (H7), needs an ID.
+
+  ---
+  Positive Findings
+
+  - Consistent design language: Uppercase labels, monospace numbers, status
+  dots, border-only depth — applied uniformly
+  - Impressive greenhouse SVG: Crop-specific shapes, growth stages, weather
+  effects, mission-day sun arc — unique and non-generic
+  - Clean type system: types.ts maps exactly to contracts/API.md with
+  comprehensive types
+  - Token-first CSS: Custom properties well-organized in globals.css, Tailwind
+  v4 @theme inline properly set up
+  - Smart font choices: Space Grotesk (technical but friendly) + JetBrains Mono
+  (purpose-built for data) — not generic
+  - useId() for SVG: greenhouse-cross-section.tsx avoids SVG ID clashes when
+  multiple instances render
+  - Expandable row pattern: Consistent interaction model across crops, alerts,
+  and agent pages
+  - Simulation provider architecture: Clean context + reducer pattern for state
+  management
+  - Activity page UX: Decisions/alerts/log unified on one page with collapsible
+  stacks — good information architecture
+
+  ---
+  Recommendations by Priority
+
+  1. Immediate (demo blockers)
+
+  - C1: Add mobile navbar — /adapt
+  - C2: Fix grid tables for mobile — /adapt
+
+  2. Short-term (before demo polish)
+
+  - H1-H3, H6-H8, M8: ARIA audit pass — /harden
+  - H4-H5: Responsive grid breakpoints — /adapt
+  - M4: Remove shadow-lg — /normalize
+
+  3. Medium-term (code quality)
+
+  - M1: Extract shared analytics component — /extract
+  - M3: Centralize color helpers — /extract
+  - M2: Normalize hard-coded hex to tokens — /normalize
+  - M7: Memoize chart data — /optimize
+
+  4. Long-term (polish)
+
+  - L2-L3: Minor theming/perf fixes — /polish
+  - M5: Type Recharts tooltips
+  - M6: Increase touch targets — /adapt
+
+  ---
+  Suggested Command Sequence
+
+  1. /adapt — Fix C1, C2, H4, H5 (responsive/mobile — highest impact for demo)
+  2. /harden — Fix H1-H3, H6-H8, M8 (accessibility pass)
+  3. /normalize — Fix M2, M4, L2 (theming consistency)
+  4. /extract — Fix M1, M3 (deduplicate shared code)
+  5. /polish — Final pass on L3, M5, M6 (minor cleanup)
+
+✻ Cogitated for 2m 32s

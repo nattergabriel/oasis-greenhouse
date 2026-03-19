@@ -18,15 +18,15 @@ async def simulate_node(state: AgentState) -> dict[str, Any]:
     actions = sim_info.get("planned_actions", [])
     plan_horizon = sim_info.get("plan_horizon", 30)
 
-    # Filter inject_events for this batch window
+    # Filter inject_events whose target day falls within this batch window.
+    # Note: the sim engine applies all inject_events on the first day of the
+    # tick, so the "day" field is only used for filtering, not scheduling.
     inject_events = state.get("inject_events") or []
-    batch_events = []
-    for event in inject_events:
-        event_day = event.get("day", 0)
-        if mission_day < event_day <= mission_day + plan_horizon:
-            batch_event = dict(event)
-            batch_event["day"] = event_day - mission_day
-            batch_events.append(batch_event)
+    batch_events = [
+        {"event_type": e["event_type"], "duration_sols": e.get("duration_sols")}
+        for e in inject_events
+        if mission_day < e.get("day", 0) <= mission_day + plan_horizon
+    ]
 
     logger.info(
         "[SIMULATE] Running %d days from day %d (%d actions, %d injected events)",

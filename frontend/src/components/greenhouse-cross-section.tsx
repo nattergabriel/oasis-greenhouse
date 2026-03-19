@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId } from "react";
 import { useSimulation } from "@/providers/simulation-provider";
 import { mockGreenhouseDetails, mockWeather } from "@/lib/mock-data";
+import { api, useApi } from "@/lib/api";
 import type { PlantSlot } from "@/lib/types";
 
 // Unique SVG IDs per instance to avoid clashes when rendered multiple times
-let instanceCounter = 0;
 function useInstanceId() {
-  return useMemo(() => `gh-${++instanceCounter}`, []);
+  const id = useId();
+  return `gh-${id.replace(/:/g, "")}`;
 }
 
 function getGrowthStage(p: number) {
@@ -254,8 +255,8 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   const instId = useInstanceId();
   const { state } = useSimulation();
   const ghId = state.selectedGreenhouseId ?? state.greenhouses[0]?.id;
-  const detail = ghId ? mockGreenhouseDetails[ghId] : null;
-  const weather = mockWeather;
+  const detail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), ghId ? mockGreenhouseDetails[ghId] ?? null : null, [ghId]);
+  const weather = useApi(() => api.weather.current(), mockWeather);
 
   if (!detail) return null;
 
@@ -290,7 +291,7 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   const plantAreaW = domeW - 80;
 
   return (
-    <div className="rounded-lg overflow-hidden border border-border bg-[#060504] h-full">
+    <div className="rounded-lg overflow-hidden border border-border h-full" style={{ background: "linear-gradient(to bottom, #0d0806 0%, #2d1810 70%, #2d1810 100%)" }}>
       <svg
         viewBox={`0 0 ${viewW} ${viewH}`}
         className="w-full"

@@ -71,7 +71,7 @@ def default_slot() -> Slot:
 
 @pytest.fixture
 def default_slots() -> list[Slot]:
-    """4 empty slots in a 2×2 grid."""
+    """16 empty slots in a 4×4 grid."""
     slots = []
     slot_id = 0
     for row in range(config.GREENHOUSE_ROWS):
@@ -112,7 +112,7 @@ def sample_crop() -> Crop:
 
 @pytest.fixture
 def default_state(default_slots: list[Slot]) -> GreenhouseState:
-    """Initial simulation state with 4 empty slots."""
+    """Initial simulation state with 16 empty slots."""
     return GreenhouseState(
         day=0,
         environment=Environment(),
@@ -159,10 +159,16 @@ def populated_state() -> GreenhouseState:
                  water_allocation=1.0, crop_type="potato")
     slot1 = Slot(id=1, row=0, col=1, area_m2=4.0, crops=[lettuce], artificial_light=False,
                  water_allocation=0.8, crop_type="lettuce")
-    # Fill remaining slots empty (2×2 grid = 4 total)
+    # Fill remaining slots empty (4×4 grid = 16 total)
     slots = [slot0, slot1]
-    slots.append(Slot(id=2, row=1, col=0, area_m2=4.0, crops=[]))
-    slots.append(Slot(id=3, row=1, col=1, area_m2=4.0, crops=[]))
+    slot_id = 2
+    for row in range(config.GREENHOUSE_ROWS):
+        for col in range(config.GREENHOUSE_COLS):
+            if slot_id >= config.GREENHOUSE_ROWS * config.GREENHOUSE_COLS:
+                break
+            if slot_id >= 2:  # slots 0 and 1 already created above
+                slots.append(Slot(id=slot_id, row=row, col=col, area_m2=4.0, crops=[]))
+            slot_id += 1
 
     food_supply = FoodSupply(items={
         "potato": FoodItem(kg=12.0, kcal=9240.0, protein_g=240.0),

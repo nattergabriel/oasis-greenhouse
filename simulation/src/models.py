@@ -43,7 +43,7 @@ class Crop:
 
 @dataclass
 class Slot:
-    """A 2×2m greenhouse slot in the grid."""
+    """A 4m² greenhouse slot in the grid."""
 
     id: int
     row: int = 0

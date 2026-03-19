@@ -430,6 +430,16 @@ export interface TimelineEvent {
   payload: Record<string, unknown>;
 }
 
+// SlotController
+export interface SlotHistorySnapshot {
+  timestamp: string;
+  missionDay: number;
+  status: SlotStatus;
+  growthStagePercent: number;
+  estimatedYieldKg: number | null;
+  activeStressTypes: StressType[];
+}
+
 // === Simulation State (frontend-only, wraps API data) ===
 
 export interface SimulationState {

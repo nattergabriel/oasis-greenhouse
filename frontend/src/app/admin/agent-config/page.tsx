@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { mockAgentConfig } from "@/lib/mock-data"
+import { api, useApi } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -9,7 +10,8 @@ import { Slider } from "@/components/ui/slider"
 import type { AutonomyLevel, RiskTolerance } from "@/lib/types"
 
 export default function AgentConfigPage() {
-  const [config, setConfig] = useState(mockAgentConfig)
+  const initialConfig = useApi(() => api.agent.config(), mockAgentConfig)
+  const [config, setConfig] = useState(initialConfig)
 
   const handleSave = () => {
     console.log("Saving agent config:", config)

@@ -24,6 +24,9 @@ import type {
   AgentPerformance,
   SimulationState,
   Zone,
+  SlotHistorySnapshot,
+  ScenarioInjection,
+  TimelineEvent,
 } from "./types";
 
 // === Helper ===
@@ -502,6 +505,33 @@ export const mockAgentPerformance: AgentPerformance = {
   diversityScore: 68, autonomousActionsCount: 342, humanOverridesCount: 18,
   crisisResponseScore: 79,
 };
+
+// === Slot History (mock snapshots for slot s1-1-0, lettuce at 85%) ===
+export const mockSlotHistory: SlotHistorySnapshot[] = Array.from({ length: 14 }, (_, i) => ({
+  timestamp: new Date(2026, 5, 2 + i).toISOString(),
+  missionDay: 129 + i,
+  status: (i < 10 ? "HEALTHY" : "NEEDS_ATTENTION") as SlotHistorySnapshot["status"],
+  growthStagePercent: Math.min(100, 20 + i * 5),
+  estimatedYieldKg: +(0.2 + i * 0.12).toFixed(2),
+  activeStressTypes: i >= 10 ? (["DROUGHT"] as SlotHistorySnapshot["activeStressTypes"]) : [],
+}));
+
+// === Timeline Events (simulation event log) ===
+export const mockTimelineEvents: TimelineEvent[] = [
+  { id: uuid(), timestamp: "2026-06-15T14:30:00Z", missionDay: 142, type: "AGENT_ACTION", summary: "Agent adjusted water multiplier for Zone 2", payload: { actionType: "water_adjust", zone: 2, value: 1.3 } },
+  { id: uuid(), timestamp: "2026-06-15T13:15:00Z", missionDay: 142, type: "AGENT_ACTION", summary: "Agent enabled artificial lighting for Zone 3", payload: { actionType: "light_toggle", zone: 3, enabled: true } },
+  { id: uuid(), timestamp: "2026-06-15T12:00:00Z", missionDay: 142, type: "SENSOR_SNAPSHOT", summary: "Sensor readings recorded", payload: { temperature: 20.0, humidity: 62, co2: 1000 } },
+  { id: uuid(), timestamp: "2026-06-15T08:00:00Z", missionDay: 142, type: "STRESS_DETECTED", summary: "Drought stress detected in slot s1-0-3", payload: { slotId: "s1-0-3", stressType: "DROUGHT", cropName: "Beans & Peas" } },
+  { id: uuid(), timestamp: "2026-06-14T22:00:00Z", missionDay: 141, type: "HARVEST", summary: "Lettuce harvested from slot s1-1-0 (1.8 kg)", payload: { slotId: "s1-1-0", cropName: "Lettuce", yieldKg: 1.8 } },
+  { id: uuid(), timestamp: "2026-06-14T16:00:00Z", missionDay: 141, type: "SCENARIO_INJECTED", summary: "Water recycling degradation event triggered", payload: { scenarioType: "WATER_RECYCLING_DEGRADATION", intensity: 0.7 } },
+  { id: uuid(), timestamp: "2026-06-14T10:00:00Z", missionDay: 141, type: "STRESS_RESOLVED", summary: "Cold stress resolved in slot s1-3-0", payload: { slotId: "s1-3-0", stressType: "COLD", cropName: "Herbs" } },
+  { id: uuid(), timestamp: "2026-06-14T06:00:00Z", missionDay: 141, type: "SLOT_SNAPSHOT", summary: "Slot snapshots recorded for all 16 slots", payload: { totalSlots: 16, healthy: 13, needsAttention: 2, empty: 1 } },
+];
+
+// === Scenario Injections (active/past injections for current sim) ===
+export const mockInjections: ScenarioInjection[] = [
+  { id: uuid(), scenarioId: mockScenarios[0]?.id ?? uuid(), scenarioName: "Water Recycling Degradation", triggeredAt: "2026-06-14T16:00:00Z", resolvedAt: "2026-06-14T18:30:00Z", intensity: 0.7, status: "RESOLVED" },
+];
 
 // === Initial Simulation State ===
 export const initialSimulationState: SimulationState = {

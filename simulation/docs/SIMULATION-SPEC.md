@@ -8,7 +8,7 @@ A 450-day stateless simulation of a Martian greenhouse supplementing the diet of
 
 ## Greenhouse Layout
 
-4 slots in a 2×2 grid. Each slot is 4 m² (2m × 2m). Total area: **16 m²**.
+16 slots in a 4×4 grid. Each slot is 4 m² (2m × 2m). Total area: **64 m²**.
 
 Each slot holds **one crop type** (`slot.crop_type`). The engine fills the slot with as many plantings of that type as fit, and auto-replants after harvest or death.
 
@@ -55,7 +55,7 @@ Estimated ~20-25 LLM calls per 450-day run.
 | Every ~30 days | Scheduled review |
 | Event fires | `water_recycling_degradation` or `temperature_control_failure` |
 | Crop health < 30 | Crop about to die |
-| Water < 1,500L (15%) | Resource crisis |
+| Water < 6,000L (15%) | Resource crisis |
 | Energy deficit 3+ days | Must cut lighting or heating |
 
 ---
@@ -157,8 +157,8 @@ Energy deficit → light penalty up to 50%.
 
 | Resource | Starting | Recycling |
 |----------|----------|-----------|
-| Water | 10,000 L | 90% (KB) |
-| Nutrients | 5,000 units | 70% (SIM) |
+| Water | 40,000 L | 90% (KB) |
+| Nutrients | 20,000 units | 70% (SIM) |
 
 Crew consumes 10L water/day (2.5L × 4). Crops consume per their `water_per_sol_l`. Nutrients: 0.5 units/crop/sol.
 
@@ -202,7 +202,7 @@ Events can also be injected manually via `/simulate/inject-event`.
 | Condition | Threshold |
 |-----------|-----------|
 | Crop health critical | Any crop health < 30 |
-| Water critical | Water < 1,500L (15%) |
+| Water critical | Water < 6,000L (15%) |
 | Energy deficit streak | 3+ consecutive days |
 | Starvation | Both stored food and greenhouse food exhausted |
 

@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: greenhouse
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./management-backend
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/greenhouse
+      DB_USER: postgres
+      DB_PASS: postgres
+      AGENT_TOKEN: dev-agent-token
+      SYSTEM_TOKEN: dev-system-token
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

@@ -31,7 +31,7 @@ class Crop(BaseModel):
 
 
 class Slot(BaseModel):
-    """A 2x2m greenhouse slot in the grid."""
+    """A 4m² greenhouse slot in the grid."""
     id: int
     row: int = 0
     col: int = 0
@@ -64,8 +64,8 @@ class EnvironmentState(BaseModel):
 
 class Resources(BaseModel):
     """Finite resources for the greenhouse."""
-    water: float = 10000.0
-    nutrients: float = 5000.0
+    water: float = 40000.0
+    nutrients: float = 20000.0
     energy_generated: float = 0.0
     energy_needed: float = 0.0
     energy_deficit: float = 0.0
@@ -149,6 +149,7 @@ class GreenhouseState(BaseModel):
     next_crop_id: int = 1
     seed: int = 42
     consecutive_energy_deficit_days: int = 0
+    rng_state: Optional[Any] = None  # saved Random.getstate() for determinism across ticks
 
 
 # ============================================================================

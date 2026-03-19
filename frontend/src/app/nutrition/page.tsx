@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { mockNutritionEntries, mockCoverageHeatmap } from "@/lib/mock-data";
+import { api, useApi } from "@/lib/api";
 import {
   AreaChart,
   Area,
@@ -84,15 +85,15 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-function generateAdvisories(selectedCrew: string): { id: string; severity: "warning" | "critical"; nutrient: string; message: string; suggestion: string }[] {
+function generateAdvisories(selectedCrew: string, heatmap: typeof mockCoverageHeatmap, entries: typeof mockNutritionEntries): { id: string; severity: "warning" | "critical"; nutrient: string; message: string; suggestion: string }[] {
   const advisories: { id: string; severity: "warning" | "critical"; nutrient: string; message: string; suggestion: string }[] = [];
   const factor = selectedCrew !== "all" ? ASTRONAUT_FACTORS[selectedCrew] : null;
 
   const recentDays = 5;
-  const startIdx = mockCoverageHeatmap.coverage[0].length - recentDays;
+  const startIdx = heatmap.coverage[0].length - recentDays;
 
-  mockCoverageHeatmap.nutrients.forEach((nutrient, rowIdx) => {
-    const recentCoverage = mockCoverageHeatmap.coverage[rowIdx].slice(startIdx);
+  heatmap.nutrients.forEach((nutrient, rowIdx) => {
+    const recentCoverage = heatmap.coverage[rowIdx].slice(startIdx);
     const adjustedCoverage = factor
       ? recentCoverage.map(v => Math.round(v * factor.microBias[rowIdx]))
       : recentCoverage;
@@ -109,7 +110,7 @@ function generateAdvisories(selectedCrew: string): { id: string; severity: "warn
   });
 
   // Check protein
-  const latestEntry = mockNutritionEntries[mockNutritionEntries.length - 1];
+  const latestEntry = entries[entries.length - 1];
   const crew = CREW.find(c => c.id === selectedCrew)!;
   const proteinTarget = crew.proteinTarget;
   const proteinValue = selectedCrew === "all"
@@ -127,7 +128,9 @@ export default function NutritionPage() {
   const [selectedCrew, setSelectedCrew] = useState("all");
   const [dismissedAdvisories, setDismissedAdvisories] = useState<Set<string>>(new Set());
   const [advisoriesExpanded, setAdvisoriesExpanded] = useState(false);
-  const latestEntry = mockNutritionEntries[mockNutritionEntries.length - 1];
+  const nutritionEntries = useApi(() => api.nutrition.consumption("", "").then(r => r.dailyEntries), mockNutritionEntries);
+  const coverageHeatmap = useApi(() => api.nutrition.coverageHeatmap(), mockCoverageHeatmap);
+  const latestEntry = nutritionEntries[nutritionEntries.length - 1];
 
   const crew = CREW.find((c) => c.id === selectedCrew)!;
   const isAll = selectedCrew === "all";
@@ -147,7 +150,7 @@ export default function NutritionPage() {
         fiberG: 30,
       };
 
-  const calorieChartData = mockNutritionEntries.map((entry) => ({
+  const calorieChartData = nutritionEntries.map((entry) => ({
     date: `${new Date(entry.date).getMonth() + 1}/${new Date(entry.date).getDate()}`,
     calories: isAll ? entry.totalCalories : Math.round(entry.totalCalories * factor!.calShare),
   }));
@@ -193,15 +196,15 @@ export default function NutritionPage() {
     return { percent: 75, status: "HEALTHY" };
   }
 
-  const dayCount = mockCoverageHeatmap.missionDays.length;
+  const dayCount = coverageHeatmap.missionDays.length;
 
   const heatmapCoverage = isAll
-    ? mockCoverageHeatmap.coverage
-    : mockCoverageHeatmap.coverage.map((row, rowIdx) =>
+    ? coverageHeatmap.coverage
+    : coverageHeatmap.coverage.map((row, rowIdx) =>
         row.map(val => Math.min(100, Math.round(val * factor!.microBias[rowIdx])))
       );
 
-  const advisories = useMemo(() => generateAdvisories(selectedCrew), [selectedCrew]);
+  const advisories = useMemo(() => generateAdvisories(selectedCrew, coverageHeatmap, nutritionEntries), [selectedCrew, coverageHeatmap, nutritionEntries]);
   const visibleAdvisories = advisories.filter(a => !dismissedAdvisories.has(a.id));
 
   return (
@@ -410,7 +413,7 @@ export default function NutritionPage() {
                 </Badge>
               </div>
             </div>
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-h-[280px]">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={calorieChartData}>
                   <defs>
@@ -565,7 +568,7 @@ export default function NutritionPage() {
           {/* Header row */}
           <div className="grid gap-x-1 gap-y-1.5" style={{ gridTemplateColumns: `100px repeat(${dayCount}, 1fr)` }}>
             <div />
-            {mockCoverageHeatmap.missionDays.map((day) => (
+            {coverageHeatmap.missionDays.map((day) => (
               <div key={day} className="flex h-7 items-center justify-center text-[10px] text-muted-foreground">
                 {day}
               </div>
@@ -573,7 +576,7 @@ export default function NutritionPage() {
           </div>
 
           {/* Data rows */}
-          {mockCoverageHeatmap.nutrients.map((nutrient, rowIndex) => (
+          {coverageHeatmap.nutrients.map((nutrient, rowIndex) => (
             <div
               key={nutrient}
               className="grid gap-1"
@@ -588,7 +591,7 @@ export default function NutritionPage() {
                   <div
                     className="h-full w-full rounded-sm transition-opacity hover:opacity-80"
                     style={{ backgroundColor: getCoverageColor(percent) }}
-                    title={`${nutrient} - Day ${mockCoverageHeatmap.missionDays[colIndex]}: ${percent}%`}
+                    title={`${nutrient} - Day ${coverageHeatmap.missionDays[colIndex]}: ${percent}%`}
                   />
                   <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
                     {percent}%

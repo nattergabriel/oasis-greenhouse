@@ -13,7 +13,7 @@ An autonomous AI agent that manages the greenhouse end-to-end — deciding what 
 ## Astronaut Panel
 
 ### Greenhouse Overview
-- 4 slots (4 m² each) showing crop assignments and individual crop status
+- 16 slots (4 m² each) showing crop assignments and individual crop status
 - Per-crop health (healthy / stressed / critical / ready to harvest)
 - Environment readings (temperature, solar hours, energy balance)
 - Resource levels (water, nutrients)

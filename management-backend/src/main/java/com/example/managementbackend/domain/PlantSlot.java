@@ -2,6 +2,7 @@ package com.example.managementbackend.domain;
 
 import com.example.managementbackend.model.enums.SlotStatus;
 import com.example.managementbackend.model.enums.StressType;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,5 +45,6 @@ public class PlantSlot {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "greenhouse_id")
+    @JsonBackReference
     private Greenhouse greenhouse;
 }
