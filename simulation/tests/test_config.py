@@ -10,10 +10,10 @@ class TestCropConfigs:
         for name, crop in config.CROPS.items():
             assert crop.growth_cycle_days > 0, f"{name} has non-positive growth cycle"
 
-    def test_all_footprints_fit_in_zone(self) -> None:
+    def test_all_footprints_fit_in_slot(self) -> None:
         for name, crop in config.CROPS.items():
-            assert crop.footprint_m2 <= config.ZONE_AREA_M2, (
-                f"{name} footprint {crop.footprint_m2} exceeds zone area {config.ZONE_AREA_M2}"
+            assert crop.footprint_m2 <= config.SLOT_AREA_M2, (
+                f"{name} footprint {crop.footprint_m2} exceeds slot area {config.SLOT_AREA_M2}"
             )
 
     def test_all_footprints_positive(self) -> None:
@@ -127,11 +127,14 @@ class TestGlobalConstants:
         days = config.STORED_FOOD_TOTAL_KCAL / config.TOTAL_DAILY_CALORIES
         assert days == 450.0
 
-    def test_four_zones(self) -> None:
-        assert config.NUM_ZONES == 4
+    def test_grid_dimensions(self) -> None:
+        assert config.GREENHOUSE_ROWS == 2
+        assert config.GREENHOUSE_COLS == 2
+        assert config.SLOT_AREA_M2 == 4.0
 
-    def test_total_area_is_zones_times_zone_area(self) -> None:
-        assert config.GREENHOUSE_TOTAL_AREA_M2 == config.NUM_ZONES * config.ZONE_AREA_M2
+    def test_total_area_is_grid_times_slot_area(self) -> None:
+        expected = config.GREENHOUSE_ROWS * config.GREENHOUSE_COLS * config.SLOT_AREA_M2
+        assert config.GREENHOUSE_TOTAL_AREA_M2 == expected
 
     def test_water_recycling_in_kb_range(self) -> None:
         assert 0.85 <= config.WATER_RECYCLING_RATE <= 0.95

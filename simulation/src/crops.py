@@ -7,14 +7,14 @@ All formulas from SIMULATION-SPEC.md Component 2.
 from __future__ import annotations
 
 from . import config
-from .models import Crop, Environment, FoodItem, ResourcePool, Zone
+from .models import Crop, Environment, FoodItem, ResourcePool, Slot
 
 
 def calculate_growth_efficiency(
     crop: Crop,
     env: Environment,
     resources: ResourcePool,
-    zone: Zone,
+    slot: Slot,
 ) -> float:
     """Calculate growth efficiency (0.0-1.0) from water, light, and temperature.
 
@@ -22,7 +22,7 @@ def calculate_growth_efficiency(
         crop: The crop to evaluate.
         env: Current environment state.
         resources: Current resource pool.
-        zone: The zone containing this crop.
+        slot: The slot containing this crop.
 
     Returns:
         Efficiency factor between 0.0 and 1.0.
@@ -31,15 +31,15 @@ def calculate_growth_efficiency(
     if crop_cfg is None:
         return 0.0
 
-    # Water factor: global availability × zone allocation
+    # Water factor: global availability × slot allocation
     # resources.water_availability is computed by simulation.py each tick
     # based on total demand vs supply (0.0-1.0)
-    water_factor = min(1.0, resources.water_availability * zone.water_allocation)
+    water_factor = min(1.0, resources.water_availability * slot.water_allocation)
 
     # Light factor: effective solar hours vs crop need
     light_need = max(crop_cfg.light_need_hours, 0.001)
     effective_solar = env.effective_solar
-    if not zone.artificial_light:
+    if not slot.artificial_light:
         effective_solar *= 0.5  # no artificial supplement halves effective light
     light_factor = min(1.0, effective_solar / light_need)
 
@@ -79,7 +79,7 @@ def grow_crop(
     crop: Crop,
     env: Environment,
     resources: ResourcePool,
-    zone: Zone,
+    slot: Slot,
 ) -> None:
     """Advance crop growth for one sol.
 
@@ -89,14 +89,14 @@ def grow_crop(
         crop: Crop to grow (mutated in place).
         env: Current environment.
         resources: Current resources.
-        zone: Zone containing this crop.
+        slot: Slot containing this crop.
     """
     crop.age += 1
 
     if crop.growth_cycle_days <= 0:
         return
 
-    efficiency = calculate_growth_efficiency(crop, env, resources, zone)
+    efficiency = calculate_growth_efficiency(crop, env, resources, slot)
     daily_growth = (config.GROWTH_MAX / crop.growth_cycle_days) * efficiency
     crop.growth = min(config.GROWTH_MAX, crop.growth + daily_growth)
 
@@ -105,7 +105,7 @@ def detect_stress(
     crop: Crop,
     env: Environment,
     resources: ResourcePool,
-    zone: Zone,
+    slot: Slot,
 ) -> str | None:
     """Detect the most severe stress condition affecting a crop.
 
@@ -116,7 +116,7 @@ def detect_stress(
         crop: Crop to evaluate.
         env: Current environment.
         resources: Current resources.
-        zone: Zone containing this crop.
+        slot: Slot containing this crop.
 
     Returns:
         Stress type string, or None if no stress detected.
@@ -125,13 +125,13 @@ def detect_stress(
     if crop_cfg is None:
         return None
 
-    # Water factor for this zone: global availability × zone allocation
-    water_factor = resources.water_availability * zone.water_allocation
+    # Water factor for this slot: global availability × slot allocation
+    water_factor = resources.water_availability * slot.water_allocation
 
     # Light factor
     light_need = max(crop_cfg.light_need_hours, 0.001)
     effective_solar = env.effective_solar
-    if not zone.artificial_light:
+    if not slot.artificial_light:
         effective_solar *= 0.5
     light_factor = effective_solar / light_need
 

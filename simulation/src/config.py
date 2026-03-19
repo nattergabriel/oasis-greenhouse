@@ -36,7 +36,7 @@ SOLAR_PANEL_EFFICIENCY: float = 4.5            # energy units per solar hour (SI
 #   Equinox: 12*4.5=54 gen vs ~51.5 need → surplus 2.5
 #   Winter:  9*4.5=40.5 gen vs ~61.5 need → deficit 21
 #   Summer: 15*4.5=67.5 gen vs ~41.5 need → surplus 26
-LIGHTING_COST_PER_ZONE: float = 2.0            # energy units per lit zone (SIM)
+LIGHTING_COST_PER_SLOT: float = 2.0             # energy units per lit slot (SIM, 4 slots × 2.0 = 8.0)
 PUMP_COST: float = 1.0                         # energy units baseline (SIM)
 
 
@@ -80,9 +80,10 @@ NUTRIENT_CRITICAL_THRESHOLD: float = 500.0     # SIM: below this → nutrient_de
 # ---------------------------------------------------------------------------
 # Greenhouse sizing (SIM + NASA)
 # ---------------------------------------------------------------------------
-GREENHOUSE_TOTAL_AREA_M2: float = 60.0         # 4 zones × 15 m²
-NUM_ZONES: int = 4
-ZONE_AREA_M2: float = 15.0                     # per zone
+GREENHOUSE_ROWS: int = 2
+GREENHOUSE_COLS: int = 2
+SLOT_AREA_M2: float = 4.0                      # 2m × 2m per slot
+GREENHOUSE_TOTAL_AREA_M2: float = float(GREENHOUSE_ROWS * GREENHOUSE_COLS) * SLOT_AREA_M2  # 16 m²
 
 
 # ---------------------------------------------------------------------------
