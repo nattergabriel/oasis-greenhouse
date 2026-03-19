@@ -20,7 +20,7 @@ export default function AgentConfigPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <h1 className="text-xl font-medium tracking-tight">Agent Configuration</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Agent Configuration</h1>
 
       <Card className="p-6 space-y-8">
         {/* Autonomy Level */}
@@ -51,7 +51,7 @@ export default function AgentConfigPage() {
                 onClick={() => setConfig({ ...config, autonomyLevel: option.value })}
                 className={`p-4 rounded-lg border-2 text-left transition-colors ${
                   config.autonomyLevel === option.value
-                    ? "border-primary bg-primary/10"
+                    ? "border-primary bg-primary/20 text-primary"
                     : "border-border bg-card hover:bg-accent"
                 }`}
               >
@@ -112,7 +112,7 @@ export default function AgentConfigPage() {
                 onClick={() => setConfig({ ...config, riskTolerance: option.value })}
                 className={`p-4 rounded-lg border-2 text-left transition-colors ${
                   config.riskTolerance === option.value
-                    ? "border-primary bg-primary/10"
+                    ? "border-primary bg-primary/20 text-primary"
                     : "border-border bg-card hover:bg-accent"
                 }`}
               >

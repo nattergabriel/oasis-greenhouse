@@ -24,15 +24,15 @@ import {
 import { Droplet, Zap, Beaker, Thermometer, Wind, Leaf } from "lucide-react";
 
 const STATUS_COLORS = {
-  HEALTHY: "#5a9a6b",
-  NEEDS_ATTENTION: "#c4a344",
+  HEALTHY: "#4ead6b",
+  NEEDS_ATTENTION: "#d4aa30",
   CRITICAL: "#c75a3a",
   EMPTY: "#6b6560",
 };
 
 const SENSOR_STATUS_COLORS = {
-  NORMAL: "#5a9a6b",
-  WARNING: "#c4a344",
+  NORMAL: "#4ead6b",
+  WARNING: "#d4aa30",
   CRITICAL: "#c75a3a",
 };
 
@@ -52,7 +52,7 @@ export default function GreenhousePage() {
   if (!selectedGhId) {
     return (
       <div className="mx-auto max-w-7xl space-y-4">
-        <h1 className="text-xl font-medium tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Greenhouse Environment
         </h1>
         <Card className="p-8 text-center text-muted-foreground">
@@ -66,7 +66,7 @@ export default function GreenhousePage() {
   if (!greenhouseDetail) {
     return (
       <div className="mx-auto max-w-7xl space-y-4">
-        <h1 className="text-xl font-medium tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Greenhouse Environment
         </h1>
         <Card className="p-8 text-center text-muted-foreground">
@@ -82,7 +82,7 @@ export default function GreenhousePage() {
     <div className="mx-auto max-w-7xl space-y-4">
       {/* Header with greenhouse selector */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-medium tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Greenhouse Environment
         </h1>
         {state.greenhouses.length > 1 && (
@@ -95,7 +95,7 @@ export default function GreenhousePage() {
                 }
                 className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
                   gh.id === selectedGhId
-                    ? "border-primary bg-primary/10 text-foreground"
+                    ? "border-primary bg-primary/20 text-primary"
                     : "border-border bg-card text-muted-foreground hover:bg-accent"
                 }`}
               >
@@ -125,7 +125,7 @@ export default function GreenhousePage() {
                     onClick={() => setMetricMode(mode)}
                     className={`rounded border px-2.5 py-0.5 text-xs transition-colors ${
                       metricMode === mode
-                        ? "border-primary bg-primary/10 text-foreground"
+                        ? "border-primary bg-primary/20 text-primary"
                         : "border-border bg-card text-muted-foreground hover:bg-accent"
                     }`}
                   >

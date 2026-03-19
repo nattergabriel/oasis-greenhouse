@@ -43,7 +43,7 @@ function AlertRow({ alert, isFirst }: { alert: Alert; isFirst: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={`border-x border-b border-border overflow-hidden transition-colors ${isFirst ? "border-t rounded-t-lg" : ""} ${open ? "bg-card" : "hover:bg-secondary/50"}`}>
+    <div className={`border-x border-b border-border overflow-hidden transition-colors ${isFirst ? "border-t rounded-t-lg" : ""} ${open ? "bg-card" : "hover:bg-secondary"}`}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center px-4 py-3.5 text-left transition-colors gap-4"
@@ -106,7 +106,7 @@ function AlertRow({ alert, isFirst }: { alert: Alert; isFirst: boolean }) {
                 {alert.greenhouseId && <div>Location: {alert.greenhouseId.includes("0001") ? "Alpha" : "Beta"}</div>}
                 {alert.slotId && <div>Slot: {alert.slotId}</div>}
                 {alert.resolvedAt && (
-                  <div className="flex items-center gap-1 text-[#5a9a6b]">
+                  <div className="flex items-center gap-1 text-[#4ead6b]">
                     <CheckCircle className="w-3.5 h-3.5" />
                     Resolved {timeAgo(alert.resolvedAt)}
                   </div>
@@ -149,7 +149,7 @@ export default function AlertsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-medium tracking-tight">Alerts</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Alerts</h1>
           <span className="text-sm text-muted-foreground">
             {counts.open} open · {counts.ack} acknowledged · {counts.resolved} resolved
           </span>
@@ -161,8 +161,8 @@ export default function AlertsPage() {
               onClick={() => setFilter(s)}
               className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                 filter === s
-                  ? "border-primary bg-primary/10 text-foreground font-medium"
-                  : "border-border bg-card text-muted-foreground hover:bg-secondary"
+                  ? "border-primary bg-primary/20 text-primary font-medium"
+                  : "border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
               {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}

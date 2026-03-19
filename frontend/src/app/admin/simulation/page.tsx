@@ -11,9 +11,9 @@ export default function SimulationManagementPage() {
   const statusColor = (status: string) => {
     switch (status) {
       case "RUNNING":
-        return "bg-[var(--color-status-healthy)]/20 text-[#5a9a6b] border-[var(--color-status-healthy)]/30"
+        return "bg-[var(--color-status-healthy)]/20 text-[#4ead6b] border-[var(--color-status-healthy)]/30"
       case "PAUSED":
-        return "bg-[var(--color-status-warning)]/20 text-[#c4a344] border-[var(--color-status-warning)]/30"
+        return "bg-[var(--color-status-warning)]/20 text-[#d4aa30] border-[var(--color-status-warning)]/30"
       case "COMPLETED":
         return "bg-muted text-muted-foreground border-border"
       default:
@@ -24,7 +24,7 @@ export default function SimulationManagementPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-medium tracking-tight">Simulation Management</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Simulation Management</h1>
         <SimControls />
       </div>
 

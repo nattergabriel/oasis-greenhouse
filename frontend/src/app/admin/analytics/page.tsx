@@ -18,7 +18,7 @@ export default function AgentAnalyticsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <h1 className="text-xl font-medium tracking-tight">Agent Analytics</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Agent Analytics</h1>
 
       {/* Stat Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

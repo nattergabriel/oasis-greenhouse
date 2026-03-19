@@ -21,15 +21,15 @@ function getGrowthStage(p: number) {
 }
 
 function healthColor(status: string) {
-  if (status === "HEALTHY") return "#5a9a6b";
-  if (status === "NEEDS_ATTENTION") return "#c4a344";
+  if (status === "HEALTHY") return "#4ead6b";
+  if (status === "NEEDS_ATTENTION") return "#d4aa30";
   if (status === "CRITICAL") return "#8b4030";
   return "#3d3530";
 }
 
 function leafDark(status: string) {
-  if (status === "HEALTHY") return "#3d6b45";
-  if (status === "NEEDS_ATTENTION") return "#8a7530";
+  if (status === "HEALTHY") return "#3a7a48";
+  if (status === "NEEDS_ATTENTION") return "#9a8025";
   if (status === "CRITICAL") return "#6b3525";
   return "#2a2520";
 }
@@ -39,7 +39,7 @@ function fruitColor(name: string) {
   if (name === "Tomato") return "#c75a3a";
   if (name === "Basil") return "#7c6aad";
   if (name === "Radish") return "#c75a6a";
-  if (name === "Wheat") return "#c4a344";
+  if (name === "Wheat") return "#d4aa30";
   if (name === "Soybean") return "#8a9a44";
   return "#d4924a";
 }
@@ -204,7 +204,7 @@ function Plant({
 
       {/* Needs attention subtle pulse */}
       {slot.status === "NEEDS_ATTENTION" && (
-        <circle cx={cx} cy={groundY - stemH - 4 * s} r={1.2 * s} fill="#c4a344" opacity={0.5}>
+        <circle cx={cx} cy={groundY - stemH - 4 * s} r={1.2 * s} fill="#d4aa30" opacity={0.5}>
           <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite" />
         </circle>
       )}
@@ -224,7 +224,7 @@ function DustParticles({ intensity, viewW }: { intensity: number; viewW: number 
         const dur = 1.5 + (i % 5) * 0.8;
         const opacity = 0.08 + intensity * 0.025;
         return (
-          <circle key={i} r={size} fill="#c4a344" opacity={opacity}>
+          <circle key={i} r={size} fill="#d4aa30" opacity={opacity}>
             <animateMotion dur={`${dur}s`} repeatCount="indefinite" path={`M${startX},${y} L${startX + 100},${y - 8 + (i % 3) * 4}`} />
           </circle>
         );
@@ -397,7 +397,7 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
             y1={groundY - 2}
             x2={plantStartX + plantAreaW + 5}
             y2={groundY - 2}
-            stroke="#4a7c9e"
+            stroke="#3d8ab0"
             strokeWidth={0.8}
             opacity={0.25}
             strokeDasharray="3 1.5"
@@ -437,8 +437,8 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
             const ny = groundY - domeRY * 0.3;
             return (
               <g key={t}>
-                <rect x={nx - 2} y={ny - 2} width={4} height={4} rx={1} fill="#252320" stroke="#9c9488" strokeWidth={0.3} opacity={0.5} />
-                <circle cx={nx} cy={ny} r={0.8} fill="#5a9a6b" opacity={0.6}>
+                <rect x={nx - 2} y={ny - 2} width={4} height={4} rx={1} fill="#211f1b" stroke="#9c9488" strokeWidth={0.3} opacity={0.5} />
+                <circle cx={nx} cy={ny} r={0.8} fill="#4ead6b" opacity={0.6}>
                   <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" />
                 </circle>
               </g>
@@ -448,10 +448,10 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
 
         {/* Airlock module */}
         <g>
-          <rect x={domeCX + domeW / 2 - 4} y={groundY - 20} width={14} height={20} rx={2} fill="#1a1917" stroke="#9c948850" strokeWidth={0.8} />
-          <rect x={domeCX + domeW / 2 + 1} y={groundY - 16} width={6} height={10} rx={1} fill="#252320" stroke="#9c948830" strokeWidth={0.5} />
+          <rect x={domeCX + domeW / 2 - 4} y={groundY - 20} width={14} height={20} rx={2} fill="#161412" stroke="#9c948850" strokeWidth={0.8} />
+          <rect x={domeCX + domeW / 2 + 1} y={groundY - 16} width={6} height={10} rx={1} fill="#211f1b" stroke="#9c948830" strokeWidth={0.5} />
           {/* Door light */}
-          <circle cx={domeCX + domeW / 2 + 4} cy={groundY - 18} r={0.8} fill="#5a9a6b" opacity={0.5} />
+          <circle cx={domeCX + domeW / 2 + 4} cy={groundY - 18} r={0.8} fill="#4ead6b" opacity={0.5} />
         </g>
 
         {/* SOL label */}

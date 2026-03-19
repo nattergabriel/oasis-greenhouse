@@ -37,8 +37,8 @@ function CustomTooltip({ active, payload }: any) {
         {isProjOnly && <span className="text-[10px] text-primary">projected</span>}
       </div>
       <div className="space-y-1">
-        <TooltipRow color="#4a7c9e" label="Water" value={data.waterReservePercent} />
-        <TooltipRow color="#5a9a6b" label="Nutrient" value={data.nutrientReservePercent} />
+        <TooltipRow color="#3d8ab0" label="Water" value={data.waterReservePercent} />
+        <TooltipRow color="#4ead6b" label="Nutrient" value={data.nutrientReservePercent} />
         <TooltipRow color="#d4924a" label="Energy" value={data.energyReservePercent} />
       </div>
     </div>
@@ -164,8 +164,8 @@ export default function ForecastingPage() {
   const energyTrend = getTrend(current.energyReservePercent, day30.energyReservePercent);
 
   const resources = [
-    { label: "Water", current: current.waterReservePercent, projected: day30.waterReservePercent, trend: waterTrend, color: "#4a7c9e" },
-    { label: "Nutrient", current: current.nutrientReservePercent, projected: day30.nutrientReservePercent, trend: nutrientTrend, color: "#5a9a6b" },
+    { label: "Water", current: current.waterReservePercent, projected: day30.waterReservePercent, trend: waterTrend, color: "#3d8ab0" },
+    { label: "Nutrient", current: current.nutrientReservePercent, projected: day30.nutrientReservePercent, trend: nutrientTrend, color: "#4ead6b" },
     { label: "Energy", current: current.energyReservePercent, projected: day30.energyReservePercent, trend: energyTrend, color: "#d4924a" },
   ];
 
@@ -187,12 +187,12 @@ export default function ForecastingPage() {
                 <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="fc-water" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4a7c9e" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#4a7c9e" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#3d8ab0" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#3d8ab0" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="fc-nutrient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#5a9a6b" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#5a9a6b" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#4ead6b" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#4ead6b" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="fc-energy" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#d4924a" stopOpacity={0.25} />
@@ -200,21 +200,21 @@ export default function ForecastingPage() {
                     </linearGradient>
                   </defs>
 
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2e2b27" />
-                  <XAxis dataKey="missionDay" tick={{ fill: "#e8e2d9", fontSize: 11 }} tickLine={{ stroke: "#9c9488" }} axisLine={{ stroke: "#9c9488" }} interval={2} />
-                  <YAxis domain={[0, 100]} tick={{ fill: "#e8e2d9", fontSize: 11 }} tickLine={{ stroke: "#9c9488" }} axisLine={{ stroke: "#9c9488" }} label={{ value: "%", angle: -90, position: "insideLeft", style: { fill: "#9c9488", fontSize: 11 } }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="missionDay" tick={{ fill: "var(--foreground)", fontSize: 11 }} tickLine={{ stroke: "var(--muted-foreground)" }} axisLine={{ stroke: "var(--muted-foreground)" }} interval={2} />
+                  <YAxis domain={[0, 100]} tick={{ fill: "var(--foreground)", fontSize: 11 }} tickLine={{ stroke: "var(--muted-foreground)" }} axisLine={{ stroke: "var(--muted-foreground)" }} label={{ value: "%", angle: -90, position: "insideLeft", style: { fill: "var(--muted-foreground)", fontSize: 11 } }} />
 
                   <ReferenceLine x={todayDay} stroke="#e8e2d9" strokeWidth={1} strokeDasharray="4 3" label={{ value: "Today", fill: "#e8e2d9", fontSize: 10, position: "insideTopRight" }} />
 
                   <Tooltip content={<CustomTooltip />} />
                   <Legend wrapperStyle={{ fontSize: "11px", textAlign: "left", paddingLeft: "40px" }} iconType="circle" iconSize={8} align="left" />
 
-                  <Area type="monotone" dataKey="waterActual" name="Water" stroke="#4a7c9e" strokeWidth={2} fill="url(#fc-water)" connectNulls={false} dot={false} />
-                  <Area type="monotone" dataKey="nutrientActual" name="Nutrient" stroke="#5a9a6b" strokeWidth={2} fill="url(#fc-nutrient)" connectNulls={false} dot={false} />
+                  <Area type="monotone" dataKey="waterActual" name="Water" stroke="#3d8ab0" strokeWidth={2} fill="url(#fc-water)" connectNulls={false} dot={false} />
+                  <Area type="monotone" dataKey="nutrientActual" name="Nutrient" stroke="#4ead6b" strokeWidth={2} fill="url(#fc-nutrient)" connectNulls={false} dot={false} />
                   <Area type="monotone" dataKey="energyActual" name="Energy" stroke="#d4924a" strokeWidth={2} fill="url(#fc-energy)" connectNulls={false} dot={false} />
 
-                  <Area type="monotone" dataKey="waterProjected" stroke="#4a7c9e" strokeWidth={1.5} strokeDasharray="6 3" fill="none" connectNulls={false} dot={false} legendType="none" />
-                  <Area type="monotone" dataKey="nutrientProjected" stroke="#5a9a6b" strokeWidth={1.5} strokeDasharray="6 3" fill="none" connectNulls={false} dot={false} legendType="none" />
+                  <Area type="monotone" dataKey="waterProjected" stroke="#3d8ab0" strokeWidth={1.5} strokeDasharray="6 3" fill="none" connectNulls={false} dot={false} legendType="none" />
+                  <Area type="monotone" dataKey="nutrientProjected" stroke="#4ead6b" strokeWidth={1.5} strokeDasharray="6 3" fill="none" connectNulls={false} dot={false} legendType="none" />
                   <Area type="monotone" dataKey="energyProjected" stroke="#d4924a" strokeWidth={1.5} strokeDasharray="6 3" fill="none" connectNulls={false} dot={false} legendType="none" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -241,9 +241,9 @@ export default function ForecastingPage() {
                         <span className="font-mono text-xs tabular-nums">{r.current.toFixed(1)}%</span>
                       </div>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-muted border border-border">
+                    <div className="h-2.5 overflow-hidden rounded-full bg-muted border border-border">
                       <div
-                        className="h-full transition-all duration-500"
+                        className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${Math.min(r.current, 100)}%`,
                           backgroundColor: r.color,
@@ -292,8 +292,8 @@ export default function ForecastingPage() {
                     onClick={() => setWeatherMetric(m)}
                     className={`rounded border px-2.5 py-0.5 text-xs transition-colors ${
                       weatherMetric === m
-                        ? "border-primary bg-primary/10 text-foreground"
-                        : "border-border bg-card text-muted-foreground hover:bg-accent"
+                        ? "border-primary bg-primary/20 text-primary"
+                        : "border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground"
                     }`}
                   >
                     {m === "solar" ? "Solar" : "Dust Risk"}
@@ -355,7 +355,7 @@ export default function ForecastingPage() {
                 <span>Mission Progress</span>
                 <span className="font-mono tabular-nums">{progressPercent.toFixed(1)}%</span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted border border-border">
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted border border-border">
                 <div className="h-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
               </div>
               <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">

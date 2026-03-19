@@ -110,7 +110,7 @@ export default function NutritionPage() {
 
   const macros = [
     { name: "Protein", value: Math.round(latestEntry.proteinG / divisor), target: macroTargets.proteinG, color: "var(--color-mars-blue)", desc: "15–20%" },
-    { name: "Carbs", value: Math.round(latestEntry.carbsG / divisor), target: macroTargets.carbsG, color: "var(--color-mars-amber)", desc: "45–55%" },
+    { name: "Carbs", value: Math.round(latestEntry.carbsG / divisor), target: macroTargets.carbsG, color: "var(--color-mars-yellow)", desc: "45–55%" },
     { name: "Fat", value: Math.round(latestEntry.fatG / divisor), target: macroTargets.fatG, color: "var(--color-mars-yellow)", desc: "30–35%" },
     { name: "Fiber", value: Math.round(latestEntry.fiberG / divisor), target: macroTargets.fiberG, color: "var(--color-mars-green)", desc: "" },
   ];
@@ -132,7 +132,7 @@ export default function NutritionPage() {
     <div className="mx-auto max-w-7xl space-y-4">
       {/* Header with crew selector */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-medium tracking-tight">Nutrition</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Nutrition</h1>
         <div className="flex gap-1">
           {CREW.map((c) => (
             <button
@@ -140,8 +140,8 @@ export default function NutritionPage() {
               onClick={() => setSelectedCrew(c.id)}
               className={`rounded border px-2.5 py-0.5 text-xs transition-colors ${
                 selectedCrew === c.id
-                  ? "border-primary bg-primary/10 text-foreground"
-                  : "border-border bg-card text-muted-foreground hover:bg-accent"
+                  ? "border-primary bg-primary/20 text-primary"
+                  : "border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
               {c.id === "all" ? "All" : c.name.split(" ").pop()}
@@ -212,9 +212,9 @@ export default function NutritionPage() {
                       <stop offset="95%" stopColor="#d4924a" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2e2b27" />
-                  <XAxis dataKey="date" tick={{ fill: "#e8e2d9", fontSize: 11 }} tickLine={{ stroke: "#9c9488" }} axisLine={{ stroke: "#9c9488" }} />
-                  <YAxis tick={{ fill: "#e8e2d9", fontSize: 11 }} tickLine={{ stroke: "#9c9488" }} axisLine={{ stroke: "#9c9488" }} domain={isAll ? [6000, 14000] : [1500, 4000]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="date" tick={{ fill: "var(--foreground)", fontSize: 11 }} tickLine={{ stroke: "var(--muted-foreground)" }} axisLine={{ stroke: "var(--muted-foreground)" }} />
+                  <YAxis tick={{ fill: "var(--foreground)", fontSize: 11 }} tickLine={{ stroke: "var(--muted-foreground)" }} axisLine={{ stroke: "var(--muted-foreground)" }} domain={isAll ? [6000, 14000] : [1500, 4000]} />
                   <Tooltip content={<CustomTooltip />} />
                   <ReferenceLine y={kcalTarget} stroke="#d4924a" strokeDasharray="5 5" label={{ value: "Target", fill: "#d4924a", fontSize: 10, position: "right" }} />
                   <Area type="monotone" dataKey="calories" stroke="#d4924a" strokeWidth={2} fill="url(#kcalGrad)" dot={false} />
@@ -243,7 +243,7 @@ export default function NutritionPage() {
                       </div>
                       <span className="font-mono text-xs tabular-nums">{percent}%</span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-muted border border-border ml-6">
+                    <div className="h-2.5 overflow-hidden rounded-full bg-muted border border-border ml-6">
                       <div
                         className="h-full transition-all duration-500"
                         style={{
@@ -301,7 +301,7 @@ export default function NutritionPage() {
                         {macro.value}g / {macro.target}g
                       </span>
                     </div>
-                    <div className="relative h-2 overflow-hidden rounded-full bg-muted border border-border">
+                    <div className="relative h-2.5 overflow-hidden rounded-full bg-muted border border-border">
                       <div className="h-full rounded-full transition-all duration-300" style={{ width: `${percentage}%`, backgroundColor: macro.color }} />
                     </div>
                   </div>
@@ -323,7 +323,7 @@ export default function NutritionPage() {
                 return (
                   <div key={micro.name} className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground w-20 shrink-0">{micro.name}</span>
-                    <div className="flex-1 h-2 overflow-hidden rounded-full bg-muted border border-border">
+                    <div className="flex-1 h-2.5 overflow-hidden rounded-full bg-muted border border-border">
                       <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: getCoverageColor(pct) }} />
                     </div>
                     <span className="font-mono text-[10px] tabular-nums text-muted-foreground w-10 text-right">{pct}%</span>

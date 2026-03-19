@@ -9,9 +9,9 @@ export default function CrisisScenariosPage() {
   const severityColor = (severity: string) => {
     switch (severity) {
       case "LOW":
-        return "bg-[var(--color-status-healthy)]/20 text-[#5a9a6b] border-[var(--color-status-healthy)]/30"
+        return "bg-[var(--color-status-healthy)]/20 text-[#4ead6b] border-[var(--color-status-healthy)]/30"
       case "MEDIUM":
-        return "bg-[var(--color-status-warning)]/20 text-[#c4a344] border-[var(--color-status-warning)]/30"
+        return "bg-[var(--color-status-warning)]/20 text-[#d4aa30] border-[var(--color-status-warning)]/30"
       case "HIGH":
         return "bg-primary/20 text-primary border-primary/30"
       case "CATASTROPHIC":
@@ -32,7 +32,7 @@ export default function CrisisScenariosPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <h1 className="text-xl font-medium tracking-tight">Crisis Scenarios</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Crisis Scenarios</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {mockScenarios.map((scenario) => (

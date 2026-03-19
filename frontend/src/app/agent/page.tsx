@@ -38,7 +38,7 @@ function RecommendationRow({ rec, onApprove, onDismiss }: {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={`border border-border rounded-lg overflow-hidden transition-colors ${open ? "bg-card" : "hover:bg-secondary/50"}`}>
+    <div className={`border border-border rounded-lg overflow-hidden transition-colors ${open ? "bg-card" : "hover:bg-secondary"}`}>
       <div className="flex items-center px-4 py-4 gap-4">
         {/* Confidence dot */}
         <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: confidenceColor(rec.confidence) }} />
@@ -53,7 +53,7 @@ function RecommendationRow({ rec, onApprove, onDismiss }: {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => onApprove(rec.id)}
-            className="flex items-center gap-1.5 rounded-lg border border-[#5a9a6b]/30 px-3 py-1.5 text-sm text-[#5a9a6b] transition-colors hover:bg-[#5a9a6b]/10"
+            className="flex items-center gap-1.5 rounded-lg border border-[#4ead6b]/30 px-3 py-1.5 text-sm text-[#4ead6b] transition-colors hover:bg-[#4ead6b]/10"
           >
             <Check className="w-3.5 h-3.5" />
             Approve
@@ -109,7 +109,7 @@ function LogRow({ entry, isFirst }: { entry: AgentLogEntry; isFirst: boolean }) 
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={`border-x border-b border-border overflow-hidden transition-colors ${isFirst ? "border-t rounded-t-lg" : ""} ${open ? "bg-card" : "hover:bg-secondary/50"}`}>
+    <div className={`border-x border-b border-border overflow-hidden transition-colors ${isFirst ? "border-t rounded-t-lg" : ""} ${open ? "bg-card" : "hover:bg-secondary"}`}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center px-4 py-3.5 text-left transition-colors gap-4"
@@ -161,7 +161,7 @@ export default function AgentPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <h1 className="text-xl font-medium tracking-tight">AI Agent</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">AI Agent</h1>
 
       {/* Pending decisions */}
       <section>
@@ -202,8 +202,8 @@ export default function AgentPage() {
                 onClick={() => setLogFilter(f)}
                 className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                   logFilter === f
-                    ? "border-primary bg-primary/10 text-foreground font-medium"
-                    : "border-border bg-card text-muted-foreground hover:bg-secondary"
+                    ? "border-primary bg-primary/20 text-primary font-medium"
+                    : "border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
               >
                 {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}

@@ -81,15 +81,15 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             <div className="flex flex-col gap-1 w-16">
               <span className="text-[10px] uppercase text-muted-foreground leading-none">Water</span>
-              <Progress value={resources.waterReservePercent} className="h-1.5" />
+              <Progress value={resources.waterReservePercent} className="h-2" />
             </div>
             <div className="flex flex-col gap-1 w-16">
               <span className="text-[10px] uppercase text-muted-foreground leading-none">Nutri</span>
-              <Progress value={resources.nutrientReservePercent} className="h-1.5" />
+              <Progress value={resources.nutrientReservePercent} className="h-2" />
             </div>
             <div className="flex flex-col gap-1 w-16">
               <span className="text-[10px] uppercase text-muted-foreground leading-none">Energy</span>
-              <Progress value={resources.energyReservePercent} className="h-1.5" />
+              <Progress value={resources.energyReservePercent} className="h-2" />
             </div>
           </div>
 

@@ -12,9 +12,9 @@ import type { Crop, CropCategory, WaterRequirement, PlantingQueueItem, HarvestEn
 
 function getCategoryColor(category: CropCategory): string {
   switch (category) {
-    case "VEGETABLE": return "#5a9a6b";
+    case "VEGETABLE": return "#4ead6b";
     case "LEGUME": return "#d4924a";
-    case "GRAIN": return "#c4a344";
+    case "GRAIN": return "#d4aa30";
     case "HERB": return "#7c6aad";
   }
 }
@@ -46,7 +46,7 @@ function CropRow({ crop, isFirst }: { crop: Crop; isFirst: boolean }) {
 
   return (
     <div
-      className={`border-x border-b border-border overflow-hidden transition-colors ${isFirst ? "border-t rounded-t-lg" : ""} ${open ? "bg-card" : "hover:bg-secondary/50"}`}
+      className={`border-x border-b border-border overflow-hidden transition-colors ${isFirst ? "border-t rounded-t-lg" : ""} ${open ? "bg-card" : "hover:bg-secondary"}`}
       style={{ borderLeftColor: open ? catColor : undefined, borderLeftWidth: open ? "2px" : undefined }}
     >
       {/* Collapsed summary */}
@@ -105,10 +105,10 @@ function CropRow({ crop, isFirst }: { crop: Crop; isFirst: boolean }) {
               <div className="mt-3 space-y-3">
                 {[
                   { label: "Calories", value: nutritionalProfile.caloriesPer100g, unit: "kcal", max: 350, color: "#d4924a" },
-                  { label: "Protein", value: nutritionalProfile.proteinG, unit: "g", max: 40, color: "#4a7c9e" },
-                  { label: "Carbs", value: nutritionalProfile.carbsG, unit: "g", max: 75, color: "#c4a344" },
+                  { label: "Protein", value: nutritionalProfile.proteinG, unit: "g", max: 40, color: "#3d8ab0" },
+                  { label: "Carbs", value: nutritionalProfile.carbsG, unit: "g", max: 75, color: "#d4aa30" },
                   { label: "Fat", value: nutritionalProfile.fatG, unit: "g", max: 20, color: "#9c9488" },
-                  { label: "Fiber", value: nutritionalProfile.fiberG, unit: "g", max: 12, color: "#5a9a6b" },
+                  { label: "Fiber", value: nutritionalProfile.fiberG, unit: "g", max: 12, color: "#4ead6b" },
                 ].map((n) => (
                   <div key={n.label} className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground w-16 shrink-0">{n.label}</span>
@@ -182,7 +182,7 @@ function PlantingQueueList({ items }: { items: PlantingQueueItem[] }) {
   return (
     <div className="space-y-1.5">
       {items.map((item) => (
-        <div key={item.rank} className="flex items-center gap-4 border border-border rounded-lg px-4 py-3.5 hover:bg-secondary/50 transition-colors">
+        <div key={item.rank} className="flex items-center gap-4 border border-border rounded-lg px-4 py-3.5 hover:bg-secondary transition-colors">
           <span className="font-mono text-lg font-bold text-primary w-8 shrink-0">#{item.rank}</span>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -193,7 +193,7 @@ function PlantingQueueList({ items }: { items: PlantingQueueItem[] }) {
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {item.nutritionalGapsAddressed.map((gap) => (
-              <span key={gap} className="inline-flex items-center rounded border border-[#5a9a6b]/30 bg-[#5a9a6b]/10 px-2.5 py-0.5 text-xs text-[#5a9a6b]">
+              <span key={gap} className="inline-flex items-center rounded border border-[#4ead6b]/30 bg-[#4ead6b]/10 px-2.5 py-0.5 text-xs text-[#4ead6b]">
                 {gap}
               </span>
             ))}
@@ -221,13 +221,13 @@ function HarvestJournalTable({ entries }: { entries: HarvestEntry[] }) {
       {entries.map((entry) => (
         <div
           key={entry.id}
-          className="grid items-center px-4 py-3 border border-border rounded-lg hover:bg-secondary/50 transition-colors"
+          className="grid items-center px-4 py-3 border border-border rounded-lg hover:bg-secondary transition-colors"
           style={{ gridTemplateColumns: "100px 70px 1fr 90px 100px 1fr" }}
         >
           <span className="text-sm text-muted-foreground">{formatDate(entry.harvestedAt)}</span>
           <span className="font-mono tabular-nums text-sm text-primary">{entry.missionDay}</span>
           <span className="font-medium">{entry.cropName}</span>
-          <span className="font-mono tabular-nums text-sm text-[#5a9a6b]">{entry.yieldKg} kg</span>
+          <span className="font-mono tabular-nums text-sm text-[#4ead6b]">{entry.yieldKg} kg</span>
           <span className="text-sm text-muted-foreground">{entry.greenhouseId === "a1000000-0000-0000-0000-000000000001" ? "Alpha" : "Beta"}</span>
           <span className="text-sm text-muted-foreground italic truncate">{entry.notes || "—"}</span>
         </div>
@@ -246,7 +246,7 @@ function StockpileList({ items }: { items: StockpileItem[] }) {
         {items.map((item) => {
           const isExpiringSoon = item.expiresInDays !== null && item.expiresInDays < 7;
           return (
-            <div key={item.cropId} className={`flex items-center justify-between border rounded-lg px-4 py-3.5 hover:bg-secondary/50 transition-colors ${isExpiringSoon ? "border-destructive/40" : "border-border"}`}>
+            <div key={item.cropId} className={`flex items-center justify-between border rounded-lg px-4 py-3.5 hover:bg-secondary transition-colors ${isExpiringSoon ? "border-destructive/40" : "border-border"}`}>
               <div className="flex items-center gap-4">
                 <span className="font-medium w-24">{item.cropName}</span>
                 <span className="font-mono text-lg tabular-nums text-primary">{item.quantityKg} <span className="text-sm text-muted-foreground">kg</span></span>
@@ -312,7 +312,7 @@ export default function CropsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <h1 className="text-xl font-medium tracking-tight">Crop Management</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Crop Management</h1>
 
       {/* Tab buttons */}
       <div className="flex gap-2">
@@ -322,7 +322,7 @@ export default function CropsPage() {
             onClick={() => setActiveTab(tab.value)}
             className={`rounded-lg border px-4 py-1.5 text-sm transition-all duration-150 ${
               activeTab === tab.value
-                ? "border-primary bg-primary/10 text-foreground font-medium"
+                ? "border-primary bg-primary/20 text-primary font-medium"
                 : "border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground"
             }`}
           >

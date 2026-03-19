@@ -21,7 +21,7 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <h1 className="text-xl font-medium tracking-tight">Dashboard</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 
       {/* Row 1: Greenhouse visualization (left) + Live stats (right) */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2" style={{ alignItems: "stretch" }}>
@@ -91,12 +91,12 @@ export default function DashboardPage() {
 
 function MetricCard({ label, value, status }: { label: string; value: string; status: string }) {
   return (
-    <Card className="p-3">
+    <Card className="p-3 border-l-2" style={{ borderLeftColor: statusColor(status) }}>
       <div className="flex items-center gap-1.5">
         <div className="h-2 w-2 rounded-full" style={{ backgroundColor: statusColor(status) }} />
         <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
       </div>
-      <p className="mt-1.5 font-mono text-lg tabular-nums">{value}</p>
+      <p className="mt-1.5 font-mono text-2xl tabular-nums">{value}</p>
     </Card>
   );
 }

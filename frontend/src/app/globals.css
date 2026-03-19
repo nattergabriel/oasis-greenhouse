@@ -7,8 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-jetbrains-mono);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-popover-foreground: var(--popover-foreground);
@@ -39,50 +39,50 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* Mars palette */
-  --color-mars-base: #0f0e0d;
-  --color-mars-surface: #1a1917;
-  --color-mars-elevated: #252320;
-  --color-mars-border: #2e2b27;
+  --color-mars-base: #0a0908;
+  --color-mars-surface: #161412;
+  --color-mars-elevated: #211f1b;
+  --color-mars-border: #352f28;
   --color-mars-text: #e8e2d9;
   --color-mars-text-secondary: #9c9488;
   --color-mars-text-tertiary: #6b6560;
   --color-mars-amber: #d4924a;
   --color-mars-red: #c75a3a;
-  --color-mars-green: #5a9a6b;
-  --color-mars-yellow: #c4a344;
-  --color-mars-blue: #4a7c9e;
+  --color-mars-green: #4ead6b;
+  --color-mars-yellow: #d4aa30;
+  --color-mars-blue: #3d8ab0;
   --color-mars-purple: #7c6aad;
 
   /* Status aliases */
-  --color-status-healthy: #5a9a6b;
-  --color-status-warning: #c4a344;
+  --color-status-healthy: #4ead6b;
+  --color-status-warning: #d4aa30;
   --color-status-critical: #c75a3a;
 }
 
 /* Dark-only app — Mars greenhouse theme */
 :root {
-  --background: #0f0e0d;
+  --background: #0a0908;
   --foreground: #e8e2d9;
-  --card: #1a1917;
+  --card: #161412;
   --card-foreground: #e8e2d9;
-  --popover: #1a1917;
+  --popover: #161412;
   --popover-foreground: #e8e2d9;
   --primary: #d4924a;
-  --primary-foreground: #0f0e0d;
-  --secondary: #252320;
+  --primary-foreground: #0a0908;
+  --secondary: #211f1b;
   --secondary-foreground: #e8e2d9;
-  --muted: #1a1917;
+  --muted: #161412;
   --muted-foreground: #9c9488;
-  --accent: #252320;
+  --accent: #211f1b;
   --accent-foreground: #e8e2d9;
   --destructive: #c75a3a;
-  --border: #2e2b27;
-  --input: #2e2b27;
+  --border: #352f28;
+  --input: #352f28;
   --ring: #d4924a;
   --chart-1: #d4924a;
-  --chart-2: #5a9a6b;
-  --chart-3: #4a7c9e;
-  --chart-4: #c4a344;
+  --chart-2: #4ead6b;
+  --chart-3: #3d8ab0;
+  --chart-4: #d4aa30;
   --chart-5: #7c6aad;
   --radius: 0.5rem;
 }
