@@ -96,7 +96,7 @@ The engine stops and returns early when:
 |---------|--------------------|---------|
 | Random event fires (tick > 0) | `event_fired` | Full day still simulated before stopping |
 | Crop health < 30 | `threshold_breach` | `trigger: crop_health_low` |
-| Water < 1,500L | `threshold_breach` | `trigger: water_low` |
+| Water < 6,000L | `threshold_breach` | `trigger: water_low` |
 | Energy deficit 3+ days | `threshold_breach` | `trigger: energy_deficit_streak` |
 | All food exhausted | `threshold_breach` | `trigger: starvation` |
 

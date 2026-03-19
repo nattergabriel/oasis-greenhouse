@@ -13,13 +13,25 @@ from src.models import state_to_dict
 from src.simulation import create_initial_state, simulate_tick
 
 
-# Assign crops across 4 slots (2×2 grid):
-# 2 potato slots, 1 beans slot, 1 lettuce slot
+# Assign crops across 16 slots (4×4 grid):
+# 6 potato, 4 beans, 3 lettuce, 2 herbs, 1 radish
 CROP_ASSIGNMENTS = {
     0: "potato",
     1: "potato",
-    2: "beans_peas",
-    3: "lettuce",
+    2: "potato",
+    3: "potato",
+    4: "potato",
+    5: "potato",
+    6: "beans_peas",
+    7: "beans_peas",
+    8: "beans_peas",
+    9: "beans_peas",
+    10: "lettuce",
+    11: "lettuce",
+    12: "lettuce",
+    13: "herbs",
+    14: "herbs",
+    15: "radish",
 }
 
 
@@ -29,7 +41,7 @@ class TestInitialState:
     def test_empty_init(self) -> None:
         state = create_initial_state(seed=42)
         assert state.day == 0
-        assert len(state.slots) == 4
+        assert len(state.slots) == 16
         assert all(len(s.crops) == 0 for s in state.slots)
         assert state.stored_food.remaining_calories == config.STORED_FOOD_TOTAL_KCAL
         assert state.resources.water == config.STARTING_WATER_L
@@ -37,13 +49,13 @@ class TestInitialState:
     def test_slots_have_grid_positions(self) -> None:
         state = create_initial_state(seed=42)
         positions = [(s.row, s.col) for s in state.slots]
-        expected = [(r, c) for r in range(2) for c in range(2)]
+        expected = [(r, c) for r in range(4) for c in range(4)]
         assert positions == expected
 
     def test_slot_ids_are_sequential(self) -> None:
         state = create_initial_state(seed=42)
         ids = [s.id for s in state.slots]
-        assert ids == list(range(4))
+        assert ids == list(range(16))
 
     def test_init_with_crop_assignments(self) -> None:
         state = create_initial_state(seed=42, crop_assignments=CROP_ASSIGNMENTS)
@@ -52,7 +64,7 @@ class TestInitialState:
         assert total_crops > 0, "Crop assignments should produce crops on init"
         # Verify slots have crop types set
         assert state.slots[0].crop_type == "potato"
-        assert state.slots[2].crop_type == "beans_peas"
+        assert state.slots[6].crop_type == "beans_peas"
         # Verify area is used
         for slot in state.slots:
             if slot.crop_type:
@@ -251,11 +263,11 @@ class TestFullMission:
     """450-day full simulation — the critical sanity check."""
 
     def test_450_day_calorie_fraction_in_range(self) -> None:
-        """Average calorie greenhouse fraction should be 2-15%.
+        """Average calorie greenhouse fraction should be meaningful.
 
-        16 m² greenhouse (4 slots) with potato-heavy assignment:
-        - 2 potato slots × 2 plants × 12kg/harvest ≈ 48 kg per cycle
-        - Plus beans, lettuce
+        64 m² greenhouse (16 slots) with potato-heavy assignment:
+        - 6 potato slots × 2 plants × 12kg/harvest ≈ 144 kg per cycle
+        - Plus beans, lettuce, herbs, radish
         """
         result = _run_full_mission(seed=42)
         final = result["state"]
@@ -282,11 +294,11 @@ class TestFullMission:
         print(f"Early stops:               {result['total_stops']}")
         print(f"{'='*60}")
 
-        assert 0.02 <= avg_cal <= 0.20, (
-            f"Calorie fraction {avg_cal:.1%} outside 2-20% range"
+        assert 0.02 <= avg_cal <= 0.60, (
+            f"Calorie fraction {avg_cal:.1%} outside 2-60% range"
         )
-        assert 0.01 <= avg_prot <= 0.20, (
-            f"Protein fraction {avg_prot:.1%} outside 1-20% range"
+        assert 0.01 <= avg_prot <= 0.60, (
+            f"Protein fraction {avg_prot:.1%} outside 1-60% range"
         )
         unique_micro = len(metrics.get("unique_micronutrients_seen", []))
         assert unique_micro >= 5, (
@@ -364,7 +376,7 @@ class TestEarlyStop:
     def test_water_threshold_stops(self) -> None:
         state = create_initial_state(seed=42, crop_assignments=CROP_ASSIGNMENTS)
         state_dict = state_to_dict(state)
-        state_dict["resources"]["water"] = 1_400.0
+        state_dict["resources"]["water"] = 5_900.0
         result = simulate_tick(state_dict, days=10)
         assert result["stopped_early"]
         assert result["stop_reason"]["type"] == "threshold_breach"
@@ -384,7 +396,7 @@ class TestEarlyStop:
     def test_early_stop_returns_valid_state(self) -> None:
         state = create_initial_state(seed=42, crop_assignments=CROP_ASSIGNMENTS)
         state_dict = state_to_dict(state)
-        state_dict["resources"]["water"] = 1_400.0
+        state_dict["resources"]["water"] = 5_900.0
         result = simulate_tick(state_dict, days=10)
         assert result["stopped_early"]
         from src.models import dict_to_state

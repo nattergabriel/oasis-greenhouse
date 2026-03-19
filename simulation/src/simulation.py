@@ -53,7 +53,7 @@ def create_initial_state(
 ) -> GreenhouseState:
     """Create the day-0 greenhouse state.
 
-    Greenhouse is a 4×4 grid of 2×2m slots. If crop_assignments are provided,
+    Greenhouse is a 4×4 grid of 4m² slots. If crop_assignments are provided,
     slots are filled with the assigned crop types.
 
     Args:

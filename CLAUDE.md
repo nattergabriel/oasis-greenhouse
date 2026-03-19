@@ -43,7 +43,7 @@ The simulation engine is a **stateless REST server** with 3 endpoints:
 
 ### Key design decisions
 - **5 crop types** (all KB-backed): lettuce, potato, radish, beans/peas, herbs
-- **4 slots × 4 m²** = 16 m² total greenhouse area (2×2 grid of 2m×2m slots)
+- **16 slots × 4 m²** = 64 m² total greenhouse area (4×4 grid of 2m×2m slots)
 - **Single crop per slot**: agent assigns one crop type per slot via `set_crop`. Engine fills the slot and auto-replants after harvest.
 - **Auto-harvest + auto-replant**: crops harvest automatically at ≥95% growth. Engine replants same crop type. Agent does not control harvest timing.
 - **Batch execution**: agent plans ~30 days ahead. Sim runs the batch, stops early on events or threshold breaches, returns control to orchestrator for agent reaction.

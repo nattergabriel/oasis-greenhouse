@@ -30,12 +30,12 @@ DEFAULT_CO2_LEVEL_PPM: float = 1000.0          # KB
 
 # Energy budget (SIM)
 HEATING_COST_FACTOR: float = 0.5               # energy units per °C difference
-SOLAR_PANEL_EFFICIENCY: float = 4.5            # energy units per solar hour (SIM)
+SOLAR_PANEL_EFFICIENCY: float = 6.5            # energy units per solar hour (SIM)
 # Calibrated so equinox (12h) has small surplus, winter (9h) has deficit:
-#   Equinox: 12*4.5=54 gen vs ~51.5 need → surplus 2.5
-#   Winter:  9*4.5=40.5 gen vs ~61.5 need → deficit 21
-#   Summer: 15*4.5=67.5 gen vs ~41.5 need → surplus 26
-LIGHTING_COST_PER_SLOT: float = 2.0             # energy units per lit slot (SIM, 4 slots × 2.0 = 8.0)
+#   Equinox: 12*6.5=78 gen vs ~75.5 need → surplus 2.5
+#   Winter:  9*6.5=58.5 gen vs ~85.5 need → deficit 27
+#   Summer: 15*6.5=97.5 gen vs ~65.5 need → surplus 32
+LIGHTING_COST_PER_SLOT: float = 2.0             # energy units per lit slot (SIM, 16 slots × 2.0 = 32.0)
 PUMP_COST: float = 1.0                         # energy units baseline (SIM)
 
 
@@ -60,8 +60,8 @@ STORED_FOOD_TOTAL_KCAL: float = 5_400_000.0    # 450 × 12,000 (KB)
 # ---------------------------------------------------------------------------
 # Resource pool starting values (SIM)
 # ---------------------------------------------------------------------------
-STARTING_WATER_L: float = 10_000.0
-STARTING_NUTRIENTS: float = 5_000.0
+STARTING_WATER_L: float = 40_000.0
+STARTING_NUTRIENTS: float = 20_000.0
 
 # Recycling rates
 WATER_RECYCLING_RATE: float = 0.90             # KB: 85-95%, we use 90%
@@ -79,10 +79,10 @@ NUTRIENT_CRITICAL_THRESHOLD: float = 500.0     # SIM: below this → nutrient_de
 # ---------------------------------------------------------------------------
 # Greenhouse sizing (SIM + NASA)
 # ---------------------------------------------------------------------------
-GREENHOUSE_ROWS: int = 2
-GREENHOUSE_COLS: int = 2
+GREENHOUSE_ROWS: int = 4
+GREENHOUSE_COLS: int = 4
 SLOT_AREA_M2: float = 4.0                      # 2m × 2m per slot
-GREENHOUSE_TOTAL_AREA_M2: float = float(GREENHOUSE_ROWS * GREENHOUSE_COLS) * SLOT_AREA_M2  # 16 m²
+GREENHOUSE_TOTAL_AREA_M2: float = float(GREENHOUSE_ROWS * GREENHOUSE_COLS) * SLOT_AREA_M2  # 64 m²
 
 
 # ---------------------------------------------------------------------------
@@ -285,7 +285,7 @@ MAX_LIGHT_PENALTY_FROM_DEFICIT: float = 0.5    # up to 50% light reduction
 # Early stop thresholds (SIM — triggers return control to orchestrator)
 # ---------------------------------------------------------------------------
 EARLY_STOP_CROP_HEALTH_THRESHOLD: float = 30.0   # any crop below this
-EARLY_STOP_WATER_THRESHOLD_L: float = 1_500.0     # 15% of starting 10,000
+EARLY_STOP_WATER_THRESHOLD_L: float = 6_000.0     # 15% of starting 40,000
 EARLY_STOP_ENERGY_DEFICIT_STREAK: int = 3          # consecutive days
 
 

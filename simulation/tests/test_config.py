@@ -128,8 +128,8 @@ class TestGlobalConstants:
         assert days == 450.0
 
     def test_grid_dimensions(self) -> None:
-        assert config.GREENHOUSE_ROWS == 2
-        assert config.GREENHOUSE_COLS == 2
+        assert config.GREENHOUSE_ROWS == 4
+        assert config.GREENHOUSE_COLS == 4
         assert config.SLOT_AREA_M2 == 4.0
 
     def test_total_area_is_grid_times_slot_area(self) -> None:

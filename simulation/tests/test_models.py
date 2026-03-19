@@ -47,7 +47,7 @@ class TestSerializationRoundtrip:
         assert restored.environment.energy_deficit == populated_state.environment.energy_deficit
 
         # Slots and crops
-        assert len(restored.slots) == 4
+        assert len(restored.slots) == 16
         assert len(restored.slots[0].crops) == 1
         assert restored.slots[0].crops[0].id == "crop_0_1"
         assert restored.slots[0].crops[0].type == "potato"
