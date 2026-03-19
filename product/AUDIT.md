@@ -1,52 +1,72 @@
-# Project Audit — End of Day 1
+# Project Audit — End of Day 1 (Final)
 
-> Last updated: end of design session, day 1.
+> Last updated: end of night session, day 1.
 
 ---
 
-## Document alignment status
+## Build status
 
-| Document | Location | Status | Notes |
-|----------|----------|--------|-------|
-| Simulation spec | `simulation/SIMULATION-SPEC.md` | ✅ Current | Source of truth for sim engine |
-| Teammate's sim API doc | Not committed yet | ✅ Aligned | Needs to go to `simulation/API.md` |
-| CLAUDE.md | root | ✅ Just updated | Reflects current architecture |
-| Learning system | `backend/docs/LEARNING-SYSTEM.md` | ✅ Aligned | Minor: "soybeans" in example |
-| Case brief | `product/research/CASE-BRIEF.md` | ✅ Current | No changes needed |
-| Tech stack | `product/research/TECH-STACK.md` | ✅ Current | No changes needed |
-| Feature list | `product/FEATURES.md` | ⚠️ Minor | Simulation objectives use old terminology |
-| Frontend↔backend API | `contracts/API.md` | ⚠️ Needs updates | See below |
-| Frontend impl plan | `frontend/doc/IMPLEMENTATION_PLAN.md` | ⚠️ Stale crops | References tomato/spinach/soybean/wheat |
-| Product context | `product/CONTEXT.md` | ✅ Just updated | |
-| Prep plan | `product/PREP-PLAN.md` | ❌ Stale | Pre-hackathon, no longer relevant |
+| Component | Status | Tests | Notes |
+|-----------|--------|-------|-------|
+| Simulation engine | ✅ **Complete** | 192 passing | Stateless FastAPI, 3 endpoints, all formulas verified |
+| Backend orchestrator | ✅ Built | Untested | LangGraph flow correct, **state models need fixing** |
+| Frontend | 🔨 In progress | — | Building against mock data from contracts/API.md |
+| Integration | ❌ Not connected | — | Blocked by state model mismatch |
 
-## `contracts/API.md` — what needs updating
-
-The frontend API contract is richer than what the sim produces. The backend translates between them. These specific items need updating:
-
-1. **ScenarioType enum**: Add `WATER_RECYCLING_DECLINE`, `TEMPERATURE_FAILURE`. Current values (`WATER_LEAK`, `SOLAR_PANEL_FAILURE`, `DUST_STORM`, `DISEASE_OUTBREAK`, `EQUIPMENT_MALFUNCTION`) can stay as stretch/display-only options.
-
-2. **CropCategory enum**: `GRAIN` is empty since wheat was dropped. Can keep for future extensibility or remove.
-
-3. **Crop data**: API crop catalog should match our 5 crops. Frontend SVG plant components reference wrong crops (tomato, spinach, soybean, wheat should be potato, radish, beans_peas, herbs).
-
-4. **StressType enum**: API has 12 types, sim produces 7. The extra 5 (NUTRIENT_DEFICIENCY_N/K/FE, SALINITY, LIGHT_EXCESSIVE, ROOT_HYPOXIA) are from the KB but not modeled in our core sim. Backend can map our generic `nutrient_deficiency` to the specific N/K/Fe types based on context, or these can be stretch additions.
-
-5. **Agent action types**: API uses descriptive names (`IRRIGATION_ADJUSTED`, `LIGHT_CYCLE_MODIFIED`). Sim uses action names (`water_adjust`, `light_toggle`). Backend maps between them.
-
-6. **Zone plans not in API**: The `set_zone_plan` action exists in the sim but has no API equivalent. Backend handles this internally — it receives zone plan from agent, translates to slot-level updates for the frontend API.
-
-## Architecture: how sim → backend → frontend
+## Critical path for tomorrow
 
 ```
-Simulation Engine (simple)          Backend (translates)         Frontend (rich)
-─────────────────────────          ────────────────────         ────────────────
-Zone plans + crop states    →→→    Slot grid positions     →→→  Animated greenhouse
-Environment (solar, temp)   →→→    Sensor readings         →→→  Live gauges
-Nutrition fractions         →→→    Daily nutrition entries  →→→  Nutrition dashboard
-Stress type per crop        →→→    Alerts with diagnosis    →→→  Alert cards
-Events (2 core types)       →→→    Scenario injections      →→→  Crisis management
-Daily log per tick batch    →→→    Timeline events          →→→  Live replay at speed
+1. Backend dev fixes state models → docs/STATE-MODEL-ALIGNMENT.md has exact format
+2. Test backend ↔ sim engine integration (start both servers, run training)
+3. Frontend continues with mock data (not blocked)
+4. Michael: pitch prep, brand, wireframes
 ```
 
-The backend is the translation layer. The sim stays simple. The frontend stays rich.
+## Document alignment
+
+| Document | Location | Status |
+|----------|----------|--------|
+| Simulation spec | `simulation/SIMULATION-SPEC.md` | ✅ Final |
+| Sim implementation guide | `simulation/SETUP.md` | ✅ Final |
+| Backend CLAUDE.md | `backend/CLAUDE.md` | ✅ Current |
+| LangGraph flow | `backend/src/graph.py` | ✅ Correct architecture |
+| State model alignment | `docs/STATE-MODEL-ALIGNMENT.md` | ✅ **NEW — backend dev read this** |
+| Handoff notes | `docs/HANDOFF-DAY1.md` | ✅ Updated with full backend audit |
+| Root CLAUDE.md | `CLAUDE.md` | ✅ Updated |
+| Product context | `product/CONTEXT.md` | ✅ Updated |
+| Feature list | `product/FEATURES.md` | ⚠️ Minor (old objective wording) |
+| Frontend↔backend API | `contracts/API.md` | ⚠️ ScenarioType enum needs 2 additions |
+| Frontend impl plan | `frontend/doc/IMPLEMENTATION_PLAN.md` | ⚠️ Wrong crop SVG names |
+| Learning system | `backend/docs/LEARNING-SYSTEM.md` | ✅ Aligned |
+| Case brief | `product/research/CASE-BRIEF.md` | ✅ Unchanged |
+| Tech stack | `product/research/TECH-STACK.md` | ✅ Unchanged |
+
+## Architecture
+
+```
+Frontend (Next.js, port 3000)
+    ↕ contracts/API.md
+Backend (FastAPI + LangGraph, port 8000)
+    ↕ sim_client.py (needs state model fix)
+Sim Engine (FastAPI, port 8001)
+    ↕
+    Pure math, 192 tests, stateless
+    
+Backend also talks to:
+    → AWS Bedrock (Claude Sonnet) for agent decisions
+    → MCP KB (Syngenta) for crop/scenario guidance
+    → Strategy file (read at init, rewrite at reflect)
+```
+
+## What the simulation produces (verified numbers)
+
+| Metric | Value | Spec target |
+|--------|-------|-------------|
+| Avg calorie GH fraction | 16.9% | 15-25% |
+| Avg protein GH fraction | 17.1% | 10-20% |
+| Micronutrients covered | 7/7 | All 7 |
+| Total harvested | 1,770 kg | >0 |
+| Water remaining | 2,535 L | >0 |
+| Stored food remaining | 913,651 kcal | >0 |
+| First harvest | Day 25 (radish) | ≤50 |
+| Early stop triggers | 5 types working | All from spec |
