@@ -27,31 +27,33 @@ public record SimResultPayload(
             ResourcesPayload resources,
             @JsonProperty("food_supply") FoodSupplyPayload foodSupply,
             @JsonProperty("stored_food") StoredFoodPayload storedFood,
-            DailyNutritionPayload nutrition,
-            List<ActiveEventPayload> events
+            @JsonProperty("daily_nutrition") DailyNutritionPayload nutrition,
+            @JsonProperty("active_events") List<ActiveEventPayload> events
     ) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record SlotSnapshotPayload(
             int id,
-            Map<String, Integer> position,
+            int row,
+            int col,
+            @JsonProperty("area_m2") double areaM2,
             @JsonProperty("crop_type") String cropType,
             List<CropSnapshotPayload> crops,
-            boolean light,
-            double water,
-            @JsonProperty("used_area") double usedArea,
-            @JsonProperty("available_area") double availableArea
+            @JsonProperty("artificial_light") boolean light,
+            @JsonProperty("water_allocation") double water,
+            @JsonProperty("used_area_m2") double usedArea,
+            @JsonProperty("available_area_m2") double availableArea
     ) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CropSnapshotPayload(
             String id,
             String type,
-            double footprint,
+            @JsonProperty("footprint_m2") double footprint,
             int age,
             double health,
             double growth,
-            String stress
+            @JsonProperty("active_stress") String stress
     ) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)

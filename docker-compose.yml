@@ -10,7 +10,13 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  backend:
+  simulation:
+    build: ./simulation
+    ports:
+      - "8001:8001"
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8001
+
+  management-backend:
     build: ./management-backend
     ports:
       - "8080:8080"
@@ -22,6 +28,18 @@ services:
       SYSTEM_TOKEN: dev-system-token
     depends_on:
       - postgres
+
+  agent:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      SIM_ENGINE_URL: http://simulation:8001
+      MANAGEMENT_BACKEND_URL: http://management-backend:8080
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - simulation
+      - management-backend
 
 volumes:
   pgdata:
