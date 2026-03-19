@@ -3,6 +3,7 @@
 import { mockSimulations, mockSimulationDetail } from "@/lib/mock-data"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { SimControls } from "@/components/layout/sim-controls"
 
 export default function SimulationManagementPage() {
   const simulation = mockSimulationDetail
@@ -22,7 +23,10 @@ export default function SimulationManagementPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <h1 className="text-xl font-medium tracking-tight">Simulation Management</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-medium tracking-tight">Simulation Management</h1>
+        <SimControls />
+      </div>
 
       {/* Current Simulation */}
       <Card className="p-6 space-y-6">

@@ -152,7 +152,7 @@ export default function NutritionPage() {
 
           {/* Right: Area chart */}
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={calorieChartData}>
                 <defs>
                   <linearGradient id="calorieGradient" x1="0" y1="0" x2="0" y2="1">
