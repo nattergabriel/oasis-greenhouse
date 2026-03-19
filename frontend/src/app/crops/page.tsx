@@ -380,7 +380,19 @@ function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots
         </Card>
         <Skeleton className="h-3 w-28 ml-1" />
         {Array.from({ length: 3 }, (_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          <div key={i} className="flex items-center gap-4 border border-border rounded-lg px-4 py-3.5">
+            <Skeleton className="h-6 w-8 shrink-0" />
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-5 w-16 rounded-md" />
+              </div>
+              <Skeleton className="h-3.5 w-48" />
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+              <Skeleton className="h-5 w-16 rounded" />
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -425,27 +437,35 @@ function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots
 
       <div>
         <span className="text-xs uppercase tracking-wide text-muted-foreground ml-1 mb-2 block">Planting Priority</span>
-        <div className="space-y-1.5">
-          {items.map((item) => (
-            <div key={item.rank} className="flex items-center gap-4 border border-border rounded-lg px-4 py-3.5 hover:bg-secondary transition-colors">
-              <span className="font-mono text-lg font-bold text-primary w-8 shrink-0">#{item.rank}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{item.cropName}</span>
-                  <Badge variant="outline" className="font-mono text-xs">SOL {item.missionDay}</Badge>
+        {items.length === 0 ? (
+          <Card className="flex flex-col items-center justify-center py-10 text-center">
+            <Sprout className="h-8 w-8 text-muted-foreground/40" />
+            <p className="mt-3 text-sm text-muted-foreground">No planting priorities available</p>
+            <p className="mt-1 text-xs text-muted-foreground/60">The agent will suggest crops when nutritional gaps are detected</p>
+          </Card>
+        ) : (
+          <div className="space-y-1.5">
+            {items.map((item) => (
+              <div key={item.rank} className="flex items-center gap-4 border border-border rounded-lg px-4 py-3.5 hover:bg-secondary transition-colors">
+                <span className="font-mono text-lg font-bold text-primary w-8 shrink-0">#{item.rank}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{item.cropName}</span>
+                    <Badge variant="outline" className="font-mono text-xs">SOL {item.missionDay}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-0.5 truncate">{item.reason}</p>
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5 truncate">{item.reason}</p>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {item.nutritionalGapsAddressed.map((gap) => (
+                    <span key={gap} className="inline-flex items-center rounded border border-[#4ead6b]/30 bg-[#4ead6b]/10 px-2.5 py-0.5 text-xs text-[#4ead6b]">
+                      {gap}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {item.nutritionalGapsAddressed.map((gap) => (
-                  <span key={gap} className="inline-flex items-center rounded border border-[#4ead6b]/30 bg-[#4ead6b]/10 px-2.5 py-0.5 text-xs text-[#4ead6b]">
-                    {gap}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

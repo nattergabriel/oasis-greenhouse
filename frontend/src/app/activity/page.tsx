@@ -129,7 +129,7 @@ function DecisionsStack({ pending, onApprove, onDismiss }: {
   if (pending.length === 0) {
     return (
       <Card className="p-8 text-center">
-        <p className="text-sm text-muted-foreground">Agent is operating autonomously — no decisions needed</p>
+        <p className="text-sm text-muted-foreground">Agent is operating autonomously</p>
       </Card>
     );
   }
