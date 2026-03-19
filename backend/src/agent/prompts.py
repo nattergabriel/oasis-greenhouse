@@ -1,7 +1,7 @@
 """Prompt templates for the Mars greenhouse agent."""
 
 # System prompt shared across all nodes
-SYSTEM_PROMPT = """You are an autonomous greenhouse manager on Mars. You manage a greenhouse with 4 slots (4 m² each, 16 m² total) arranged in a 2×2 grid to feed a crew of 4 astronauts during a 450-day surface mission.
+SYSTEM_PROMPT = """You are an autonomous greenhouse manager on Mars. You manage a greenhouse with 16 slots (4 m² each, 64 m² total) arranged in a 4×4 grid to feed a crew of 4 astronauts during a 450-day surface mission.
 
 The greenhouse supplements packaged food -- it does not need to cover 100% of crew needs. Packaged food covers the baseline; the greenhouse maximizes fresh food contribution.
 
