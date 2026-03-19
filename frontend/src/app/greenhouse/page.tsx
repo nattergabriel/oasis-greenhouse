@@ -3,14 +3,11 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useSimulation } from "@/providers/simulation-provider";
-import {
-  mockGreenhouseDetails,
-  mockSensorSnapshot,
-  mockSensorHistory,
-} from "@/lib/mock-data";
+import { emptySensorSnapshot } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
 import { GreenhouseCrossSection } from "@/components/greenhouse-cross-section";
 import type { PlantSlot, SensorStatus } from "@/lib/types";
+import { fmt, fmtInt } from "@/lib/utils";
 import {
   LineChart,
   Line,
@@ -61,39 +58,27 @@ function getCropDotColor(name: string) {
 }
 
 export default function GreenhousePage() {
-  const { state, dispatch } = useSimulation();
+  const { state, dispatch, hydrated } = useSimulation();
   const [metricMode, setMetricMode] = useState<MetricMode>("status");
-
   const selectedGhId = state.selectedGreenhouseId;
-  if (!selectedGhId) {
+  const skip = !hydrated || !selectedGhId;
+
+  const greenhouseDetail = useApi(() => api.greenhouses.get(selectedGhId!), null, [selectedGhId], skip);
+  const sensors = useApi(() => api.greenhouses.sensorsLatest(selectedGhId!), emptySensorSnapshot, [selectedGhId], skip);
+  const sensorHistory = useApi(() => api.greenhouses.sensorsHistory(selectedGhId!, { from: new Date(Date.now() - 86400000).toISOString(), to: new Date().toISOString(), interval: "1h" }).then(r => r.readings), [] as import("@/lib/types").SensorHistoryReading[], [selectedGhId], skip);
+
+  if (!selectedGhId || !greenhouseDetail) {
     return (
       <div className="mx-auto max-w-7xl space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">
           Greenhouse Environment
         </h1>
         <Card className="p-8 text-center text-muted-foreground">
-          No greenhouse selected
+          {!selectedGhId ? "No greenhouse selected" : "Loading greenhouse data…"}
         </Card>
       </div>
     );
   }
-
-  const greenhouseDetail = useApi(() => api.greenhouses.get(selectedGhId), mockGreenhouseDetails[selectedGhId], [selectedGhId]);
-  if (!greenhouseDetail) {
-    return (
-      <div className="mx-auto max-w-7xl space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Greenhouse Environment
-        </h1>
-        <Card className="p-8 text-center text-muted-foreground">
-          Greenhouse data not found
-        </Card>
-      </div>
-    );
-  }
-
-  const sensors = useApi(() => api.greenhouses.sensorsLatest(selectedGhId), mockSensorSnapshot, [selectedGhId]);
-  const sensorHistory = useApi(() => api.greenhouses.sensorsHistory(selectedGhId, { from: "", to: "", interval: "1h" }).then(r => r.readings), mockSensorHistory, [selectedGhId]);
 
   const { name, rows, cols, slots, resources } = greenhouseDetail;
 

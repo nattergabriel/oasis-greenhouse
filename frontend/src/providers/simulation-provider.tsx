@@ -6,10 +6,11 @@ import {
   useReducer,
   useEffect,
   useCallback,
+  useState,
   type ReactNode,
 } from "react";
 import type { SimulationState } from "@/lib/types";
-import { initialSimulationState } from "@/lib/mock-data";
+import { initialSimulationState } from "@/lib/defaults";
 import { simulationTick } from "@/lib/simulation";
 import { api } from "@/lib/api";
 
@@ -22,6 +23,7 @@ type Action =
 interface SimulationContextValue {
   state: SimulationState;
   dispatch: React.Dispatch<Action>;
+  hydrated: boolean;
 }
 
 const SimulationContext = createContext<SimulationContextValue | null>(null);
@@ -53,13 +55,15 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     simulationReducer,
     initialSimulationState
   );
+  const [hydrated, setHydrated] = useState(false);
 
   // Hydrate from API on mount
   useEffect(() => {
     let cancelled = false;
     async function hydrate() {
       try {
-        const [ghList, weather, alertsRes, logRes, recsRes, timeline] = await Promise.all([
+        // Use allSettled so 401s on agent/alerts don't break greenhouse hydration
+        const [ghResult, weatherResult, alertsResult, logResult, recsResult, timelineResult] = await Promise.allSettled([
           api.greenhouses.list(),
           api.weather.current(),
           api.alerts.list(),
@@ -70,11 +74,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
         if (cancelled) return;
 
-        const greenhouses = ghList.greenhouses;
+        const greenhouses = ghResult.status === "fulfilled" ? ghResult.value.greenhouses : [];
         const selectedId = greenhouses[0]?.id ?? null;
 
-        // Fetch detail for the first greenhouse to get resources
-        let resources = initialSimulationState.resources;
+        let resources = { waterReservePercent: 0, nutrientReservePercent: 0, energyReservePercent: 0 };
         if (selectedId) {
           try {
             const detail = await api.greenhouses.get(selectedId);
@@ -87,18 +90,19 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
           state: {
             greenhouses,
             selectedGreenhouseId: selectedId,
-            weather,
-            alerts: alertsRes.alerts,
-            agentLog: logRes.entries,
-            recommendations: recsRes.recommendations,
+            weather: weatherResult.status === "fulfilled" ? weatherResult.value : initialSimulationState.weather,
+            alerts: alertsResult.status === "fulfilled" ? alertsResult.value.alerts : [],
+            agentLog: logResult.status === "fulfilled" ? logResult.value.entries : [],
+            recommendations: recsResult.status === "fulfilled" ? recsResult.value.recommendations : [],
             resources,
-            currentMissionDay: timeline.currentMissionDay,
-            totalMissionDays: timeline.totalMissionDays,
+            currentMissionDay: timelineResult.status === "fulfilled" ? timelineResult.value.currentMissionDay : 0,
+            totalMissionDays: timelineResult.status === "fulfilled" ? timelineResult.value.totalMissionDays : 0,
           },
         });
       } catch {
-        // API unavailable — keep mock data
+        // Total failure — keep defaults
       }
+      if (!cancelled) setHydrated(true);
     }
     hydrate();
     return () => { cancelled = true; };
@@ -117,7 +121,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   }, [state.isRunning, state.speed, tick]);
 
   return (
-    <SimulationContext.Provider value={{ state, dispatch }}>
+    <SimulationContext.Provider value={{ state, dispatch, hydrated }}>
       {children}
     </SimulationContext.Provider>
   );

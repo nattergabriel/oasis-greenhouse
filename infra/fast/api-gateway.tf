@@ -10,10 +10,14 @@ resource "aws_apigatewayv2_api" "main" {
   description   = "Martian Greenhouse API with API key authentication"
 
   cors_configuration {
-    # Allow localhost for development
-    # For production: Update CORS after Amplify deployment to add the specific domain
-    allow_origins = ["http://localhost:5173", "http://localhost:3000", "http://localhost:5174"]
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    # Allow localhost for development + CloudFront for production
+    allow_origins = [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:5174",
+      "https://${aws_cloudfront_distribution.frontend.domain_name}"
+    ]
+    allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     allow_headers = ["*"]
     expose_headers = ["*"]
     max_age = 3600
@@ -138,10 +142,14 @@ resource "aws_apigatewayv2_integration" "management_backend" {
   api_id             = aws_apigatewayv2_api.main.id
   integration_type   = "HTTP_PROXY"
   integration_method = "ANY"
-  integration_uri    = "https://${aws_apprunner_service.management_backend.service_url}"
+  integration_uri    = "https://${aws_apprunner_service.management_backend.service_url}/{proxy}"
 
   payload_format_version = "1.0"
   timeout_milliseconds   = 10000 # 10 seconds
+
+  request_parameters = {
+    "overwrite:path" = "$request.path.proxy"
+  }
 }
 
 resource "aws_apigatewayv2_route" "management_backend" {
@@ -157,10 +165,14 @@ resource "aws_apigatewayv2_integration" "agent_backend" {
   api_id             = aws_apigatewayv2_api.main.id
   integration_type   = "HTTP_PROXY"
   integration_method = "ANY"
-  integration_uri    = "https://${aws_apprunner_service.agent_backend.service_url}"
+  integration_uri    = "https://${aws_apprunner_service.agent_backend.service_url}/{proxy}"
 
   payload_format_version = "1.0"
   timeout_milliseconds   = 30000 # 30 seconds (agent may need more time)
+
+  request_parameters = {
+    "overwrite:path" = "$request.path.proxy"
+  }
 }
 
 resource "aws_apigatewayv2_route" "agent_backend" {
@@ -176,10 +188,14 @@ resource "aws_apigatewayv2_integration" "simulation" {
   api_id             = aws_apigatewayv2_api.main.id
   integration_type   = "HTTP_PROXY"
   integration_method = "ANY"
-  integration_uri    = "https://${aws_apprunner_service.simulation.service_url}"
+  integration_uri    = "https://${aws_apprunner_service.simulation.service_url}/{proxy}"
 
   payload_format_version = "1.0"
   timeout_milliseconds   = 30000 # 30 seconds (simulation may need more time)
+
+  request_parameters = {
+    "overwrite:path" = "$request.path.proxy"
+  }
 }
 
 resource "aws_apigatewayv2_route" "simulation" {

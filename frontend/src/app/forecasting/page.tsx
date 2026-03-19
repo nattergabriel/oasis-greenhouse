@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { mockResourceForecast, mockMissionTimeline, mockWeather } from "@/lib/mock-data";
+import { emptyResourceProjection, emptyMissionTimeline, emptyWeather } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
+import { fmtInt } from "@/lib/utils";
 import type { MilestoneType, RiskLevel } from "@/lib/types";
 import {
   AreaChart,
@@ -23,13 +24,14 @@ import {
   Sun,
   AlertTriangle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // === Helpers ===
 
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload || !payload.length) return null;
   const data = payload[0].payload;
-  const isProjOnly = data.missionDay > mockMissionTimeline.currentMissionDay;
+  const isProjOnly = data.missionDay > emptyMissionTimeline.currentMissionDay;
 
   return (
     <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
@@ -114,9 +116,9 @@ function generatePastData(forecastStart: number, count: number) {
 
 export default function ForecastingPage() {
   const [weatherMetric, setWeatherMetric] = useState<WeatherMetric>("solar");
-  const forecast = useApi(() => api.forecast.resources().then(r => r.projections), mockResourceForecast);
-  const timeline = useApi(() => api.forecast.missionTimeline(), mockMissionTimeline);
-  const weather = useApi(() => api.weather.current(), mockWeather);
+  const forecast = useApi(() => api.forecast.resources().then(r => r.projections), [emptyResourceProjection]);
+  const timeline = useApi(() => api.forecast.missionTimeline(), emptyMissionTimeline);
+  const weather = useApi(() => api.weather.current(), emptyWeather);
   const todayDay = timeline.currentMissionDay;
 
   // 30-day chart: 15 past + today bridge + 14 future
@@ -125,28 +127,17 @@ export default function ForecastingPage() {
     const futureData = forecast.slice(0, 15);
 
     return [
-      ...pastData.map((d) => ({
+      ...pastData.map((d, i) => ({
         ...d,
         waterActual: d.waterReservePercent,
         nutrientActual: d.nutrientReservePercent,
         energyActual: d.energyReservePercent,
-        waterProjected: undefined as number | undefined,
-        nutrientProjected: undefined as number | undefined,
-        energyProjected: undefined as number | undefined,
+        // Last past point bridges actual → projected so the dashed line connects
+        waterProjected: i === pastData.length - 1 ? d.waterReservePercent : undefined as number | undefined,
+        nutrientProjected: i === pastData.length - 1 ? d.nutrientReservePercent : undefined as number | undefined,
+        energyProjected: i === pastData.length - 1 ? d.energyReservePercent : undefined as number | undefined,
       })),
-      {
-        missionDay: forecast[0].missionDay,
-        waterReservePercent: forecast[0].waterReservePercent,
-        nutrientReservePercent: forecast[0].nutrientReservePercent,
-        energyReservePercent: forecast[0].energyReservePercent,
-        waterActual: forecast[0].waterReservePercent,
-        nutrientActual: forecast[0].nutrientReservePercent,
-        energyActual: forecast[0].energyReservePercent,
-        waterProjected: forecast[0].waterReservePercent,
-        nutrientProjected: forecast[0].nutrientReservePercent,
-        energyProjected: forecast[0].energyReservePercent,
-      },
-      ...futureData.slice(1).map((d) => ({
+      ...futureData.map((d) => ({
         ...d,
         waterActual: undefined as number | undefined,
         nutrientActual: undefined as number | undefined,
@@ -307,7 +298,7 @@ export default function ForecastingPage() {
             <div className="flex items-center gap-2 text-sm">
               <Sun className="h-3.5 w-3.5 text-primary" />
               <span className="text-muted-foreground">Solar</span>
-              <span className="ml-auto font-mono tabular-nums">{weather.solarIrradiance} W/m²</span>
+              <span className="ml-auto font-mono tabular-nums">{fmtInt(weather.solarIrradiance)} W/m²</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <AlertTriangle className="h-3.5 w-3.5 text-primary" />
@@ -316,23 +307,29 @@ export default function ForecastingPage() {
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Ext. Temp</span>
-              <span className="ml-auto font-mono tabular-nums">{weather.externalTemperature}°C</span>
+              <span className="ml-auto font-mono tabular-nums">{fmtInt(weather.externalTemperature)}°C</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Pressure</span>
-              <span className="ml-auto font-mono tabular-nums">{weather.atmosphericPressure} Pa</span>
+              <span className="ml-auto font-mono tabular-nums">{fmtInt(weather.atmosphericPressure)} Pa</span>
             </div>
           </div>
 
           <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 lg:mb-0 lg:self-end block pt-4 border-t border-border">7-Day Forecast</span>
           <div className="space-y-1.5">
+            {weather.forecast.length === 0 && Array.from({ length: 7 }, (_, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                <Skeleton className="h-4 w-14" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ))}
             {weather.forecast.map((day) => (
               <div key={day.missionDay} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
                 <span className="font-mono text-xs tabular-nums text-muted-foreground w-16">SOL {day.missionDay}</span>
                 {weatherMetric === "solar" ? (
                   <div className="flex items-center gap-2">
                     <Sun className="h-3 w-3 text-primary" />
-                    <span className="font-mono text-sm tabular-nums">{day.solarIrradiance} W/m²</span>
+                    <span className="font-mono text-sm tabular-nums">{fmtInt(day.solarIrradiance)} W/m²</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -368,6 +365,13 @@ export default function ForecastingPage() {
 
           <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 lg:mb-0 lg:self-end block pt-4 border-t border-border">Next Milestones</span>
           <div className="space-y-1.5">
+            {upcomingMilestones.length === 0 && Array.from({ length: 7 }, (_, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+                <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
+                <Skeleton className="h-4 w-14 shrink-0" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ))}
             {upcomingMilestones.slice(0, 7).map((m) => (
               <div key={m.missionDay} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
                 <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: milestoneColor(m.type) }} />

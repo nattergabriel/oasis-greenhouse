@@ -18,6 +18,7 @@ from .models.state import (
     SimulationResult,
     TrainingRunRequest,
 )
+from .bridge_client import bridge_client
 from .strategy.store import strategy_store
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ async def root() -> dict:
 @app.post("/api/training/run")
 async def run_training_simulation(request: TrainingRunRequest) -> dict:
     """Run a training simulation and improve strategy."""
-    run_id = str(uuid.uuid4())
+    run_id = request.simulation_id or str(uuid.uuid4())
     logger.info("Starting training run: %s", run_id)
 
     strategy_before = strategy_store.read()
@@ -89,6 +90,10 @@ async def run_training_simulation(request: TrainingRunRequest) -> dict:
         )
 
         _save_simulation_result(result)
+
+        # Forward result to management-backend for DB persistence + frontend access
+        bridge_resp = await bridge_client.import_result(run_id, result)
+        logger.info("Bridge response: %s", bridge_resp)
 
         logger.info("Training run complete: %s", run_id)
         return {"id": run_id, "status": "completed", "metrics": metrics.model_dump()}

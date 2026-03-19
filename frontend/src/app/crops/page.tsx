@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Thermometer, Sprout, Droplets, Sun, Leaf, Flower2 } from "lucide-react";
-import { mockCrops, mockPlantingQueue, mockHarvestJournal, mockStockpile, mockStoredFood, mockGreenhouseDetails } from "@/lib/mock-data";
+import { Skeleton } from "@/components/ui/skeleton";
+import { emptyStoredFood } from "@/lib/defaults";
 import { useSimulation } from "@/providers/simulation-provider";
 import { api, useApi } from "@/lib/api";
 import type { Crop, CropCategory, PlantingQueueItem, HarvestEntry, StockpileItem, PlantSlot } from "@/lib/types";
@@ -16,6 +17,7 @@ function getCategoryColor(category: CropCategory): string {
     case "VEGETABLE": return "#4ead6b";
     case "LEGUME": return "#d4924a";
     case "HERB": return "#7c6aad";
+    default: return "#9c9488";
   }
 }
 
@@ -217,7 +219,7 @@ function ExpansionDetail({ crop }: { crop: Crop }) {
 // === Catalog View (row grouping + full-width expansion) ===
 
 function CatalogView() {
-  const crops = useApi(() => api.crops.list().then(r => r.crops), mockCrops);
+  const crops = useApi(() => api.crops.list().then(r => r.crops), [] as Crop[]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [rowDisplay, setRowDisplay] = useState<Record<number, string>>({});
 
@@ -234,6 +236,30 @@ function CatalogView() {
       setExpandedId(cropId);
       setRowDisplay((prev) => ({ ...prev, [rowIdx]: cropId }));
     }
+  }
+
+  if (crops.length === 0) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Card key={i} className="overflow-hidden">
+            <div className="grid grid-cols-3 items-center">
+              <div className="p-3"><Skeleton className="w-full min-h-[56px] rounded-lg" /></div>
+              <div className="flex justify-center"><Skeleton className="h-7 w-20 rounded-md" /></div>
+              <div className="flex justify-center"><Skeleton className="h-4 w-16" /></div>
+            </div>
+            <div className="border-t border-border grid grid-cols-3">
+              {Array.from({ length: 3 }, (_, j) => (
+                <div key={j} className={`text-center px-2 py-2.5 ${j === 1 ? "border-x border-border" : ""}`}>
+                  <Skeleton className="h-3 w-12 mx-auto" />
+                  <Skeleton className="h-4 w-8 mx-auto mt-1.5" />
+                </div>
+              ))}
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -334,6 +360,44 @@ function SlotCell({ slot }: { slot: PlantSlot }) {
 }
 
 function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots: PlantSlot[] }) {
+  if (items.length === 0 && slots.length === 0) {
+    return (
+      <div className="space-y-4">
+        <Card className="p-4">
+          <Skeleton className="h-3 w-40 mb-4" />
+          <div className="space-y-1.5">
+            {Array.from({ length: 4 }, (_, z) => (
+              <div key={z} className="flex items-center gap-2">
+                <Skeleton className="h-4 w-6" />
+                <div className="flex-1 grid grid-cols-4 gap-1.5">
+                  {Array.from({ length: 4 }, (_, c) => (
+                    <Skeleton key={c} className="min-h-[56px] rounded-lg" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Skeleton className="h-3 w-28 ml-1" />
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className="flex items-center gap-4 border border-border rounded-lg px-4 py-3.5">
+            <Skeleton className="h-6 w-8 shrink-0" />
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-5 w-16 rounded-md" />
+              </div>
+              <Skeleton className="h-3.5 w-48" />
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+              <Skeleton className="h-5 w-16 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <Card className="p-4">
@@ -373,27 +437,35 @@ function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots
 
       <div>
         <span className="text-xs uppercase tracking-wide text-muted-foreground ml-1 mb-2 block">Planting Priority</span>
-        <div className="space-y-1.5">
-          {items.map((item) => (
-            <div key={item.rank} className="flex items-center gap-4 border border-border rounded-lg px-4 py-3.5 hover:bg-secondary transition-colors">
-              <span className="font-mono text-lg font-bold text-primary w-8 shrink-0">#{item.rank}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{item.cropName}</span>
-                  <Badge variant="outline" className="font-mono text-xs">SOL {item.missionDay}</Badge>
+        {items.length === 0 ? (
+          <Card className="flex flex-col items-center justify-center py-10 text-center">
+            <Sprout className="h-8 w-8 text-muted-foreground/40" />
+            <p className="mt-3 text-sm text-muted-foreground">No planting priorities available</p>
+            <p className="mt-1 text-xs text-muted-foreground/60">The agent will suggest crops when nutritional gaps are detected</p>
+          </Card>
+        ) : (
+          <div className="space-y-1.5">
+            {items.map((item) => (
+              <div key={item.rank} className="flex items-center gap-4 border border-border rounded-lg px-4 py-3.5 hover:bg-secondary transition-colors">
+                <span className="font-mono text-lg font-bold text-primary w-8 shrink-0">#{item.rank}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{item.cropName}</span>
+                    <Badge variant="outline" className="font-mono text-xs">SOL {item.missionDay}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-0.5 truncate">{item.reason}</p>
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5 truncate">{item.reason}</p>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {item.nutritionalGapsAddressed.map((gap) => (
+                    <span key={gap} className="inline-flex items-center rounded border border-[#4ead6b]/30 bg-[#4ead6b]/10 px-2.5 py-0.5 text-xs text-[#4ead6b]">
+                      {gap}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {item.nutritionalGapsAddressed.map((gap) => (
-                  <span key={gap} className="inline-flex items-center rounded border border-[#4ead6b]/30 bg-[#4ead6b]/10 px-2.5 py-0.5 text-xs text-[#4ead6b]">
-                    {gap}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -404,6 +476,38 @@ function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots
 function StockpileView({ items, storedFood }: { items: StockpileItem[]; storedFood: { totalCalories: number; remainingCalories: number } }) {
   const totalCalories = items.reduce((sum, item) => sum + item.estimatedCalories, 0);
   const totalDays = items.reduce((sum, item) => sum + item.daysOfSupply, 0);
+
+  if (items.length === 0) {
+    return (
+      <div className="space-y-3">
+        <div
+          className="grid items-center px-4 py-2.5 text-xs uppercase tracking-wide text-muted-foreground"
+          style={{ gridTemplateColumns: "1fr 100px 120px 100px 80px" }}
+        >
+          <span>Crop</span><span className="text-right">Quantity</span><span className="text-right">Calories</span><span className="text-right">Supply</span><span className="text-right">Expires</span>
+        </div>
+        {Array.from({ length: 4 }, (_, i) => (
+          <div
+            key={i}
+            className="grid items-center border border-border rounded-lg px-4 py-3.5"
+            style={{ gridTemplateColumns: "1fr 100px 120px 100px 80px" }}
+          >
+            <div className="flex items-center gap-2.5"><Skeleton className="h-2 w-2 rounded-full" /><Skeleton className="h-4 w-20" /></div>
+            <Skeleton className="h-4 w-12 ml-auto" />
+            <Skeleton className="h-4 w-16 ml-auto" />
+            <Skeleton className="h-4 w-10 ml-auto" />
+            <Skeleton className="h-4 w-8 ml-auto" />
+          </div>
+        ))}
+        <Card className="bg-primary/10 border-primary/30 p-4">
+          <div className="flex items-center justify-between">
+            <div><Skeleton className="h-3 w-32 bg-primary/20" /><Skeleton className="h-7 w-24 mt-1 bg-primary/20" /></div>
+            <div className="text-right"><Skeleton className="h-3 w-20 ml-auto bg-primary/20" /><Skeleton className="h-7 w-16 mt-1 ml-auto bg-primary/20" /></div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -513,6 +617,33 @@ function StockpileView({ items, storedFood }: { items: StockpileItem[]; storedFo
 // === Harvest Journal (unchanged) ===
 
 function HarvestJournalTable({ entries }: { entries: HarvestEntry[] }) {
+  if (entries.length === 0) {
+    return (
+      <div className="space-y-1">
+        <div
+          className="grid items-center px-4 py-2.5 text-xs uppercase tracking-wide text-muted-foreground"
+          style={{ gridTemplateColumns: "100px 70px 1fr 90px 100px 1fr" }}
+        >
+          <span>Date</span><span>SOL</span><span>Crop</span><span>Yield</span><span>Location</span><span>Notes</span>
+        </div>
+        {Array.from({ length: 5 }, (_, i) => (
+          <div
+            key={i}
+            className="grid items-center px-4 py-3 border border-border rounded-lg"
+            style={{ gridTemplateColumns: "100px 70px 1fr 90px 100px 1fr" }}
+          >
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-10" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-14" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-1">
       <div
@@ -554,13 +685,14 @@ const TABS: { value: TabValue; label: string }[] = [
 ];
 
 export default function CropsPage() {
-  const { state } = useSimulation();
+  const { state, hydrated } = useSimulation();
   const [activeTab, setActiveTab] = useState<TabValue>("catalog");
-  const plantingQueue = useApi(() => api.crops.plantingQueue().then(r => r.queue), mockPlantingQueue);
-  const harvestJournal = useApi(() => api.crops.harvestJournal().then(r => r.harvests), mockHarvestJournal);
-  const stockpileItems = useApi(() => api.crops.stockpile().then(r => r.items), mockStockpile);
-  const storedFood = useApi(() => api.nutrition.storedFood(), mockStoredFood);
-  const ghDetail = useApi(() => state.selectedGreenhouseId ? api.greenhouses.get(state.selectedGreenhouseId) : Promise.resolve(null), state.selectedGreenhouseId ? mockGreenhouseDetails[state.selectedGreenhouseId] ?? null : null, [state.selectedGreenhouseId]);
+  const plantingQueue = useApi(() => api.crops.plantingQueue().then(r => r.queue), [] as PlantingQueueItem[]);
+  const harvestJournal = useApi(() => api.crops.harvestJournal().then(r => r.harvests), [] as HarvestEntry[]);
+  const stockpileItems = useApi(() => api.crops.stockpile().then(r => r.items), [] as StockpileItem[]);
+  const storedFood = useApi(() => api.nutrition.storedFood(), emptyStoredFood);
+  const ghId = state.selectedGreenhouseId;
+  const ghDetail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), null, [ghId], !hydrated || !ghId);
   const slots = ghDetail?.slots || [];
 
   return (

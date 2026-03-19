@@ -27,7 +27,7 @@ export type ScenarioType =
   | "TEMPERATURE_FAILURE";
 export type ScenarioSeverity = "LOW" | "MEDIUM" | "HIGH" | "CATASTROPHIC";
 export type InjectionStatus = "ACTIVE" | "RESOLVED";
-export type CropCategory = "VEGETABLE" | "LEGUME" | "HERB";
+export type CropCategory = "VEGETABLE" | "LEGUME" | "GRAIN" | "HERB";
 export type WaterRequirement = "LOW" | "MEDIUM" | "HIGH";
 export type StressType =
   | "DROUGHT"

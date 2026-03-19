@@ -1,2 +1,2 @@
 package com.example.managementbackend.model.enums;
-public enum CropCategory { VEGETABLE, LEGUME, HERB }
+public enum CropCategory { VEGETABLE, LEGUME, GRAIN, HERB }

@@ -18,10 +18,6 @@ variable "agent_token" {
   sensitive = true
 }
 
-variable "system_token" {
-  sensitive = true
-}
-
 variable "anthropic_api_key" {
   sensitive = true
 }
@@ -29,13 +25,4 @@ variable "anthropic_api_key" {
 variable "api_key" {
   description = "API key for demo access control"
   sensitive   = true
-}
-
-variable "github_repo" {
-  description = "GitHub repo for Amplify: owner/repo (leave empty to skip frontend deployment)"
-  default     = ""
-}
-
-variable "github_branch" {
-  default = "main"
 }

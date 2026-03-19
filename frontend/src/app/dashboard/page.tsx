@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { useSimulation } from "@/providers/simulation-provider";
-import { mockSensorSnapshot, mockWeather, mockStockpile, mockStoredFood, mockNutritionEntries } from "@/lib/mock-data";
+import { emptySensorSnapshot, emptyWeather, emptyStoredFood, emptyNutritionEntry } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
 import { GreenhouseCrossSection } from "@/components/greenhouse-cross-section";
-import { Droplet, Leaf, Zap, Sun, AlertTriangle, Thermometer, Gauge, SunDim, Moon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Droplet, Leaf, Zap, Sun, AlertTriangle, Thermometer, Gauge, SunDim, Moon, Warehouse } from "lucide-react";
 import type { RiskLevel } from "@/lib/types";
+import { fmt, fmtInt } from "@/lib/utils";
 
 function statusColor(status: string) {
   if (status === "healthy" || status === "HEALTHY" || status === "NORMAL") return "var(--color-status-healthy)";
@@ -22,13 +24,20 @@ function riskColor(risk: RiskLevel): string {
 }
 
 export default function DashboardPage() {
-  const { state } = useSimulation();
+  const { state, hydrated } = useSimulation();
+  const ghId = state.selectedGreenhouseId;
+  const skip = !hydrated || !ghId;
+
+  const sensor = useApi(() => api.greenhouses.sensorsLatest(ghId!), emptySensorSnapshot, [ghId], skip);
+  const weather = useApi(() => api.weather.current(), emptyWeather, [], skip);
+  const stockpile = useApi(() => api.crops.stockpile().then(r => r.items), [] as import("@/lib/types").StockpileItem[], [], skip);
+  const storedFood = useApi(() => api.nutrition.storedFood(), emptyStoredFood, [], skip);
+  const nutritionEntries = useApi(() => api.nutrition.consumption(new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10), new Date().toISOString().slice(0, 10)).then(r => r.dailyEntries), [emptyNutritionEntry], [], skip);
+
+  if (!hydrated) return <DashboardSkeleton />;
+  if (!ghId) return <DashboardEmpty />;
+
   const { resources } = state;
-  const sensor = useApi(() => api.greenhouses.sensorsLatest(state.selectedGreenhouseId ?? ""), mockSensorSnapshot, [state.selectedGreenhouseId]);
-  const weather = useApi(() => api.weather.current(), mockWeather);
-  const stockpile = useApi(() => api.crops.stockpile().then(r => r.items), mockStockpile);
-  const storedFood = useApi(() => api.nutrition.storedFood(), mockStoredFood);
-  const nutritionEntries = useApi(() => api.nutrition.consumption("", "").then(r => r.dailyEntries), mockNutritionEntries);
   const totalCalories = stockpile.reduce((s, i) => s + i.estimatedCalories, 0);
   const latestNutrition = nutritionEntries[nutritionEntries.length - 1];
   const ghFractionPct = Math.round(latestNutrition.calorieGhFraction * 100);
@@ -120,14 +129,14 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 flex-1">
-                <SensorRow label="Temp" value={`${sensor.temperature.value}°C`} status={sensor.temperature.status} />
-                <SensorRow label="Humidity" value={`${sensor.humidity.value}%`} status={sensor.humidity.status} />
-                <SensorRow label="CO2" value={`${sensor.co2.value} ppm`} status={sensor.co2.status} />
-                <SensorRow label="PAR" value={`${sensor.par.value}`} status={sensor.par.status} />
-                <SensorRow label="pH" value={`${sensor.nutrientSolution.ph.value}`} status={sensor.nutrientSolution.ph.status} />
-                <SensorRow label="EC" value={`${sensor.nutrientSolution.ec.value}`} status={sensor.nutrientSolution.ec.status} />
-                <SensorRow label="H2O Flow" value={`${sensor.waterFlowRate.value} L/h`} status={sensor.waterFlowRate.status} />
-                <SensorRow label="Recycle" value={`${sensor.waterRecyclingEfficiency.value}%`} status={sensor.waterRecyclingEfficiency.status} />
+                <SensorRow label="Temp" value={`${fmt(sensor.temperature.value)}°C`} status={sensor.temperature.status} />
+                <SensorRow label="Humidity" value={`${fmtInt(sensor.humidity.value)}%`} status={sensor.humidity.status} />
+                <SensorRow label="CO2" value={`${fmtInt(sensor.co2.value)} ppm`} status={sensor.co2.status} />
+                <SensorRow label="PAR" value={`${fmtInt(sensor.par.value)}`} status={sensor.par.status} />
+                <SensorRow label="pH" value={`${fmt(sensor.nutrientSolution.ph.value)}`} status={sensor.nutrientSolution.ph.status} />
+                <SensorRow label="EC" value={`${fmt(sensor.nutrientSolution.ec.value)}`} status={sensor.nutrientSolution.ec.status} />
+                <SensorRow label="H2O Flow" value={`${fmt(sensor.waterFlowRate.value)} L/h`} status={sensor.waterFlowRate.status} />
+                <SensorRow label="Recycle" value={`${fmtInt(sensor.waterRecyclingEfficiency.value)}%`} status={sensor.waterRecyclingEfficiency.status} />
               </div>
               {/* Sensor alert banner */}
               {warningSensors.length > 0 && (
@@ -153,7 +162,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 text-sm">
                 <Sun className="h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="text-muted-foreground">Solar</span>
-                <span className="ml-auto font-mono tabular-nums">{weather.solarIrradiance} W/m²</span>
+                <span className="ml-auto font-mono tabular-nums">{fmtInt(weather.solarIrradiance)} W/m²</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -163,12 +172,12 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 text-sm">
                 <Thermometer className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span className="text-muted-foreground">Ext Temp</span>
-                <span className="ml-auto font-mono tabular-nums">{weather.externalTemperature}°C</span>
+                <span className="ml-auto font-mono tabular-nums">{fmtInt(weather.externalTemperature)}°C</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Gauge className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span className="text-muted-foreground">Pressure</span>
-                <span className="ml-auto font-mono tabular-nums">{weather.atmosphericPressure} Pa</span>
+                <span className="ml-auto font-mono tabular-nums">{fmtInt(weather.atmosphericPressure)} Pa</span>
               </div>
             </div>
 
@@ -190,7 +199,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5">
                         <SunDim className="h-3 w-3 text-primary" />
-                        <span className="font-mono text-xs tabular-nums">{day.solarIrradiance}</span>
+                        <span className="font-mono text-xs tabular-nums">{fmtInt(day.solarIrradiance)}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: riskColor(day.dustStormRisk) }} />
@@ -316,6 +325,60 @@ function SensorRow({ label, value, status }: { label: string; value: string; sta
         <span className="text-muted-foreground">{label}</span>
       </div>
       <span className="font-mono tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="mx-auto max-w-7xl space-y-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-36" />
+        <Skeleton className="h-5 w-24" />
+      </div>
+      <Skeleton className="h-1.5 w-full rounded-full" />
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <Skeleton className="h-[300px] rounded-lg" />
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <Skeleton className="h-[76px] rounded-lg" />
+            <Skeleton className="h-[76px] rounded-lg" />
+            <Skeleton className="h-[76px] rounded-lg" />
+          </div>
+          <Skeleton className="h-full min-h-[200px] rounded-lg" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <Skeleton className="h-[240px] rounded-lg" />
+        <Skeleton className="h-[240px] rounded-lg" />
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <Skeleton className="h-[88px] rounded-lg" />
+        <Skeleton className="h-[88px] rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+function DashboardEmpty() {
+  return (
+    <div className="mx-auto max-w-7xl space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+      </div>
+      <Card className="flex flex-col items-center justify-center py-20 text-center">
+        <Warehouse className="h-12 w-12 text-muted-foreground/50" />
+        <h2 className="mt-4 text-lg font-medium">No greenhouse available</h2>
+        <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+          Start a simulation to initialize the greenhouse and begin monitoring crops, sensors, and resources.
+        </p>
+        <Link
+          href="/admin/simulation"
+          className="mt-6 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+        >
+          Launch Simulation
+        </Link>
+      </Card>
     </div>
   );
 }

@@ -8,6 +8,11 @@ class Settings(BaseSettings):
     # Sim engine
     sim_engine_url: str = "http://localhost:8001"
 
+    # Management backend (bridge)
+    management_backend_url: str = "http://localhost:8080"
+    agent_token: str = "14f4c3d9a9c7f2389927510a5461e46a974bc74c2f673f065dffaf0ee7f9bd5c"
+    system_token: str = "ef6b0e8afb0c29c478c1b6665f252814b734aac242915f9364bb6df8a429e051"
+
     # AWS Bedrock
     aws_region: str = "us-west-2"
     bedrock_model_id: str = "us.anthropic.claude-sonnet-4-20250514-v1:0"

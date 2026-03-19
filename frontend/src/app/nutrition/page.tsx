@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { mockNutritionEntries, mockCoverageHeatmap } from "@/lib/mock-data";
+import { emptyNutritionEntry, emptyCoverageHeatmap } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
+import type { DailyNutritionEntry, CoverageHeatmap } from "@/lib/types";
 import {
   AreaChart,
   Area,
@@ -85,7 +86,7 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-function generateAdvisories(selectedCrew: string, heatmap: typeof mockCoverageHeatmap, entries: typeof mockNutritionEntries): { id: string; severity: "warning" | "critical"; nutrient: string; message: string; suggestion: string }[] {
+function generateAdvisories(selectedCrew: string, heatmap: CoverageHeatmap, entries: DailyNutritionEntry[]): { id: string; severity: "warning" | "critical"; nutrient: string; message: string; suggestion: string }[] {
   const advisories: { id: string; severity: "warning" | "critical"; nutrient: string; message: string; suggestion: string }[] = [];
   const factor = selectedCrew !== "all" ? ASTRONAUT_FACTORS[selectedCrew] : null;
 
@@ -128,8 +129,8 @@ export default function NutritionPage() {
   const [selectedCrew, setSelectedCrew] = useState("all");
   const [dismissedAdvisories, setDismissedAdvisories] = useState<Set<string>>(new Set());
   const [advisoriesExpanded, setAdvisoriesExpanded] = useState(false);
-  const nutritionEntries = useApi(() => api.nutrition.consumption("", "").then(r => r.dailyEntries), mockNutritionEntries);
-  const coverageHeatmap = useApi(() => api.nutrition.coverageHeatmap(), mockCoverageHeatmap);
+  const nutritionEntries = useApi(() => api.nutrition.consumption(new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10), new Date().toISOString().slice(0, 10)).then(r => r.dailyEntries), [emptyNutritionEntry]);
+  const coverageHeatmap = useApi(() => api.nutrition.coverageHeatmap(), emptyCoverageHeatmap);
   const latestEntry = nutritionEntries[nutritionEntries.length - 1];
 
   const crew = CREW.find((c) => c.id === selectedCrew)!;
