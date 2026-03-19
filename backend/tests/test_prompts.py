@@ -18,8 +18,8 @@ class TestSystemPrompt:
         assert "potato" in SYSTEM_PROMPT
         assert "set_crop" in SYSTEM_PROMPT
         assert "JSON" in SYSTEM_PROMPT
-        assert "4 slots" in SYSTEM_PROMPT
-        assert "4 m²" in SYSTEM_PROMPT
+        assert "16 slots" in SYSTEM_PROMPT
+        assert "64 m²" in SYSTEM_PROMPT
 
 
 class TestBuildPlanPrompt:
