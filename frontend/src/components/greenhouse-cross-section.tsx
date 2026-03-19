@@ -253,9 +253,9 @@ function DustParticles({ intensity, viewW }: { intensity: number; viewW: number 
 
 export function GreenhouseCrossSection({ compact = false }: { compact?: boolean }) {
   const instId = useInstanceId();
-  const { state } = useSimulation();
+  const { state, hydrated } = useSimulation();
   const ghId = state.selectedGreenhouseId ?? state.greenhouses[0]?.id;
-  const detail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), ghId ? mockGreenhouseDetails[ghId] ?? null : null, [ghId]);
+  const detail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), ghId ? mockGreenhouseDetails[ghId] ?? null : null, [ghId], !hydrated);
   const weather = useApi(() => api.weather.current(), mockWeather);
 
   if (!detail) return null;

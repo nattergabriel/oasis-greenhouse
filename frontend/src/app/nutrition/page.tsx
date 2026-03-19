@@ -128,7 +128,7 @@ export default function NutritionPage() {
   const [selectedCrew, setSelectedCrew] = useState("all");
   const [dismissedAdvisories, setDismissedAdvisories] = useState<Set<string>>(new Set());
   const [advisoriesExpanded, setAdvisoriesExpanded] = useState(false);
-  const nutritionEntries = useApi(() => api.nutrition.consumption("", "").then(r => r.dailyEntries), mockNutritionEntries);
+  const nutritionEntries = useApi(() => api.nutrition.consumption(new Date(Date.now() - 7 * 86400000).toISOString(), new Date().toISOString()).then(r => r.dailyEntries), mockNutritionEntries);
   const coverageHeatmap = useApi(() => api.nutrition.coverageHeatmap(), mockCoverageHeatmap);
   const latestEntry = nutritionEntries[nutritionEntries.length - 1];
 

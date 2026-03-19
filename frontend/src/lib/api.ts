@@ -60,23 +60,35 @@ import { useState, useEffect, useRef } from "react";
 
 // Toggle this to switch between mock and real API
 const USE_MOCK = false;
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+// Requests go to same-origin /api/* which next.config.ts rewrites to the backend
+const BASE_URL = "";
 
 // Hook: returns fallback immediately, swaps to real data when API responds.
+// Pass skip=true to defer the fetch (e.g. waiting for a valid ID).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useApi<T>(fetcher: () => Promise<T>, fallback: T, deps: any[] = []): T {
+export function useApi<T>(fetcher: () => Promise<T>, fallback: T, deps: any[] = [], skip = false): T {
   const [data, setData] = useState<T>(fallback);
-  const mounted = useRef(true);
   useEffect(() => {
-    mounted.current = true;
-    fetcher().then((result) => { if (mounted.current) setData(result); }).catch(() => {});
-    return () => { mounted.current = false; };
+    if (skip) return;
+    let cancelled = false;
+    fetcher()
+      .then((result) => { if (!cancelled) setData(result); })
+      .catch(() => {});
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...deps, skip]);
   return data;
 }
 
 // --- HTTP helpers ---
+
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
+
+function authHeaders(extra?: Record<string, string>): Record<string, string> {
+  const h: Record<string, string> = { ...extra };
+  if (API_KEY) h["X-API-Key"] = API_KEY;
+  return h;
+}
 
 function qs(params: Record<string, string | number | undefined | null>): string {
   const entries = Object.entries(params).filter(([, v]) => v != null) as [string, string | number][];
@@ -85,7 +97,7 @@ function qs(params: Record<string, string | number | undefined | null>): string 
 }
 
 async function get<T>(endpoint: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`);
+  const res = await fetch(`${BASE_URL}${endpoint}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -93,7 +105,7 @@ async function get<T>(endpoint: string): Promise<T> {
 async function post<T>(endpoint: string, body?: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
@@ -103,7 +115,7 @@ async function post<T>(endpoint: string, body?: unknown): Promise<T> {
 async function put<T>(endpoint: string, body?: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
@@ -113,7 +125,7 @@ async function put<T>(endpoint: string, body?: unknown): Promise<T> {
 async function patchReq<T>(endpoint: string, body?: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
@@ -121,13 +133,13 @@ async function patchReq<T>(endpoint: string, body?: unknown): Promise<T> {
 }
 
 async function del<T>(endpoint: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, { method: "DELETE" });
+  const res = await fetch(`${BASE_URL}${endpoint}`, { method: "DELETE", headers: authHeaders() });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
 async function delVoid(endpoint: string): Promise<void> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, { method: "DELETE" });
+  const res = await fetch(`${BASE_URL}${endpoint}`, { method: "DELETE", headers: authHeaders() });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
 }
 

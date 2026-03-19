@@ -6,6 +6,7 @@ import {
   useReducer,
   useEffect,
   useCallback,
+  useState,
   type ReactNode,
 } from "react";
 import type { SimulationState } from "@/lib/types";
@@ -22,6 +23,7 @@ type Action =
 interface SimulationContextValue {
   state: SimulationState;
   dispatch: React.Dispatch<Action>;
+  hydrated: boolean;
 }
 
 const SimulationContext = createContext<SimulationContextValue | null>(null);
@@ -53,6 +55,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     simulationReducer,
     initialSimulationState
   );
+  const [hydrated, setHydrated] = useState(false);
 
   // Hydrate from API on mount
   useEffect(() => {
@@ -99,6 +102,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       } catch {
         // API unavailable — keep mock data
       }
+      if (!cancelled) setHydrated(true);
     }
     hydrate();
     return () => { cancelled = true; };
@@ -117,7 +121,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   }, [state.isRunning, state.speed, tick]);
 
   return (
-    <SimulationContext.Provider value={{ state, dispatch }}>
+    <SimulationContext.Provider value={{ state, dispatch, hydrated }}>
       {children}
     </SimulationContext.Provider>
   );
