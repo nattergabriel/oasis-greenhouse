@@ -1,5 +1,5 @@
 """Cached knowledge base data loaded at startup."""
-from backend.kb.client import kb_client
+from .client import kb_client
 
 
 class KnowledgeBaseCache:

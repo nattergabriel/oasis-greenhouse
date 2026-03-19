@@ -3,10 +3,10 @@ import json
 import logging
 from typing import Any
 
-from backend.models.state import AgentState, AgentAction
-from backend.agent.llm import bedrock_client
-from backend.agent.prompts import SYSTEM_PROMPT, build_react_prompt
-from backend.kb.client import kb_client
+from ..models.state import AgentState, AgentAction
+from ..agent.llm import bedrock_client
+from ..agent.prompts import SYSTEM_PROMPT, build_react_prompt
+from ..kb.client import kb_client
 
 logger = logging.getLogger(__name__)
 

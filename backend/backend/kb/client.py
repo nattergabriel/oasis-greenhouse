@@ -3,7 +3,7 @@ from typing import Any
 
 import httpx
 
-from backend.config import settings
+from ..config import settings
 
 
 class KnowledgeBaseClient:

@@ -7,7 +7,7 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 
-from backend.config import settings
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 

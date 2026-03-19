@@ -2,15 +2,15 @@
 import logging
 from typing import Any
 
-from backend.models.state import (
+from ..models.state import (
     AgentState,
     GreenhouseState,
     SimEngineConfig,
 )
-from backend.sim_client import sim_client
-from backend.kb.cache import kb_cache
-from backend.strategy.store import strategy_store
-from backend.nodes._snapshot import create_snapshot
+from ..sim_client import sim_client
+from ..kb.cache import kb_cache
+from ..strategy.store import strategy_store
+from ._snapshot import create_snapshot
 
 logger = logging.getLogger(__name__)
 

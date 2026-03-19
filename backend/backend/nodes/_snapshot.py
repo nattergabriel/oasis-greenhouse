@@ -1,5 +1,5 @@
 """Shared snapshot helper used by multiple nodes."""
-from backend.models.state import (
+from ..models.state import (
     GreenhouseState,
     DailySnapshot,
     ZoneSnapshot,
