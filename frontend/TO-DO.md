@@ -24,10 +24,10 @@
 - if agents needs more than one decision make it to a stack where you can expand to see all choice needed to free up space
 
 ## /greenhouse
-- Move sun to always above/outside greenhouse
+- Move sun/ to always above/outside greenhouse
 - Option to view the past of the plants to see progress in a quick way
 - Top view of greenhouse change to a circular visualization to match greenhouse design, also make it smaller
 
-## $NavBar
+## NavBar
 - Remove Water / Energy / Nutri?
 - Remove badge?

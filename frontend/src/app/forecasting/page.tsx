@@ -278,109 +278,107 @@ export default function ForecastingPage() {
         </div>
       </div>
 
-      {/* Row 2: Weather + Mission Timeline */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2" style={{ alignItems: "stretch" }}>
-        <div className="flex">
-          <Card className="p-6 flex flex-col flex-1">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                Mars Weather
-              </span>
-              <div className="flex gap-1">
-                {(["solar", "dust"] as WeatherMetric[]).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setWeatherMetric(m)}
-                    className={`rounded border px-2.5 py-0.5 text-xs transition-colors ${
-                      weatherMetric === m
-                        ? "border-primary bg-primary/20 text-primary"
-                        : "border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    }`}
-                  >
-                    {m === "solar" ? "Solar" : "Dust Risk"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-4 grid grid-cols-2 gap-x-6 gap-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Sun className="h-3.5 w-3.5 text-primary" />
-                <span className="text-muted-foreground">Solar</span>
-                <span className="ml-auto font-mono tabular-nums">{weather.solarIrradiance} W/m²</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <AlertTriangle className="h-3.5 w-3.5 text-primary" />
-                <span className="text-muted-foreground">Dust</span>
-                <span className="ml-auto font-mono tabular-nums">{weather.dustStormIndex.toFixed(1)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Ext. Temp</span>
-                <span className="ml-auto font-mono tabular-nums">{weather.externalTemperature}°C</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Pressure</span>
-                <span className="ml-auto font-mono tabular-nums">{weather.atmosphericPressure} Pa</span>
-              </div>
-            </div>
-
-            <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 block">7-Day Forecast</span>
-            <div className="flex-1 space-y-1.5">
-              {weather.forecast.map((day) => (
-                <div key={day.missionDay} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                  <span className="font-mono text-xs tabular-nums text-muted-foreground w-16">SOL {day.missionDay}</span>
-                  {weatherMetric === "solar" ? (
-                    <div className="flex items-center gap-2">
-                      <Sun className="h-3 w-3 text-primary" />
-                      <span className="font-mono text-sm tabular-nums">{day.solarIrradiance} W/m²</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: riskColor(day.dustStormRisk) }} />
-                      <span className="text-sm">{day.dustStormRisk}</span>
-                    </div>
-                  )}
-                </div>
+      {/* Row 2: Weather + Mission Timeline — subgrid aligns sections across columns */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto_1fr]">
+        <Card className="p-6 flex flex-col lg:row-span-4 lg:grid lg:grid-rows-[subgrid]">
+          <div className="flex items-center justify-between mb-4 lg:mb-0">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              Mars Weather
+            </span>
+            <div className="flex gap-1">
+              {(["solar", "dust"] as WeatherMetric[]).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setWeatherMetric(m)}
+                  className={`rounded border px-2.5 py-0.5 text-xs transition-colors ${
+                    weatherMetric === m
+                      ? "border-primary bg-primary/20 text-primary"
+                      : "border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`}
+                >
+                  {m === "solar" ? "Solar" : "Dust Risk"}
+                </button>
               ))}
             </div>
-          </Card>
-        </div>
+          </div>
 
-        <div className="flex">
-          <Card className="p-6 flex flex-col flex-1">
+          <div className="mb-4 lg:mb-0 grid grid-cols-2 gap-x-6 gap-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <Sun className="h-3.5 w-3.5 text-primary" />
+              <span className="text-muted-foreground">Solar</span>
+              <span className="ml-auto font-mono tabular-nums">{weather.solarIrradiance} W/m²</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <AlertTriangle className="h-3.5 w-3.5 text-primary" />
+              <span className="text-muted-foreground">Dust</span>
+              <span className="ml-auto font-mono tabular-nums">{weather.dustStormIndex.toFixed(1)}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Ext. Temp</span>
+              <span className="ml-auto font-mono tabular-nums">{weather.externalTemperature}°C</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Pressure</span>
+              <span className="ml-auto font-mono tabular-nums">{weather.atmosphericPressure} Pa</span>
+            </div>
+          </div>
+
+          <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 lg:mb-0 lg:self-end block pt-4 border-t border-border">7-Day Forecast</span>
+          <div className="space-y-1.5">
+            {weather.forecast.map((day) => (
+              <div key={day.missionDay} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                <span className="font-mono text-xs tabular-nums text-muted-foreground w-16">SOL {day.missionDay}</span>
+                {weatherMetric === "solar" ? (
+                  <div className="flex items-center gap-2">
+                    <Sun className="h-3 w-3 text-primary" />
+                    <span className="font-mono text-sm tabular-nums">{day.solarIrradiance} W/m²</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: riskColor(day.dustStormRisk) }} />
+                    <span className="text-sm">{day.dustStormRisk}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-6 flex flex-col lg:row-span-4 lg:grid lg:grid-rows-[subgrid]">
+          <div className="flex items-center mb-4 lg:mb-0">
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
               Mission Timeline
             </span>
+          </div>
 
-            <div className="mt-4 mb-6">
-              <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                <span>Mission Progress</span>
-                <span className="font-mono tabular-nums">{progressPercent.toFixed(1)}%</span>
-              </div>
-              <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted border border-border">
-                <div className="h-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
-              </div>
-              <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-                <span>SOL {timeline.currentMissionDay}</span>
-                <span>SOL {timeline.totalMissionDays}</span>
-              </div>
+          <div className="mb-4 lg:mb-0">
+            <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+              <span>Mission Progress</span>
+              <span className="font-mono tabular-nums">{progressPercent.toFixed(1)}%</span>
             </div>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted border border-border">
+              <div className="h-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
+            </div>
+            <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+              <span>SOL {timeline.currentMissionDay}</span>
+              <span>SOL {timeline.totalMissionDays}</span>
+            </div>
+          </div>
 
-            <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 block">Next Milestones</span>
-            <div className="flex-1 space-y-1.5">
-              {upcomingMilestones.slice(0, 8).map((m) => (
-                <div key={m.missionDay} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
-                  <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: milestoneColor(m.type) }} />
-                  <span className="font-mono text-xs tabular-nums text-muted-foreground shrink-0 w-14">SOL {m.missionDay}</span>
-                  <span className="text-sm truncate">{simplifyLabel(m.label)}</span>
-                  {m.missionDay === timeline.currentMissionDay && (
-                    <span className="ml-auto text-[10px] text-primary shrink-0">TODAY</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 lg:mb-0 lg:self-end block pt-4 border-t border-border">Next Milestones</span>
+          <div className="space-y-1.5">
+            {upcomingMilestones.slice(0, 7).map((m) => (
+              <div key={m.missionDay} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+                <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: milestoneColor(m.type) }} />
+                <span className="font-mono text-xs tabular-nums text-muted-foreground shrink-0 w-14">SOL {m.missionDay}</span>
+                <span className="text-sm truncate">{simplifyLabel(m.label)}</span>
+                {m.missionDay === timeline.currentMissionDay && (
+                  <span className="ml-auto text-[10px] text-primary shrink-0">TODAY</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
     </div>
   );
