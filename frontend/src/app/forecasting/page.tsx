@@ -174,6 +174,7 @@ export default function ForecastingPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
+      <h1 className="text-2xl font-semibold tracking-tight">Forecast</h1>
       {/* Row 1: Chart (2/3) + Resource status panel (1/3) — matched height */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:min-h-[420px]" style={{ alignItems: "stretch" }}>
         <div className="lg:col-span-2 flex">
@@ -323,6 +324,7 @@ export default function ForecastingPage() {
               </div>
             </div>
 
+            <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 block">7-Day Forecast</span>
             <div className="flex-1 space-y-1.5">
               {weather.forecast.map((day) => (
                 <div key={day.missionDay} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
@@ -364,6 +366,7 @@ export default function ForecastingPage() {
               </div>
             </div>
 
+            <span className="text-xs uppercase tracking-wide text-muted-foreground mb-2 block">Next Milestones</span>
             <div className="flex-1 space-y-1.5">
               {upcomingMilestones.slice(0, 8).map((m) => (
                 <div key={m.missionDay} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
