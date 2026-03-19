@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { mockNutritionEntries, mockCoverageHeatmap } from "@/lib/mock-data";
 import {
   AreaChart,
@@ -15,6 +15,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSimulation } from "@/providers/simulation-provider";
+import { X, AlertTriangle } from "lucide-react";
 
 // === Astronaut profiles (from doc: 4 astronauts, ~75kg avg, 3000 kcal/day each) ===
 const CREW = [
@@ -26,7 +27,17 @@ const CREW = [
 ];
 
 const MACRO_TARGETS_CREW = { proteinG: 480, carbsG: 1350, fatG: 433, fiberG: 120 };
-const MACRO_TARGETS_PERSON = { proteinG: 120, carbsG: 338, fatG: 108, fiberG: 30 };
+
+// Per-astronaut share factors and nutrient biases (diet preferences affect distribution)
+const ASTRONAUT_FACTORS: Record<string, { calShare: number; proteinBias: number; carbBias: number; fatBias: number; fiberBias: number; microBias: number[] }> = {
+  cmdr: { calShare: 3200 / 12000, proteinBias: 1.15, carbBias: 0.97, fatBias: 1.02, fiberBias: 0.90, microBias: [0.92, 0.88, 0.93, 0.88, 1.08, 0.98, 0.93] },
+  eng:  { calShare: 2800 / 12000, proteinBias: 0.85, carbBias: 1.08, fatBias: 0.92, fiberBias: 1.15, microBias: [1.12, 1.18, 1.12, 1.08, 0.88, 1.06, 1.12] },
+  bio:  { calShare: 3000 / 12000, proteinBias: 1.00, carbBias: 0.98, fatBias: 1.00, fiberBias: 1.20, microBias: [1.02, 1.04, 1.00, 1.12, 1.15, 1.02, 1.08] },
+  plt:  { calShare: 3000 / 12000, proteinBias: 1.05, carbBias: 1.02, fatBias: 1.08, fiberBias: 0.85, microBias: [0.94, 0.90, 0.95, 0.92, 0.89, 0.94, 0.88] },
+};
+
+const MICRO_KEYS = ["vitaminAMcg", "vitaminCMg", "vitaminKMcg", "folateMcg", "ironMg", "potassiumMg", "magnesiumMg"] as const;
+const MICRO_NAMES = ["Vitamin A", "Vitamin C", "Vitamin K", "Folate", "Iron", "Potassium", "Magnesium"];
 
 const MICRO_TARGETS = {
   vitaminAMcg: 900, vitaminCMg: 90, vitaminKMcg: 120,
@@ -40,36 +51,20 @@ const RISK_HIERARCHY = [
   { rank: 4, label: "Psychological satisfaction", key: "psych" as const },
 ];
 
+const DEFICIENCY_IMPACTS: Record<string, { warning: string; suggestion: string }> = {
+  "Vitamin A": { warning: "Low vitamin A can impair vision adaptation in low-light conditions and weaken immune response.", suggestion: "Increase lettuce and herb allocation; both are high in vitamin A." },
+  "Vitamin C": { warning: "Vitamin C below target increases risk of fatigue, slow wound healing, and weakened immunity.", suggestion: "Prioritize radish and lettuce harvests; consider raw consumption to preserve vitamin C." },
+  "Vitamin K": { warning: "Insufficient vitamin K impairs blood clotting and bone metabolism.", suggestion: "Herbs (basil) are the richest source — ensure Zone 4 herb allocation is maintained." },
+  "Folate": { warning: "Low folate affects cell division and can cause fatigue and cognitive impairment.", suggestion: "Beans & peas provide the highest folate density; maintain legume zones." },
+  "Iron": { warning: "Iron deficiency leads to fatigue, reduced cognitive performance, and impaired physical endurance — dangerous for mission-critical tasks.", suggestion: "Increase beans & peas allocation. Iron absorption improves when paired with vitamin C sources." },
+  "Potassium": { warning: "Low potassium can cause muscle weakness, cramping, and cardiac irregularities.", suggestion: "Potatoes and beans are top potassium sources; ensure consistent harvesting." },
+  "Magnesium": { warning: "Magnesium deficiency affects muscle function, sleep quality, and stress response.", suggestion: "Beans & peas and herbs provide the best magnesium; maintain current allocations." },
+};
+
 function getCoverageColor(percent: number): string {
   if (percent > 80) return "var(--color-status-healthy)";
   if (percent >= 50) return "var(--color-status-warning)";
   return "var(--color-status-critical)";
-}
-
-function riskStatus(key: string, entry: typeof mockNutritionEntries[0]): { percent: number; status: string } {
-  if (key === "calories") {
-    const p = Math.round((entry.totalCalories / 12000) * 100);
-    return { percent: p, status: p >= 90 ? "HEALTHY" : p >= 70 ? "WARNING" : "CRITICAL" };
-  }
-  if (key === "protein") {
-    const p = Math.round((entry.proteinG / MACRO_TARGETS_CREW.proteinG) * 100);
-    return { percent: p, status: p >= 80 ? "HEALTHY" : p >= 60 ? "WARNING" : "CRITICAL" };
-  }
-  if (key === "micro") {
-    const m = entry.micronutrients;
-    const coverages = [
-      (m.vitaminAMcg ?? 0) / (MICRO_TARGETS.vitaminAMcg * 4),
-      (m.vitaminCMg ?? 0) / (MICRO_TARGETS.vitaminCMg * 4),
-      (m.vitaminKMcg ?? 0) / (MICRO_TARGETS.vitaminKMcg * 4),
-      (m.folateMcg ?? 0) / (MICRO_TARGETS.folateMcg * 4),
-      (m.ironMg ?? 0) / (MICRO_TARGETS.ironMg * 4),
-      (m.potassiumMg ?? 0) / (MICRO_TARGETS.potassiumMg * 4),
-      (m.magnesiumMg ?? 0) / (MICRO_TARGETS.magnesiumMg * 4),
-    ];
-    const avg = Math.round(coverages.reduce((a, b) => a + b, 0) / coverages.length * 100);
-    return { percent: avg, status: avg >= 70 ? "HEALTHY" : avg >= 50 ? "WARNING" : "CRITICAL" };
-  }
-  return { percent: 75, status: "HEALTHY" };
 }
 
 function statusDot(status: string) {
@@ -89,44 +84,124 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
+function generateAdvisories(selectedCrew: string): { id: string; severity: "warning" | "critical"; nutrient: string; message: string; suggestion: string }[] {
+  const advisories: { id: string; severity: "warning" | "critical"; nutrient: string; message: string; suggestion: string }[] = [];
+  const factor = selectedCrew !== "all" ? ASTRONAUT_FACTORS[selectedCrew] : null;
+
+  const recentDays = 5;
+  const startIdx = mockCoverageHeatmap.coverage[0].length - recentDays;
+
+  mockCoverageHeatmap.nutrients.forEach((nutrient, rowIdx) => {
+    const recentCoverage = mockCoverageHeatmap.coverage[rowIdx].slice(startIdx);
+    const adjustedCoverage = factor
+      ? recentCoverage.map(v => Math.round(v * factor.microBias[rowIdx]))
+      : recentCoverage;
+
+    const avg = Math.round(adjustedCoverage.reduce((a, b) => a + b, 0) / adjustedCoverage.length);
+    const impact = DEFICIENCY_IMPACTS[nutrient];
+    if (!impact) return;
+
+    if (avg < 50) {
+      advisories.push({ id: `adv-${selectedCrew}-${nutrient}`, severity: "critical", nutrient, message: impact.warning, suggestion: impact.suggestion });
+    } else if (avg < 65) {
+      advisories.push({ id: `adv-${selectedCrew}-${nutrient}`, severity: "warning", nutrient, message: impact.warning, suggestion: impact.suggestion });
+    }
+  });
+
+  // Check protein
+  const latestEntry = mockNutritionEntries[mockNutritionEntries.length - 1];
+  const crew = CREW.find(c => c.id === selectedCrew)!;
+  const proteinTarget = crew.proteinTarget;
+  const proteinValue = selectedCrew === "all"
+    ? latestEntry.proteinG
+    : Math.round(latestEntry.proteinG * (factor?.calShare ?? 0.25) * (factor?.proteinBias ?? 1));
+  if (Math.round((proteinValue / proteinTarget) * 100) < 75) {
+    advisories.push({ id: `adv-${selectedCrew}-protein`, severity: "warning", nutrient: "Protein", message: "Protein intake is below 75% of target. Sustained deficiency causes muscle wasting and impaired recovery.", suggestion: "Increase beans & peas zone allocation for higher protein yield." });
+  }
+
+  return advisories;
+}
+
 export default function NutritionPage() {
   const { state } = useSimulation();
   const [selectedCrew, setSelectedCrew] = useState("all");
+  const [dismissedAdvisories, setDismissedAdvisories] = useState<Set<string>>(new Set());
   const latestEntry = mockNutritionEntries[mockNutritionEntries.length - 1];
 
   const crew = CREW.find((c) => c.id === selectedCrew)!;
   const isAll = selectedCrew === "all";
-  const divisor = isAll ? 1 : 4;
+  const factor = !isAll ? ASTRONAUT_FACTORS[selectedCrew] : null;
   const kcalTarget = crew.kcalTarget;
-  const displayCalories = isAll ? latestEntry.totalCalories : Math.round(latestEntry.totalCalories / 4);
-  const macroTargets = isAll ? MACRO_TARGETS_CREW : MACRO_TARGETS_PERSON;
+
+  const displayCalories = isAll
+    ? latestEntry.totalCalories
+    : Math.round(latestEntry.totalCalories * factor!.calShare);
+
+  const macroTargets = isAll
+    ? MACRO_TARGETS_CREW
+    : {
+        proteinG: crew.proteinTarget,
+        carbsG: Math.round(crew.kcalTarget * 0.50 / 4),
+        fatG: Math.round(crew.kcalTarget * 0.325 / 9),
+        fiberG: 30,
+      };
 
   const calorieChartData = mockNutritionEntries.map((entry) => ({
     date: `${new Date(entry.date).getMonth() + 1}/${new Date(entry.date).getDate()}`,
-    calories: isAll ? entry.totalCalories : Math.round(entry.totalCalories / 4),
+    calories: isAll ? entry.totalCalories : Math.round(entry.totalCalories * factor!.calShare),
   }));
 
   const caloriePercentage = Math.round((displayCalories / kcalTarget) * 100);
 
-  const macros = [
-    { name: "Protein", value: Math.round(latestEntry.proteinG / divisor), target: macroTargets.proteinG, color: "var(--color-mars-blue)", desc: "15–20%" },
-    { name: "Carbs", value: Math.round(latestEntry.carbsG / divisor), target: macroTargets.carbsG, color: "var(--color-mars-yellow)", desc: "45–55%" },
-    { name: "Fat", value: Math.round(latestEntry.fatG / divisor), target: macroTargets.fatG, color: "var(--color-mars-yellow)", desc: "30–35%" },
-    { name: "Fiber", value: Math.round(latestEntry.fiberG / divisor), target: macroTargets.fiberG, color: "var(--color-mars-green)", desc: "" },
-  ];
+  const macros = isAll
+    ? [
+        { name: "Protein", value: latestEntry.proteinG, target: macroTargets.proteinG, color: "var(--color-mars-blue)", desc: "15–20%" },
+        { name: "Carbs", value: latestEntry.carbsG, target: macroTargets.carbsG, color: "var(--color-mars-yellow)", desc: "45–55%" },
+        { name: "Fat", value: latestEntry.fatG, target: macroTargets.fatG, color: "var(--color-mars-yellow)", desc: "30–35%" },
+        { name: "Fiber", value: latestEntry.fiberG, target: macroTargets.fiberG, color: "var(--color-mars-green)", desc: "" },
+      ]
+    : [
+        { name: "Protein", value: Math.round(latestEntry.proteinG * factor!.calShare * factor!.proteinBias), target: macroTargets.proteinG, color: "var(--color-mars-blue)", desc: "15–20%" },
+        { name: "Carbs", value: Math.round(latestEntry.carbsG * factor!.calShare * factor!.carbBias), target: macroTargets.carbsG, color: "var(--color-mars-yellow)", desc: "45–55%" },
+        { name: "Fat", value: Math.round(latestEntry.fatG * factor!.calShare * factor!.fatBias), target: macroTargets.fatG, color: "var(--color-mars-yellow)", desc: "30–35%" },
+        { name: "Fiber", value: Math.round(latestEntry.fiberG * factor!.calShare * factor!.fiberBias), target: macroTargets.fiberG, color: "var(--color-mars-green)", desc: "" },
+      ];
 
-  const microData = [
-    { name: "Vitamin A", value: latestEntry.micronutrients.vitaminAMcg ?? 0, target: MICRO_TARGETS.vitaminAMcg * (isAll ? 4 : 1) },
-    { name: "Vitamin C", value: latestEntry.micronutrients.vitaminCMg ?? 0, target: MICRO_TARGETS.vitaminCMg * (isAll ? 4 : 1) },
-    { name: "Vitamin K", value: latestEntry.micronutrients.vitaminKMcg ?? 0, target: MICRO_TARGETS.vitaminKMcg * (isAll ? 4 : 1) },
-    { name: "Folate", value: latestEntry.micronutrients.folateMcg ?? 0, target: MICRO_TARGETS.folateMcg * (isAll ? 4 : 1) },
-    { name: "Iron", value: latestEntry.micronutrients.ironMg ?? 0, target: MICRO_TARGETS.ironMg * (isAll ? 4 : 1) },
-    { name: "Potassium", value: latestEntry.micronutrients.potassiumMg ?? 0, target: MICRO_TARGETS.potassiumMg * (isAll ? 4 : 1) },
-    { name: "Magnesium", value: latestEntry.micronutrients.magnesiumMg ?? 0, target: MICRO_TARGETS.magnesiumMg * (isAll ? 4 : 1) },
-  ];
+  const microData = MICRO_KEYS.map((key, i) => {
+    const rawValue = latestEntry.micronutrients[key] ?? 0;
+    const value = isAll ? rawValue : Math.round(rawValue * factor!.calShare * factor!.microBias[i]);
+    const target = MICRO_TARGETS[key] * (isAll ? 4 : 1);
+    return { name: MICRO_NAMES[i], value, target };
+  });
 
-  // Heatmap: compute cell width to fill available space
+  function riskStatus(key: string): { percent: number; status: string } {
+    if (key === "calories") {
+      const p = Math.round((displayCalories / kcalTarget) * 100);
+      return { percent: p, status: p >= 90 ? "HEALTHY" : p >= 70 ? "WARNING" : "CRITICAL" };
+    }
+    if (key === "protein") {
+      const proteinVal = isAll ? latestEntry.proteinG : Math.round(latestEntry.proteinG * factor!.calShare * factor!.proteinBias);
+      const p = Math.round((proteinVal / macroTargets.proteinG) * 100);
+      return { percent: p, status: p >= 80 ? "HEALTHY" : p >= 60 ? "WARNING" : "CRITICAL" };
+    }
+    if (key === "micro") {
+      const coverages = microData.map(m => m.value / m.target);
+      const avg = Math.round(coverages.reduce((a, b) => a + b, 0) / coverages.length * 100);
+      return { percent: avg, status: avg >= 70 ? "HEALTHY" : avg >= 50 ? "WARNING" : "CRITICAL" };
+    }
+    return { percent: 75, status: "HEALTHY" };
+  }
+
   const dayCount = mockCoverageHeatmap.missionDays.length;
+
+  const heatmapCoverage = isAll
+    ? mockCoverageHeatmap.coverage
+    : mockCoverageHeatmap.coverage.map((row, rowIdx) =>
+        row.map(val => Math.min(100, Math.round(val * factor!.microBias[rowIdx])))
+      );
+
+  const advisories = useMemo(() => generateAdvisories(selectedCrew), [selectedCrew]);
+  const visibleAdvisories = advisories.filter(a => !dismissedAdvisories.has(a.id));
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
@@ -149,6 +224,50 @@ export default function NutritionPage() {
           ))}
         </div>
       </div>
+
+      {/* Nutrition advisories */}
+      {visibleAdvisories.length > 0 && (
+        <div className="space-y-2">
+          {visibleAdvisories.map((advisory) => (
+            <div
+              key={advisory.id}
+              className="flex items-start gap-3 rounded-lg border p-3"
+              style={{
+                borderColor: advisory.severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)",
+                borderLeftWidth: 3,
+              }}
+            >
+              <AlertTriangle
+                className="mt-0.5 h-4 w-4 shrink-0"
+                style={{ color: advisory.severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)" }}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{advisory.nutrient} Deficiency</span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px]"
+                    style={{
+                      borderColor: advisory.severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)",
+                      color: advisory.severity === "critical" ? "var(--color-status-critical)" : "var(--color-status-warning)",
+                    }}
+                  >
+                    {advisory.severity}
+                  </Badge>
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">{advisory.message}</p>
+                <p className="mt-1 text-xs text-foreground/80">{advisory.suggestion}</p>
+              </div>
+              <button
+                onClick={() => setDismissedAdvisories(prev => new Set(prev).add(advisory.id))}
+                className="shrink-0 rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Astronaut profile card (individual only) */}
       {!isAll && (
@@ -177,20 +296,20 @@ export default function NutritionPage() {
       {/* Greenhouse Fraction — the core success metric */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <Card className="p-4">
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">Calorie GH Fraction</span>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Greenhouse Calorie Share</span>
           <p className="mt-2 font-mono text-2xl tabular-nums text-primary">{Math.round(latestEntry.calorieGhFraction * 100)}%</p>
           <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted border border-border">
             <div className="h-full rounded-full" style={{ width: `${Math.min(latestEntry.calorieGhFraction * 100 * 4, 100)}%`, backgroundColor: latestEntry.calorieGhFraction >= 0.15 ? "var(--color-status-healthy)" : "var(--color-status-warning)" }} />
           </div>
-          <p className="mt-1 text-[10px] text-muted-foreground">Target: 15-25% from greenhouse</p>
+          <p className="mt-1 text-[10px] text-muted-foreground">% of daily calories grown in greenhouse (target: 15-25%)</p>
         </Card>
         <Card className="p-4">
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">Protein GH Fraction</span>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Greenhouse Protein Share</span>
           <p className="mt-2 font-mono text-2xl tabular-nums text-primary">{Math.round(latestEntry.proteinGhFraction * 100)}%</p>
           <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted border border-border">
             <div className="h-full rounded-full" style={{ width: `${Math.min(latestEntry.proteinGhFraction * 100 * 4, 100)}%`, backgroundColor: latestEntry.proteinGhFraction >= 0.15 ? "var(--color-status-healthy)" : "var(--color-status-warning)" }} />
           </div>
-          <p className="mt-1 text-[10px] text-muted-foreground">Target: 15-25% from greenhouse</p>
+          <p className="mt-1 text-[10px] text-muted-foreground">% of daily protein grown in greenhouse (target: 15-25%)</p>
         </Card>
         <Card className="p-4">
           <span className="text-xs uppercase tracking-wide text-muted-foreground">Micronutrients Covered</span>
@@ -244,7 +363,7 @@ export default function NutritionPage() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="date" tick={{ fill: "var(--foreground)", fontSize: 11 }} tickLine={{ stroke: "var(--muted-foreground)" }} axisLine={{ stroke: "var(--muted-foreground)" }} />
-                  <YAxis tick={{ fill: "var(--foreground)", fontSize: 11 }} tickLine={{ stroke: "var(--muted-foreground)" }} axisLine={{ stroke: "var(--muted-foreground)" }} domain={isAll ? [6000, 14000] : [1500, 4000]} />
+                  <YAxis tick={{ fill: "var(--foreground)", fontSize: 11 }} tickLine={{ stroke: "var(--muted-foreground)" }} axisLine={{ stroke: "var(--muted-foreground)" }} domain={isAll ? [6000, 14000] : [Math.round(kcalTarget * 0.6), Math.round(kcalTarget * 1.3)]} />
                   <Tooltip content={<CustomTooltip />} />
                   <ReferenceLine y={kcalTarget} stroke="#d4924a" strokeDasharray="5 5" label={{ value: "Target", fill: "#d4924a", fontSize: 10, position: "right" }} />
                   <Area type="monotone" dataKey="calories" stroke="#d4924a" strokeWidth={2} fill="url(#kcalGrad)" dot={false} />
@@ -262,7 +381,7 @@ export default function NutritionPage() {
             <p className="mt-1 text-[10px] text-muted-foreground">Priority order per mission protocol</p>
             <div className="mt-4 space-y-3 flex-1">
               {RISK_HIERARCHY.map((risk) => {
-                const { percent, status } = riskStatus(risk.key, latestEntry);
+                const { percent, status } = riskStatus(risk.key);
                 return (
                   <div key={risk.key} className="space-y-1.5">
                     <div className="flex items-center justify-between">
@@ -348,8 +467,7 @@ export default function NutritionPage() {
             </span>
             <div className="mt-4 flex-1 flex flex-col justify-between">
               {microData.map((micro) => {
-                const displayVal = isAll ? micro.value : Math.round(micro.value / 4);
-                const pct = Math.min(Math.round((displayVal / micro.target) * 100), 100);
+                const pct = Math.min(Math.round((micro.value / micro.target) * 100), 100);
                 return (
                   <div key={micro.name} className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground w-20 shrink-0">{micro.name}</span>
@@ -404,7 +522,7 @@ export default function NutritionPage() {
               style={{ gridTemplateColumns: `100px repeat(${dayCount}, 1fr)` }}
             >
               <div className="flex items-center text-xs text-muted-foreground pr-2">{nutrient}</div>
-              {mockCoverageHeatmap.coverage[rowIndex].map((percent, colIndex) => (
+              {heatmapCoverage[rowIndex].map((percent, colIndex) => (
                 <div
                   key={colIndex}
                   className="group relative flex h-[28px] items-center justify-center"
