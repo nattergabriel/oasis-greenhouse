@@ -1,70 +1,67 @@
-# Martian Greenhouse AI Agent — Feature List
+# Features — What We Actually Built
 
-> Agreed by the team. This is the working feature list. Prioritization TBD during build.
-
----
-
-## User Dashboard
-
-### Core Dashboard
-- Animated greenhouse overview with plant status indicators (healthy, needs attention, critical)
-- Live sensor data feed (temperature, humidity, light, CO2, water levels)
-- Resource statistics (water, nutrients, energy reserves)
-- External Mars weather monitoring
-
-### Autonomous Agent
-- Agent Activity Log — every autonomous action with timestamp, reasoning chain, and referenced knowledge base source
-- Recommended Actions queue for non-autonomous decisions under certain certainty threshold
-
-### Greenhouse Environment Information
-- Live readouts for temperature, humidity, light intensity/cycle, CO2 levels, water flow rate
-
-### Alert and Incident System
-- Plant stress detection with AI diagnosis (nutrient deficiency, disease, environmental stress)
-- Escalation to human operator when confidence is low (ties to Autonomous Agent)
-
-### Crop and Harvest Management
-- Planting queue/calendar: agent recommends what to plant next based on nutritional gaps and growth cycles
-- Harvest journal
-- Supply/Stockpile overview
-
-### Nutrition and Consumption
-- Consumption tracker: calorie intake
-- Nutritional Coverage Heatmap
-
-### Forecasting
-- Resource Forecast — projected water, nutrient, and energy reserves over next x mission days
-- Mission Timeline/Calendar — trip end date, predicted harvest windows, critical milestones
-
-### Onboarding
-- Interactive User Guide / Tour
+> Updated to reflect the real, integrated system as of Day 2.
 
 ---
 
-## Admin Panel
+## Core System
 
-### Simulation Management
-- Start new simulations with defined learning goals
-- Configure simulation parameters (yield targets, resource availability, crew size, mission duration)
-- View past simulations with parameters and outcomes
+### Simulation Engine (complete)
+- 5 KB-backed crop types with full growth models (lettuce, potato, radish, beans_peas, herbs)
+- Seasonal Mars environment (solar 9-15h, temperature -83 to -43°C)
+- Energy budget with solar panel generation vs heating/lighting/pump costs
+- Water (10,000L, 90% recycling) and nutrient (5,000 units, 70% recycling) management
+- 7 stress types from KB Domain 4 with priority-based detection
+- 2 crisis events from KB Domain 6 (water recycling degradation, temperature control failure)
+- Auto-harvest at ≥95% growth, auto-replant per slot assignment
+- Crew feeding: greenhouse-first, stored food fills gap
+- Calorie fraction, protein fraction, micronutrient coverage (7 critical nutrients from KB Domain 5)
+- 5 early stop triggers for agent reactive decisions
+- 192 passing tests, 450-day simulation verified
 
-### Scenario Injection
-- Trigger crisis events mid-simulation: water leak, solar panel failure, disease outbreak, dust storm, equipment malfunction
-- Based on Greenhouse Operational Scenarios dataset
+### AI Agent (complete)
+- LangGraph state machine: init → plan → simulate → react/reflect
+- AWS Bedrock (Claude Sonnet) for all decisions
+- Syngenta MCP Knowledge Base integration (live queries during react)
+- Strategy document learning: rewritten after each 450-day run
+- ~20-25 LLM calls per simulation (15 scheduled + 5-10 reactive)
+- Transparent reasoning logged for every decision
 
-### Agent Configuration
-- Set autonomy level (fully autonomous / suggest-only / hybrid)
-- Adjust risk tolerance and priority weights (yield vs. diversity vs. resource conservation)
+### Dashboard (in progress)
+- Greenhouse grid visualization with per-slot crop status
+- Environmental gauges (temperature, solar hours, energy balance)
+- Resource level indicators (water, nutrients)
+- Nutrition tracking (calorie/protein fractions, micronutrient coverage heatmap)
+- Agent activity log with reasoning chains
+- Crisis event alerts with agent diagnosis
+- Simulation playback controls
 
-### Analytics
-- Agent Performance Metrics — decision accuracy, response time, resource efficiency score, nutritional target hit rate
+### Admin Panel (in progress)
+- Start/configure simulation runs
+- Inject crisis events mid-simulation
+- View past simulation results and agent decisions
+- Compare strategy documents across runs
 
 ---
 
-## Simulation Objectives
-- Maximize harvest yield
-- Maximize food diversity
-- Maintain healthy stockpile levels
-- Optimize resource consumption (water, nutrients, energy)
-- Minimize crew nutritional gaps
-- Maximize system resilience under crisis scenarios
+## Success Metrics (from KB Domain 5)
+
+| Metric | Target | How we measure |
+|---|---|---|
+| Calorie greenhouse fraction | 15-25% | Daily: greenhouse kcal / 12,000 crew need |
+| Protein greenhouse fraction | 10-20% | Daily: greenhouse protein / 400g crew need |
+| Micronutrient coverage | 7/7 | Mission-level: unique nutrients ever produced |
+| Water conservation | Last 450 days | 10,000L with 90% recycling |
+| Crop survival | Minimize losses | Stress-related deaths tracked |
+| Resource efficiency | Optimize | Water + nutrient remaining at day 450 |
+
+---
+
+## Not Implemented (intentional scope cuts)
+
+- Dust storms, crop disease events (KB-backed, planned additions)
+- Individual astronaut health/mood/death mechanics
+- Food spoilage / expiry
+- Per-plant environmental controls (humidity, pH, EC, dissolved oxygen)
+- Weather forecast / prediction system
+- Astronaut personas or variable crew sizes

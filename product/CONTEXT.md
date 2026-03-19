@@ -1,56 +1,44 @@
-# Product Context
+# Product Context — Updated Day 2
 
-## Who I Am
-
-**Role:** PM / Design / Demo Lead
-**Name:** Michael
-
----
+## Role
+**Michael** — PM / Design / Demo Lead
 
 ## Current Phase
+**Day 2 of hackathon.** Simulation engine complete. Backend integrated. Moving to presentation and brand.
 
-**Hackathon live.** Simulation spec is finalized. Implementation starting in Claude Code.
-Product/UI work (brand, pitch, wireframes) resumes after simulation engine is functional.
+## What Exists Right Now
 
----
+| Component | Status | What it does |
+|---|---|---|
+| Simulation engine | ✅ Complete (192 tests) | Stateless physics: crops grow, stress, harvest, resources, feeding |
+| Backend orchestrator | ✅ Built + integrated | LangGraph agent: plan → simulate → react → reflect |
+| AI agent | ✅ Working | Claude Sonnet via Bedrock, KB queries, strategy learning |
+| Frontend | 🔨 In progress | Next.js dashboard, adapting to slot model |
+| Management backend | 🔨 Built, needs bridging | Java Spring Boot, serves frontend API |
+| Presentation | 🚧 Starting now | 7-slide pitch, brand identity defined |
 
-## Workspace Map
+## The Current Design (Source of Truth)
 
-| Location | Purpose | Status |
-|----------|---------|--------|
-| `simulation/SIMULATION-SPEC.md` | Simulation spec (source of truth) | **✅ Finalized** |
-| `simulation/` | Simulation engine code (to be built) | **Next** |
-| `product/` | PM/Design workspace | Paused until sim works |
-| `product/research/` | Challenge brief, tech stack | ✅ Done |
-| `product/brand/` | Identity kit | Not started |
-| `product/pitch/` | Demo script, slides | Not started |
-| `product/wireframes/` | Dashboard mockups | Not started |
-| `contracts/API.md` | Frontend↔backend API contract | Needs minor updates |
-| `backend/docs/` | Learning system + raw KB source docs | ✅ Done |
+**Greenhouse:** Grid of 2×2m slots (configurable). Each slot holds one crop type. Agent assigns crops to slots. Engine auto-fills and auto-replants.
 
----
+**Crops (5, all KB-backed):** potato, lettuce, radish, beans_peas, herbs
 
-## Key Decisions Made
+**Agent actions:** assign crop to slot, water_adjust, light_toggle, set_temperature, remove
 
-| # | Decision | Date |
-|---|----------|------|
-| 1 | 5 crop types (KB-backed): lettuce, potato, radish, beans/peas, herbs | Day 1 |
-| 2 | 4 zones × 15 m² = 60 m² greenhouse (NASA-grounded) | Day 1 |
-| 3 | Zone plans: agent sets % allocation, engine auto-fills and auto-replants | Day 1 |
-| 4 | Batch execution: agent plans ~30 days, sim runs with early stop on events/thresholds | Day 1 |
-| 5 | Success metrics: calorie fraction, protein fraction, micronutrient coverage (0-7) | Day 1 |
-| 6 | Stored food: 5.4M kcal, greenhouse supplements, crew never starves | Day 1 |
-| 7 | 2 core events: water_recycling_decline, temperature_failure (both KB-backed) | Day 1 |
-| 8 | No health/mood/death in core — moved to stretch additions | Day 1 |
-| 9 | Auto-harvest at ≥95% growth — agent doesn't control harvest timing | Day 1 |
-| 10 | Stateless REST server for sim engine (init, tick, inject-event) | Day 1 |
+**Agent loop:** init → plan (LLM) → simulate (30 days) → [react if crisis / plan if batch done / reflect if day 450]
 
----
+**Learning:** Strategy document rewritten after each 450-day run. Gets sharper, not longer.
 
-## Next Steps
+## Key Product Documents
 
-1. **Build simulation engine** — Claude Code implements the spec as a FastAPI server
-2. **Teammate commits** his simulation API doc to `simulation/API.md`
-3. **Update `contracts/API.md`** — add missing ScenarioType values, minor alignment
-4. **Frontend crop SVGs** — need to reference our 5 crops, not the old 6
-5. **Product work** — brand, pitch, wireframes once sim is running
+| Document | Location | Purpose |
+|---|---|---|
+| **Project Definition** | `product/PROJECT-DEFINITION.md` | What the project is, how to talk about it |
+| **Pitch Script** | `product/pitch/PITCH-SCRIPT.md` | 7-slide, 3-minute pitch with exact words |
+| **Brand Identity** | `product/brand/IDENTITY.md` | Colors, fonts, design guidelines |
+| **Business Case** | `product/research/BUSINESS-CASE.md` | Why this matters commercially |
+| **Partner Analysis** | `product/research/PARTNER-ANALYSIS.md` | Syngenta deep dive |
+| **Market Fit** | `product/research/MARKET-FIT.md` | Competitive landscape, value prop |
+| **Value Roadmap** | `product/research/VALUE-ROADMAP.md` | Hackathon → pilot → scale |
+| **Case Brief** | `product/research/CASE-BRIEF.md` | Original challenge requirements |
+| **Sim API Reference** | `simulation/API-REFERENCE.md` | Exact JSON schemas |
