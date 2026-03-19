@@ -1,0 +1,22 @@
+# Terraform state files (CRITICAL: Never commit state files - they contain secrets!)
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfstate.*
+.terraform.tfstate.lock.info
+*.tfplan
+*.tfplan.json
+
+# Secrets (never commit)
+terraform.tfvars
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Lambda build artifacts
+lambda/node_modules/
+lambda/package-lock.json
+lambda/*.zip
+lambda/layers/
