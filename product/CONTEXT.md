@@ -9,8 +9,8 @@
 
 ## Current Phase
 
-**Hackathon live.** Currently focused on simulation engine design and build.
-Product/UI work resumes after simulation is functional.
+**Hackathon live.** Simulation spec is finalized. Implementation starting in Claude Code.
+Product/UI work (brand, pitch, wireframes) resumes after simulation engine is functional.
 
 ---
 
@@ -18,56 +18,39 @@ Product/UI work resumes after simulation is functional.
 
 | Location | Purpose | Status |
 |----------|---------|--------|
-| `simulation/` | Greenhouse simulation engine (shared workspace) | **Active** |
-| `product/` | PM/Design workspace | Paused until simulation done |
-| `product/research/` | Challenge brief, tech stack, business case | Updated |
-| `product/brand/` | Identity kit (colors, fonts, logo) | Not started |
-| `product/pitch/` | Demo script, slides, submission | Not started |
+| `simulation/SIMULATION-SPEC.md` | Simulation spec (source of truth) | **✅ Finalized** |
+| `simulation/` | Simulation engine code (to be built) | **Next** |
+| `product/` | PM/Design workspace | Paused until sim works |
+| `product/research/` | Challenge brief, tech stack | ✅ Done |
+| `product/brand/` | Identity kit | Not started |
+| `product/pitch/` | Demo script, slides | Not started |
 | `product/wireframes/` | Dashboard mockups | Not started |
-| `product/Instruction Docs/` | Official hackathon instructions (read reference) |  |
+| `contracts/API.md` | Frontend↔backend API contract | Needs minor updates |
+| `backend/docs/` | Learning system + raw KB source docs | ✅ Done |
 
 ---
 
-## Key Reference Files
+## Key Decisions Made
 
-| File | What it contains |
-|------|-----------------|
-| `simulation/SIMULATION-SPEC.md` | Full simulation specification |
-| `product/FEATURES.md` | Agreed feature list |
-| `product/research/CASE-BRIEF.md` | Syngenta challenge (complete) |
-| `product/research/TECH-STACK.md` | MCP endpoint, AWS infra, architecture, links |
-| `backend/docs/LEARNING-SYSTEM.md` | Agent learning approach (read-only) |
-| `product/Instruction Docs/README.md` | Official getting started guide |
-| `CLAUDE.md` | Repo conventions (read-only) |
-
----
-
-## Critical: MCP Endpoint
-
-```
-https://kb-start-hack-gateway-buyjtibfpg.gateway.bedrock-agentcore.us-east-2.amazonaws.com/mcp
-```
-
-This is the Syngenta knowledge base. The simulation parameters AND the agent decisions both reference this source. They must be consistent.
-
----
-
-## Decisions Log
-
-| # | Decision | Rationale | Date |
-|---|----------|-----------|------|
-| 1 | Product folder structure (brand, design-system, wireframes, pitch, research) | Layered prep approach | 2026-03-18 |
-| 2 | Simulation as top-level `/simulation/` directory | Shared across team, not product-specific | 2026-03-19 |
-| 3 | Hybrid simulation approach (Python math + LLM agent + LLM flavor) | Fast, reliable, demo-friendly | 2026-03-19 |
-| 4 | Learning system: summary injection + rules extraction across runs | Visible learning arc for demo | 2026-03-19 |
-| 5 | 6 crop types, 4 zones, 4 astronauts, day-by-day tick | Manageable scope for hackathon | 2026-03-19 |
+| # | Decision | Date |
+|---|----------|------|
+| 1 | 5 crop types (KB-backed): lettuce, potato, radish, beans/peas, herbs | Day 1 |
+| 2 | 4 zones × 15 m² = 60 m² greenhouse (NASA-grounded) | Day 1 |
+| 3 | Zone plans: agent sets % allocation, engine auto-fills and auto-replants | Day 1 |
+| 4 | Batch execution: agent plans ~30 days, sim runs with early stop on events/thresholds | Day 1 |
+| 5 | Success metrics: calorie fraction, protein fraction, micronutrient coverage (0-7) | Day 1 |
+| 6 | Stored food: 5.4M kcal, greenhouse supplements, crew never starves | Day 1 |
+| 7 | 2 core events: water_recycling_decline, temperature_failure (both KB-backed) | Day 1 |
+| 8 | No health/mood/death in core — moved to stretch additions | Day 1 |
+| 9 | Auto-harvest at ≥95% growth — agent doesn't control harvest timing | Day 1 |
+| 10 | Stateless REST server for sim engine (init, tick, inject-event) | Day 1 |
 
 ---
 
 ## Next Steps
 
-1. **Query the MCP endpoint** — extract real crop data, environmental constants, nutritional targets
-2. **Validate/update simulation spec** with KB data
-3. **Build simulation engine** in Python
-4. **Connect agent** to AgentCore gateway
-5. Then: UI wireframes, brand, pitch
+1. **Build simulation engine** — Claude Code implements the spec as a FastAPI server
+2. **Teammate commits** his simulation API doc to `simulation/API.md`
+3. **Update `contracts/API.md`** — add missing ScenarioType values, minor alignment
+4. **Frontend crop SVGs** — need to reference our 5 crops, not the old 6
+5. **Product work** — brand, pitch, wireframes once sim is running
