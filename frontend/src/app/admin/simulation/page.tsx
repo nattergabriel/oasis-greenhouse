@@ -1,14 +1,14 @@
 "use client"
 
-import { mockSimulations, mockSimulationDetail } from "@/lib/mock-data"
+import { emptySimulationDetail } from "@/lib/defaults"
 import { api, useApi } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { SimControls } from "@/components/layout/sim-controls"
 
 export default function SimulationManagementPage() {
-  const simulations = useApi(() => api.simulations.list().then(r => r.simulations), mockSimulations)
-  const simulation = useApi(() => api.simulations.get(mockSimulationDetail.id), mockSimulationDetail)
+  const simulations = useApi(() => api.simulations.list().then(r => r.simulations), [] as import("@/lib/types").SimulationSummary[])
+  const simulation = useApi(() => simulations[0] ? api.simulations.get(simulations[0].id) : Promise.reject(), emptySimulationDetail, [simulations])
 
   const statusColor = (status: string) => {
     switch (status) {

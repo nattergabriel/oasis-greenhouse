@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { useSimulation } from "@/providers/simulation-provider";
-import { mockSensorSnapshot, mockWeather, mockStockpile, mockStoredFood, mockNutritionEntries } from "@/lib/mock-data";
+import { emptySensorSnapshot, emptyWeather, emptyStoredFood, emptyNutritionEntry } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
 import { GreenhouseCrossSection } from "@/components/greenhouse-cross-section";
 import { Droplet, Leaf, Zap, Sun, AlertTriangle, Thermometer, Gauge, SunDim, Moon } from "lucide-react";
@@ -26,11 +26,11 @@ export default function DashboardPage() {
   const { state, hydrated } = useSimulation();
   const { resources } = state;
   const ghId = state.selectedGreenhouseId;
-  const sensor = useApi(() => api.greenhouses.sensorsLatest(ghId!), mockSensorSnapshot, [ghId], !hydrated || !ghId);
-  const weather = useApi(() => api.weather.current(), mockWeather);
-  const stockpile = useApi(() => api.crops.stockpile().then(r => r.items), mockStockpile);
-  const storedFood = useApi(() => api.nutrition.storedFood(), mockStoredFood);
-  const nutritionEntries = useApi(() => api.nutrition.consumption(new Date(Date.now() - 7 * 86400000).toISOString(), new Date().toISOString()).then(r => r.dailyEntries), mockNutritionEntries);
+  const sensor = useApi(() => api.greenhouses.sensorsLatest(ghId!), emptySensorSnapshot, [ghId], !hydrated || !ghId);
+  const weather = useApi(() => api.weather.current(), emptyWeather);
+  const stockpile = useApi(() => api.crops.stockpile().then(r => r.items), [] as import("@/lib/types").StockpileItem[]);
+  const storedFood = useApi(() => api.nutrition.storedFood(), emptyStoredFood);
+  const nutritionEntries = useApi(() => api.nutrition.consumption(new Date(Date.now() - 7 * 86400000).toISOString(), new Date().toISOString()).then(r => r.dailyEntries), [emptyNutritionEntry]);
   const totalCalories = stockpile.reduce((s, i) => s + i.estimatedCalories, 0);
   const latestNutrition = nutritionEntries[nutritionEntries.length - 1];
   const ghFractionPct = Math.round(latestNutrition.calorieGhFraction * 100);

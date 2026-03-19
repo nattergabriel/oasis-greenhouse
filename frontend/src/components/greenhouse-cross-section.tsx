@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { useSimulation } from "@/providers/simulation-provider";
-import { mockGreenhouseDetails, mockWeather } from "@/lib/mock-data";
+import { emptyWeather } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
 import type { PlantSlot } from "@/lib/types";
 
@@ -255,8 +255,8 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   const instId = useInstanceId();
   const { state, hydrated } = useSimulation();
   const ghId = state.selectedGreenhouseId ?? state.greenhouses[0]?.id;
-  const detail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), ghId ? mockGreenhouseDetails[ghId] ?? null : null, [ghId], !hydrated);
-  const weather = useApi(() => api.weather.current(), mockWeather);
+  const detail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), null, [ghId], !hydrated);
+  const weather = useApi(() => api.weather.current(), emptyWeather);
 
   if (!detail) return null;
 

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { mockResourceForecast, mockMissionTimeline, mockWeather } from "@/lib/mock-data";
+import { emptyResourceProjection, emptyMissionTimeline, emptyWeather } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
 import { fmtInt } from "@/lib/utils";
 import type { MilestoneType, RiskLevel } from "@/lib/types";
@@ -30,7 +30,7 @@ import {
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload || !payload.length) return null;
   const data = payload[0].payload;
-  const isProjOnly = data.missionDay > mockMissionTimeline.currentMissionDay;
+  const isProjOnly = data.missionDay > emptyMissionTimeline.currentMissionDay;
 
   return (
     <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
@@ -115,9 +115,9 @@ function generatePastData(forecastStart: number, count: number) {
 
 export default function ForecastingPage() {
   const [weatherMetric, setWeatherMetric] = useState<WeatherMetric>("solar");
-  const forecast = useApi(() => api.forecast.resources().then(r => r.projections), mockResourceForecast);
-  const timeline = useApi(() => api.forecast.missionTimeline(), mockMissionTimeline);
-  const weather = useApi(() => api.weather.current(), mockWeather);
+  const forecast = useApi(() => api.forecast.resources().then(r => r.projections), [emptyResourceProjection]);
+  const timeline = useApi(() => api.forecast.missionTimeline(), emptyMissionTimeline);
+  const weather = useApi(() => api.weather.current(), emptyWeather);
   const todayDay = timeline.currentMissionDay;
 
   // 30-day chart: 15 past + today bridge + 14 future
