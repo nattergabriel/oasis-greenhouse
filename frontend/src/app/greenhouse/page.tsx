@@ -2,12 +2,6 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useSimulation } from "@/providers/simulation-provider";
 import {
   mockGreenhouseDetails,
@@ -38,10 +32,31 @@ const SENSOR_STATUS_COLORS = {
 
 type MetricMode = "status" | "growth" | "yield";
 
-function statusColor(status: string) {
+function sensorStatusColor(status: string) {
   if (status === "NORMAL") return SENSOR_STATUS_COLORS.NORMAL;
   if (status === "WARNING") return SENSOR_STATUS_COLORS.WARNING;
   return SENSOR_STATUS_COLORS.CRITICAL;
+}
+
+function getCellColor(slot: PlantSlot, mode: MetricMode): string {
+  if (mode === "status") {
+    return STATUS_COLORS[slot.status];
+  }
+  if (mode === "growth") {
+    if (!slot.cropId) return STATUS_COLORS.EMPTY;
+    const t = slot.growthStagePercent / 100;
+    return `rgb(${Math.round(90 + 64 * t)}, ${Math.round(154 - 48 * t)}, 107)`;
+  }
+  return STATUS_COLORS[slot.status];
+}
+
+function getCropDotColor(name: string) {
+  if (name === "Lettuce") return "#4ead6b";
+  if (name === "Potato") return "#d4aa30";
+  if (name === "Radish") return "#c75a6a";
+  if (name === "Beans & Peas") return "#8a9a44";
+  if (name === "Herbs") return "#7c6aad";
+  return "#9c9488";
 }
 
 export default function GreenhousePage() {
@@ -80,7 +95,7 @@ export default function GreenhousePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      {/* Header with greenhouse selector */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">
           Greenhouse Environment
@@ -106,100 +121,56 @@ export default function GreenhousePage() {
         )}
       </div>
 
-      {/* Cross-section visualization */}
-      <GreenhouseCrossSection />
-
-      {/* Top-down Grid + Resources side by side */}
+      {/* Cross-section visualization + Resource Reserves */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        {/* Top-down grid (compact) — 2/3 */}
         <div className="lg:col-span-2">
-          <Card className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                {name} — Top View ({rows}×{cols})
-              </span>
-              <div className="flex gap-1">
-                {(["status", "growth", "yield"] as MetricMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => setMetricMode(mode)}
-                    className={`rounded border px-2.5 py-0.5 text-xs transition-colors ${
-                      metricMode === mode
-                        ? "border-primary bg-primary/20 text-primary"
-                        : "border-border bg-card text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  </button>
-                ))}
+          <GreenhouseCrossSection />
+        </div>
+        <Card className="p-4 flex flex-col overflow-hidden">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+            Resource Reserves
+          </span>
+          <div className="mt-4 space-y-6">
+            <ResourceBar label="Water" percent={resources.waterReservePercent} icon={<Droplet className="h-4 w-4" />} />
+            <ResourceBar label="Nutrients" percent={resources.nutrientReservePercent} icon={<Beaker className="h-4 w-4" />} />
+            <ResourceBar label="Energy" percent={resources.energyReservePercent} icon={<Zap className="h-4 w-4" />} />
+          </div>
+
+          <div className="mt-6 border-t border-border pt-4 flex-1 min-h-0 flex flex-col">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              Plants
+            </span>
+            <div className="mt-3 flex-1 min-h-0 overflow-y-auto space-y-2">
+              {(() => {
+                const cropCounts: Record<string, { count: number; avgGrowth: number }> = {};
+                for (const s of slots) {
+                  if (!s.cropName) continue;
+                  if (!cropCounts[s.cropName]) cropCounts[s.cropName] = { count: 0, avgGrowth: 0 };
+                  cropCounts[s.cropName].count++;
+                  cropCounts[s.cropName].avgGrowth += s.growthStagePercent;
+                }
+                return Object.entries(cropCounts).map(([name, { count, avgGrowth }]) => (
+                  <div key={name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: getCropDotColor(name) }} />
+                      <span className="truncate">{name}</span>
+                    </div>
+                    <span className="font-mono tabular-nums text-muted-foreground shrink-0 ml-2">
+                      {count} <span className="text-xs">× {Math.round(avgGrowth / count)}%</span>
+                    </span>
+                  </div>
+                ));
+              })()}
+              <div className="mt-1 pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                <span>{slots.filter(s => s.cropId).length} / {slots.length} slots</span>
+                <span className="font-mono tabular-nums">{Math.round((slots.filter(s => s.cropId).length / slots.length) * 100)}% full</span>
               </div>
             </div>
-
-            <div
-              className="grid gap-1"
-              style={{
-                gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-              }}
-            >
-              {Array.from({ length: rows }, (_, rowIdx) =>
-                Array.from({ length: cols }, (_, colIdx) => {
-                  const slot = slots.find(
-                    (s) => s.position.row === rowIdx && s.position.col === colIdx
-                  );
-                  return slot ? (
-                    <PlantSlotCell
-                      key={slot.id}
-                      slot={slot}
-                      mode={metricMode}
-                    />
-                  ) : (
-                    <div
-                      key={`empty-${rowIdx}-${colIdx}`}
-                      className="aspect-square rounded border border-border bg-card/50"
-                    />
-                  );
-                })
-              )}
-            </div>
-
-            {/* Compact legend */}
-            <div className="mt-2 flex flex-wrap gap-3 text-[10px]">
-              {metricMode === "status" && (
-                <>
-                  {Object.entries(STATUS_COLORS).map(([key, color]) => (
-                    <div key={key} className="flex items-center gap-1">
-                      <div className="h-2 w-2 rounded" style={{ backgroundColor: color }} />
-                      <span className="text-muted-foreground">{key.replace("_", " ").toLowerCase()}</span>
-                    </div>
-                  ))}
-                </>
-              )}
-              {metricMode === "growth" && (
-                <span className="text-muted-foreground">Intensity = growth stage (0–100%)</span>
-              )}
-              {metricMode === "yield" && (
-                <span className="text-muted-foreground">Estimated yield (kg)</span>
-              )}
-            </div>
-          </Card>
-        </div>
-
-        {/* Resources — 1/3 */}
-        <div>
-          <Card className="p-4">
-            <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              Resource Reserves
-            </span>
-            <div className="mt-4 space-y-4">
-              <ResourceBar label="Water" percent={resources.waterReservePercent} icon={<Droplet className="h-4 w-4" />} />
-              <ResourceBar label="Nutrients" percent={resources.nutrientReservePercent} icon={<Beaker className="h-4 w-4" />} />
-              <ResourceBar label="Energy" percent={resources.energyReservePercent} icon={<Zap className="h-4 w-4" />} />
-            </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
       </div>
 
-      {/* Sensor Readouts */}
+      {/* Environmental Sensors */}
       <Card className="p-4">
         <span className="text-xs uppercase tracking-wide text-muted-foreground">
           Environmental Sensors
@@ -213,119 +184,232 @@ export default function GreenhousePage() {
           <SensorGauge label="EC" value={mockSensorSnapshot.nutrientSolution.ec.value} unit="mS/cm" status={mockSensorSnapshot.nutrientSolution.ec.status} icon={<Zap className="h-4 w-4" />} history={mockSensorHistory.map((h) => h.nutrientSolutionEc)} />
         </div>
       </Card>
+
+      {/* Circular Top-Down View */}
+      <Card className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+            {name} — Top View
+          </span>
+          <div className="flex gap-1">
+            {(["status", "growth", "yield"] as MetricMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setMetricMode(mode)}
+                className={`rounded border px-2.5 py-0.5 text-xs transition-colors ${
+                  metricMode === mode
+                    ? "border-primary bg-primary/20 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <CircularTopView slots={slots} rows={rows} cols={cols} metricMode={metricMode} />
+
+        {/* Legend */}
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-[10px]">
+          {metricMode === "status" &&
+            Object.entries(STATUS_COLORS).map(([key, color]) => (
+              <div key={key} className="flex items-center gap-1">
+                <div className="h-2 w-2 rounded" style={{ backgroundColor: color }} />
+                <span className="text-muted-foreground">{key.replace("_", " ").toLowerCase()}</span>
+              </div>
+            ))}
+          {metricMode === "growth" && (
+            <span className="text-muted-foreground">Intensity = growth stage (0–100%)</span>
+          )}
+          {metricMode === "yield" && (
+            <span className="text-muted-foreground">Estimated yield (kg)</span>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }
 
-function PlantSlotCell({ slot, mode }: { slot: PlantSlot; mode: MetricMode }) {
-  const getCellColor = () => {
-    if (mode === "status") {
-      return STATUS_COLORS[slot.status];
-    } else if (mode === "growth") {
-      if (!slot.cropId) return STATUS_COLORS.EMPTY;
-      const intensity = slot.growthStagePercent / 100;
-      const r = Math.round(90 + (154 - 90) * intensity);
-      const g = Math.round(154 + (106 - 154) * intensity);
-      const b = Math.round(107 + (107 - 107) * intensity);
-      return `rgb(${r}, ${g}, ${b})`;
-    } else {
-      return STATUS_COLORS[slot.status];
-    }
-  };
+/* ── Circular Top-Down View ─────────────────────────────── */
+
+function CircularTopView({
+  slots,
+  rows,
+  cols,
+  metricMode,
+}: {
+  slots: PlantSlot[];
+  rows: number;
+  cols: number;
+  metricMode: MetricMode;
+}) {
+  const svgSize = 500;
+  const cx = svgSize / 2;
+  const cy = svgSize / 2;
+  const outerR = 220;
+
+  const cellSize = 75;
+  const colGap = 8;
+  const rowGap = 12;
+  const gridW = cellSize * cols + colGap * (cols - 1);
+  const gridH = cellSize * rows + rowGap * (rows - 1);
+  const gridX0 = cx - gridW / 2;
+  const gridY0 = cy - gridH / 2;
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        className="relative aspect-square cursor-pointer rounded border border-border transition-all hover:border-primary text-left"
-        style={{
-          backgroundColor: getCellColor(),
-          opacity: slot.status === "EMPTY" ? 0.4 : 1,
-        }}
+    <div className="flex justify-center py-2">
+      <svg
+        viewBox={`0 0 ${svgSize} ${svgSize}`}
+        className="w-full max-w-2xl"
+        style={{ display: "block" }}
       >
-        <div className="flex h-full flex-col items-center justify-center gap-0.5 p-1 text-center">
-          {slot.cropName && (
-            <>
-              <span className="text-[9px] font-medium leading-tight text-white/90 line-clamp-1">
-                {slot.cropName}
-              </span>
-              {mode === "yield" && slot.estimatedYieldKg !== null ? (
-                <span className="font-mono text-[10px] tabular-nums text-white/90">
-                  {slot.estimatedYieldKg.toFixed(1)}kg
-                </span>
-              ) : (
-                <span className="font-mono text-[10px] tabular-nums text-white/90">
-                  {slot.growthStagePercent}%
-                </span>
-              )}
-              {slot.activeStressTypes.length > 0 && (
-                <div className="flex gap-0.5">
-                  {slot.activeStressTypes.map((_, idx) => (
-                    <div key={idx} className="h-1 w-1 rounded-full bg-destructive" />
-                  ))}
-                </div>
-              )}
-            </>
+        <defs>
+          <clipPath id="topview-clip">
+            <circle cx={cx} cy={cy} r={outerR} />
+          </clipPath>
+          <radialGradient id="topview-glow" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stopColor="#7c6aad" stopOpacity={0.04} />
+            <stop offset="100%" stopColor="#7c6aad" stopOpacity={0} />
+          </radialGradient>
+        </defs>
+
+        {/* Outer circle */}
+        <circle cx={cx} cy={cy} r={outerR} fill="#0a0908" stroke="#2e2b27" strokeWidth={2} />
+
+        {/* Subtle depth rings */}
+        <circle cx={cx} cy={cy} r={outerR * 0.7} fill="none" stroke="#2e2b27" strokeWidth={0.5} opacity={0.2} />
+        <circle cx={cx} cy={cy} r={outerR * 0.4} fill="none" stroke="#2e2b27" strokeWidth={0.5} opacity={0.12} />
+
+        {/* Ambient glow */}
+        <circle cx={cx} cy={cy} r={outerR * 0.9} fill="url(#topview-glow)" />
+
+        {/* Clipped content */}
+        <g clipPath="url(#topview-clip)">
+          {/* Zone divider lines */}
+          {Array.from({ length: rows - 1 }, (_, i) => {
+            const y = gridY0 + (i + 1) * cellSize + i * rowGap + rowGap / 2;
+            return (
+              <line
+                key={i}
+                x1={0}
+                y1={y}
+                x2={svgSize}
+                y2={y}
+                stroke="#2e2b27"
+                strokeWidth={1.5}
+              />
+            );
+          })}
+
+          {/* Slot cells */}
+          {Array.from({ length: rows }, (_, r) =>
+            Array.from({ length: cols }, (_, c) => {
+              const slot = slots.find(
+                (s) => s.position.row === r && s.position.col === c
+              );
+              const x = gridX0 + c * (cellSize + colGap);
+              const y = gridY0 + r * (cellSize + rowGap);
+              const color = slot ? getCellColor(slot, metricMode) : "#1a1917";
+              const isEmpty = !slot || slot.status === "EMPTY";
+
+              return (
+                <g key={`${r}-${c}`} opacity={isEmpty ? 0.4 : 1}>
+                  <title>
+                    {slot?.cropName
+                      ? `${slot.cropName} — ${slot.growthStagePercent}% — ${slot.status}`
+                      : `Zone ${r + 1} — Empty`}
+                  </title>
+                  <rect
+                    x={x}
+                    y={y}
+                    width={cellSize}
+                    height={cellSize}
+                    rx={8}
+                    fill={color}
+                    stroke="#2e2b27"
+                    strokeWidth={1}
+                  />
+                  {slot?.cropName && (
+                    <>
+                      <text
+                        x={x + cellSize / 2}
+                        y={y + cellSize / 2 - 5}
+                        textAnchor="middle"
+                        fill="white"
+                        fontSize={10}
+                        fontWeight={500}
+                        opacity={0.9}
+                      >
+                        {slot.cropName}
+                      </text>
+                      <text
+                        x={x + cellSize / 2}
+                        y={y + cellSize / 2 + 10}
+                        textAnchor="middle"
+                        fill="white"
+                        fontSize={11}
+                        fontFamily="monospace"
+                        opacity={0.8}
+                      >
+                        {metricMode === "yield" && slot.estimatedYieldKg !== null
+                          ? `${slot.estimatedYieldKg.toFixed(1)}kg`
+                          : `${slot.growthStagePercent}%`}
+                      </text>
+                      {slot.activeStressTypes.length > 0 && (
+                        <circle cx={x + cellSize - 8} cy={y + 8} r={3} fill="#c75a3a">
+                          <animate
+                            attributeName="opacity"
+                            values="0.5;1;0.5"
+                            dur="1.5s"
+                            repeatCount="indefinite"
+                          />
+                        </circle>
+                      )}
+                    </>
+                  )}
+                </g>
+              );
+            })
           )}
-        </div>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-xs">
-        <div className="space-y-1 text-xs">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Position:</span>
-            <span className="font-mono">[{slot.position.row}, {slot.position.col}]</span>
-          </div>
-          {slot.cropName ? (
-            <>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Crop:</span>
-                <span className="font-medium">{slot.cropName}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Status:</span>
-                <Badge variant="outline" className="text-[10px]" style={{ borderColor: STATUS_COLORS[slot.status], color: STATUS_COLORS[slot.status] }}>
-                  {slot.status}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Growth:</span>
-                <span className="font-mono">{slot.growthStagePercent}%</span>
-              </div>
-              {slot.daysUntilHarvest !== null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">Harvest in:</span>
-                  <span className="font-mono">{slot.daysUntilHarvest}d</span>
-                </div>
-              )}
-              {slot.estimatedYieldKg !== null && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">Est. Yield:</span>
-                  <span className="font-mono">{slot.estimatedYieldKg.toFixed(2)} kg</span>
-                </div>
-              )}
-              {slot.activeStressTypes.length > 0 && (
-                <div className="mt-2 space-y-1 border-t border-border pt-2">
-                  <span className="text-muted-foreground">Active Stresses:</span>
-                  {slot.activeStressTypes.map((stress) => (
-                    <div key={stress} className="text-destructive">• {stress.replace(/_/g, " ")}</div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-muted-foreground">Empty slot</div>
-          )}
-        </div>
-      </TooltipContent>
-    </Tooltip>
+        </g>
+
+        {/* Zone labels at circle edge */}
+        {Array.from({ length: rows }, (_, i) => {
+          const rowCenterY = gridY0 + i * (cellSize + rowGap) + cellSize / 2;
+          const dy = rowCenterY - cy;
+          const circleEdgeX = cx - Math.sqrt(Math.max(0, outerR * outerR - dy * dy));
+          return (
+            <text
+              key={i}
+              x={circleEdgeX - 6}
+              y={rowCenterY + 3}
+              textAnchor="end"
+              fill="#9c9488"
+              fontSize={9}
+              fontFamily="monospace"
+              opacity={0.6}
+            >
+              Z{i + 1}
+            </text>
+          );
+        })}
+
+        {/* Outer highlight ring */}
+        <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="#9c9488" strokeWidth={0.5} opacity={0.15} />
+      </svg>
+    </div>
   );
 }
+
+/* ── Helper Components ──────────────────────────────────── */
 
 function SensorGauge({
   label, value, unit, status, icon, history,
 }: {
   label: string; value: number; unit: string; status: SensorStatus; icon: React.ReactNode; history: number[];
 }) {
-  const statusCol = statusColor(status);
+  const statusCol = sensorStatusColor(status);
 
   return (
     <div className="space-y-1.5">

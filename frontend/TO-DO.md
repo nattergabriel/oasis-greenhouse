@@ -13,7 +13,7 @@
   - Add headers for rows
   - Add legend to let user know what red circle/border means
 - Planting Queue:
-  - Either move to /greenhouse or implement view to show grid where to plant next
+  - implement view to show grid where to plant next
 - Catalog:
   - Use a card design with 3 cards in a row but dont put everything on it, make it also expandable to not clutter the simple fast view and animate the expanding where it shows it in detail
 
@@ -24,9 +24,10 @@
 - if agents needs more than one decision make it to a stack where you can expand to see all choice needed to free up space
 
 ## /greenhouse
-- Move sun/ to always above/outside greenhouse
-- Option to view the past of the plants to see progress in a quick way
-- Top view of greenhouse change to a circular visualization to match greenhouse design, also make it smaller
+- Move sun/ to always above/outside greenhouse - you can make the component card bigger both for dashboard and greenhouse page to make sun fit if needed.
+- make the greenhouse animated drawing the same size of the dashboard page and move resource reserves to the right side of the animated view of the greenhouse
+- Move the environmental sensors component to be after the new changes to be below the animated drawing and resource reserves component after the environmental sensor component will be the greenhouse from the top down view
+- Top view of greenhouse change to a circular visualization to match greenhouse circular design, you can use the full width now as the resource reserves component is now gone to a different place. when you draw the top view and make it circular you also need to make the quadratic slots for plants adapt accordingly for example if they touch the border of the greenhouse so it does not overflow its lines.
 
 ## NavBar
 - Remove Water / Energy / Nutri?
