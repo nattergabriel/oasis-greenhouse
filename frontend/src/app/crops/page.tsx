@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Thermometer, Sprout, Droplets, Sun, Leaf, Flower2 } from "lucide-react";
-import { mockCrops, mockPlantingQueue, mockHarvestJournal, mockStockpile, mockStoredFood, mockGreenhouseDetails } from "@/lib/mock-data";
+import { emptyStoredFood } from "@/lib/defaults";
 import { useSimulation } from "@/providers/simulation-provider";
 import { api, useApi } from "@/lib/api";
 import type { Crop, CropCategory, PlantingQueueItem, HarvestEntry, StockpileItem, PlantSlot } from "@/lib/types";
@@ -217,7 +217,7 @@ function ExpansionDetail({ crop }: { crop: Crop }) {
 // === Catalog View (row grouping + full-width expansion) ===
 
 function CatalogView() {
-  const crops = useApi(() => api.crops.list().then(r => r.crops), mockCrops);
+  const crops = useApi(() => api.crops.list().then(r => r.crops), [] as Crop[]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [rowDisplay, setRowDisplay] = useState<Record<number, string>>({});
 
@@ -556,12 +556,12 @@ const TABS: { value: TabValue; label: string }[] = [
 export default function CropsPage() {
   const { state, hydrated } = useSimulation();
   const [activeTab, setActiveTab] = useState<TabValue>("catalog");
-  const plantingQueue = useApi(() => api.crops.plantingQueue().then(r => r.queue), mockPlantingQueue);
-  const harvestJournal = useApi(() => api.crops.harvestJournal().then(r => r.harvests), mockHarvestJournal);
-  const stockpileItems = useApi(() => api.crops.stockpile().then(r => r.items), mockStockpile);
-  const storedFood = useApi(() => api.nutrition.storedFood(), mockStoredFood);
+  const plantingQueue = useApi(() => api.crops.plantingQueue().then(r => r.queue), [] as PlantingQueueItem[]);
+  const harvestJournal = useApi(() => api.crops.harvestJournal().then(r => r.harvests), [] as HarvestEntry[]);
+  const stockpileItems = useApi(() => api.crops.stockpile().then(r => r.items), [] as StockpileItem[]);
+  const storedFood = useApi(() => api.nutrition.storedFood(), emptyStoredFood);
   const ghId = state.selectedGreenhouseId;
-  const ghDetail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), ghId ? mockGreenhouseDetails[ghId] ?? null : null, [ghId], !hydrated || !ghId);
+  const ghDetail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), null, [ghId], !hydrated || !ghId);
   const slots = ghDetail?.slots || [];
 
   return (

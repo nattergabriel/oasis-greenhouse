@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { mockSimulations, mockSimulationDetail, mockScenarios } from "@/lib/mock-data"
+import { emptySimulationDetail } from "@/lib/defaults"
 import { api, useApi } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -103,9 +103,9 @@ function InlineSimControls({ simId }: { simId: string }) {
 
 export default function SimulationPage() {
   const [activeTab, setActiveTab] = useState<TabValue>("current")
-  const simulations = useApi(() => api.simulations.list().then(r => r.simulations), mockSimulations)
-  const simulation = useApi(() => api.simulations.get(mockSimulationDetail.id), mockSimulationDetail)
-  const scenarios = useApi(() => api.scenarios.list().then(r => r.scenarios), mockScenarios)
+  const simulations = useApi(() => api.simulations.list().then(r => r.simulations), [] as import("@/lib/types").SimulationSummary[])
+  const simulation = useApi(() => simulations[0] ? api.simulations.get(simulations[0].id) : Promise.reject(), emptySimulationDetail, [simulations])
+  const scenarios = useApi(() => api.scenarios.list().then(r => r.scenarios), [] as import("@/lib/types").Scenario[])
   const runningSimulations = simulations.filter((s) => s.status === "RUNNING")
 
   // Scenario detail dialog

@@ -1,13 +1,12 @@
 "use client"
 
-import { mockScenarios } from "@/lib/mock-data"
 import { api, useApi } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 export default function CrisisScenariosPage() {
-  const scenarios = useApi(() => api.scenarios.list().then(r => r.scenarios), mockScenarios)
+  const scenarios = useApi(() => api.scenarios.list().then(r => r.scenarios), [] as import("@/lib/types").Scenario[])
   const severityColor = (severity: string) => {
     switch (severity) {
       case "LOW":

@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useSimulation } from "@/providers/simulation-provider";
-import {
-  mockGreenhouseDetails,
-  mockSensorSnapshot,
-  mockSensorHistory,
-} from "@/lib/mock-data";
+import { emptySensorSnapshot } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
 import { GreenhouseCrossSection } from "@/components/greenhouse-cross-section";
 import type { PlantSlot, SensorStatus } from "@/lib/types";
@@ -79,7 +75,7 @@ export default function GreenhousePage() {
     );
   }
 
-  const greenhouseDetail = useApi(() => api.greenhouses.get(selectedGhId), mockGreenhouseDetails[selectedGhId], [selectedGhId], !hydrated);
+  const greenhouseDetail = useApi(() => api.greenhouses.get(selectedGhId), null, [selectedGhId], !hydrated);
   if (!greenhouseDetail) {
     return (
       <div className="mx-auto max-w-7xl space-y-4">
@@ -93,8 +89,8 @@ export default function GreenhousePage() {
     );
   }
 
-  const sensors = useApi(() => api.greenhouses.sensorsLatest(selectedGhId), mockSensorSnapshot, [selectedGhId], !hydrated);
-  const sensorHistory = useApi(() => api.greenhouses.sensorsHistory(selectedGhId, { from: new Date(Date.now() - 86400000).toISOString(), to: new Date().toISOString(), interval: "1h" }).then(r => r.readings), mockSensorHistory, [selectedGhId], !hydrated);
+  const sensors = useApi(() => api.greenhouses.sensorsLatest(selectedGhId), emptySensorSnapshot, [selectedGhId], !hydrated);
+  const sensorHistory = useApi(() => api.greenhouses.sensorsHistory(selectedGhId, { from: new Date(Date.now() - 86400000).toISOString(), to: new Date().toISOString(), interval: "1h" }).then(r => r.readings), [] as import("@/lib/types").SensorHistoryReading[], [selectedGhId], !hydrated);
 
   const { name, rows, cols, slots, resources } = greenhouseDetail;
 

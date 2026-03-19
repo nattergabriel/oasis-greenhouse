@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { SimulationState } from "@/lib/types";
-import { initialSimulationState } from "@/lib/mock-data";
+import { initialSimulationState } from "@/lib/defaults";
 import { simulationTick } from "@/lib/simulation";
 import { api } from "@/lib/api";
 
@@ -77,7 +77,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         const selectedId = greenhouses[0]?.id ?? null;
 
         // Fetch detail for the first greenhouse to get resources
-        let resources = initialSimulationState.resources;
+        let resources = { waterReservePercent: 0, nutrientReservePercent: 0, energyReservePercent: 0 };
         if (selectedId) {
           try {
             const detail = await api.greenhouses.get(selectedId);
