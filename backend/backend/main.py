@@ -8,9 +8,9 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.config import settings
-from backend.graph import graph
-from backend.models.state import (
+from .config import settings
+from .graph import graph
+from .models.state import (
     AgentAction,
     SimEngineConfig,
     SimulationListItem,
@@ -18,7 +18,7 @@ from backend.models.state import (
     SimulationResult,
     TrainingRunRequest,
 )
-from backend.strategy.store import strategy_store
+from .strategy.store import strategy_store
 
 logger = logging.getLogger(__name__)
 

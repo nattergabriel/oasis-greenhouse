@@ -44,11 +44,12 @@ function fruitColor(name: string) {
 }
 
 // Crop-specific shape variation
-function cropShape(name: string): "round" | "tall" | "bushy" | "rosette" {
+function cropShape(name: string): "round" | "tall" | "bushy" | "rosette" | "root" {
   if (name === "Lettuce") return "rosette";
   if (name === "Beans & Peas") return "tall";
   if (name === "Herbs") return "bushy";
-  return "round"; // Potato, Radish
+  if (name === "Potato" || name === "Radish") return "root";
+  return "round";
 }
 
 function Plant({
@@ -109,7 +110,7 @@ function Plant({
       {/* Shape-specific rendering */}
       {shape === "rosette" && (
         <g>
-          {/* Low, spreading leaves */}
+          {/* Low, spreading leaves — lettuce */}
           {stage >= 2 && (
             <>
               <ellipse cx={cx - leafR * 0.7} cy={groundY - stemH * 0.4} rx={leafR * 0.9} ry={leafR * 0.35} fill={hc} opacity={0.85} transform={`rotate(-20 ${cx - leafR * 0.7} ${groundY - stemH * 0.4})`} />
@@ -128,7 +129,7 @@ function Plant({
 
       {shape === "tall" && (
         <g>
-          {/* Upright with side branches */}
+          {/* Upright with side branches — beans/peas */}
           {stage >= 2 && (
             <>
               <line x1={cx} y1={groundY - stemH * 0.4} x2={cx - leafR * 0.8} y2={groundY - stemH * 0.55} stroke="#3a6a40" strokeWidth={0.5 * s} />
@@ -146,6 +147,7 @@ function Plant({
 
       {shape === "bushy" && (
         <g>
+          {/* Bushy herb shape */}
           {stage >= 2 && (
             <>
               <ellipse cx={cx - leafR * 0.4} cy={groundY - stemH * 0.5} rx={leafR * 0.7} ry={leafR * 0.4} fill={hc} opacity={0.75} />
@@ -159,6 +161,23 @@ function Plant({
         </g>
       )}
 
+      {shape === "root" && (
+        <g>
+          {/* Root vegetable — potato/radish: visible tuber bulge at soil line */}
+          {stage >= 2 && (
+            <ellipse cx={cx} cy={groundY - stemH * 0.5} rx={leafR * 0.6} ry={leafR * 0.35} fill={dc} opacity={0.7} />
+          )}
+          <ellipse cx={cx} cy={groundY - stemH} rx={leafR * 0.5} ry={leafR * 0.35} fill={hc} />
+          {/* Tuber/root bulge at soil line */}
+          {stage >= 3 && (
+            <ellipse cx={cx} cy={groundY + 1} rx={leafR * 0.45} ry={leafR * 0.3} fill={fc} opacity={0.6} />
+          )}
+          {stage >= 4 && (
+            <ellipse cx={cx} cy={groundY + 1} rx={leafR * 0.55} ry={leafR * 0.35} fill={fc} opacity={0.7} />
+          )}
+        </g>
+      )}
+
       {shape === "round" && (
         <g>
           {stage >= 2 && (
@@ -168,8 +187,8 @@ function Plant({
         </g>
       )}
 
-      {/* Fruit / flower dots */}
-      {showFruit && (
+      {/* Fruit / flower dots (non-root crops) */}
+      {showFruit && shape !== "root" && (
         <>
           <circle cx={cx - 3 * s} cy={groundY - stemH * 0.65} r={1.8 * s} fill={fc}>
             <animate attributeName="opacity" values="0.75;1;0.75" dur="3s" repeatCount="indefinite" />
@@ -246,16 +265,31 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   const domeW = viewW - 60;
   const domeCX = viewW / 2;
   const domeRY = groundY - 25;
+  const halfDomeW = domeW / 2;
   const isDusty = weather.dustStormIndex > 3;
+
+  // Half-dome arc paths (semicircle from left base to right base)
+  const domeArc = `M ${domeCX - halfDomeW} ${groundY} A ${halfDomeW} ${domeRY} 0 0 1 ${domeCX + halfDomeW} ${groundY}`;
+  const domeClosedArc = `${domeArc} Z`;
+
+  // Sun position — follows an arc across the sky based on mission day
+  const solPhase = (state.currentMissionDay % 5) / 5;
+  const sunAngle = Math.PI * (0.15 + solPhase * 0.7);
+  const sunArcRX = viewW * 0.38;
+  const sunArcRY = viewH * 0.52;
+  const sunX = domeCX - sunArcRX * Math.cos(sunAngle);
+  const sunY = groundY - sunArcRY * Math.sin(sunAngle);
+  const sunHeight = Math.sin(sunAngle);
+  const starBrightness = Math.max(0.08, 0.35 - sunHeight * 0.3);
 
   // Show 2 rows of plants to fill the dome
   const row0 = detail.slots.filter((s) => s.position.row === 0);
   const row1 = detail.slots.filter((s) => s.position.row === 1);
-  const plantStartX = domeCX - domeW / 2 + 40;
+  const plantStartX = domeCX - halfDomeW + 40;
   const plantAreaW = domeW - 80;
 
   return (
-    <div className="rounded-lg overflow-hidden border border-border bg-[#0a0908] h-full">
+    <div className="rounded-lg overflow-hidden border border-border bg-[#060504] h-full">
       <svg
         viewBox={`0 0 ${viewW} ${viewH}`}
         className="w-full"
@@ -271,12 +305,12 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
             <stop offset="100%" stopColor="#3d2518" />
           </linearGradient>
           {/* Dome glass */}
-          <radialGradient id={`${instId}-glass`} cx="50%" cy="40%" r="60%">
+          <radialGradient id={`${instId}-glass`} cx="50%" cy="70%" r="70%">
             <stop offset="0%" stopColor="#e8e2d9" stopOpacity={0.05} />
             <stop offset="100%" stopColor="#e8e2d9" stopOpacity={0.015} />
           </radialGradient>
           {/* Dome highlight */}
-          <radialGradient id={`${instId}-highlight`} cx="35%" cy="25%" r="40%">
+          <radialGradient id={`${instId}-highlight`} cx="35%" cy="40%" r="40%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity={0.04} />
             <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
           </radialGradient>
@@ -285,15 +319,16 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
             <stop offset="0%" stopColor="#7c6aad" stopOpacity={0.04} />
             <stop offset="100%" stopColor="#7c6aad" stopOpacity={0} />
           </radialGradient>
+          {/* Clip to half-dome */}
           <clipPath id={`${instId}-clip`}>
-            <ellipse cx={domeCX} cy={groundY} rx={domeW / 2} ry={domeRY} />
+            <path d={domeClosedArc} />
           </clipPath>
         </defs>
 
         {/* Background */}
         <rect width={viewW} height={viewH} fill={`url(#${instId}-sky)`} />
 
-        {/* Stars */}
+        {/* Stars — brightness varies with sun position */}
         {Array.from({ length: 20 }, (_, i) => (
           <circle
             key={i}
@@ -301,9 +336,9 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
             cy={5 + ((i * 17 + 3) % 50)}
             r={0.3 + (i % 4) * 0.2}
             fill="#e8e2d9"
-            opacity={0.15 + (i % 5) * 0.08}
+            opacity={starBrightness + (i % 5) * 0.04}
           >
-            <animate attributeName="opacity" values={`${0.08 + (i % 3) * 0.06};${0.25 + (i % 3) * 0.08};${0.08 + (i % 3) * 0.06}`} dur={`${2.5 + (i % 6) * 0.7}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values={`${starBrightness * 0.5};${starBrightness + 0.1};${starBrightness * 0.5}`} dur={`${2.5 + (i % 6) * 0.7}s`} repeatCount="indefinite" />
           </circle>
         ))}
 
@@ -320,58 +355,60 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
         {/* Dust */}
         <DustParticles intensity={weather.dustStormIndex} viewW={viewW} />
 
-        {/* Sun */}
-        <circle cx={viewW - 50} cy={22} r={14} fill="#d4924a" opacity={isDusty ? 0.1 : 0.2}>
-          <animate attributeName="opacity" values={isDusty ? "0.08;0.15;0.08" : "0.15;0.25;0.15"} dur="5s" repeatCount="indefinite" />
+        {/* Sun — position follows arc based on mission day */}
+        <circle cx={sunX} cy={sunY} r={14} fill="#d4924a" opacity={isDusty ? 0.08 : 0.15}>
+          <animate attributeName="opacity" values={isDusty ? "0.05;0.12;0.05" : "0.1;0.2;0.1"} dur="5s" repeatCount="indefinite" />
         </circle>
-        <circle cx={viewW - 50} cy={22} r={7} fill="#d4924a" opacity={isDusty ? 0.25 : 0.5} />
-        {/* Sun rays */}
+        <circle cx={sunX} cy={sunY} r={7} fill="#d4924a" opacity={isDusty ? 0.2 : 0.45} />
+        {/* Sun rays toward dome */}
         {!isDusty && [0, 1, 2].map((i) => (
           <line
             key={i}
-            x1={viewW - 50}
-            y1={34}
-            x2={domeCX + 40 - i * 40}
-            y2={groundY - domeRY * (0.5 + i * 0.1)}
+            x1={sunX}
+            y1={sunY + 12}
+            x2={domeCX + 30 - i * 30}
+            y2={groundY - domeRY * (0.4 + i * 0.1)}
             stroke="#d4924a"
             strokeWidth={0.4}
-            opacity={0.06 - i * 0.015}
+            opacity={0.05 - i * 0.012}
           />
         ))}
 
-        {/* === DOME === */}
+        {/* === DOME (half-circle) === */}
         {/* Dome fill */}
-        <ellipse cx={domeCX} cy={groundY} rx={domeW / 2} ry={domeRY} fill={`url(#${instId}-glass)`} />
+        <path d={domeClosedArc} fill={`url(#${instId}-glass)`} />
         {/* Dome highlight */}
-        <ellipse cx={domeCX} cy={groundY} rx={domeW / 2} ry={domeRY} fill={`url(#${instId}-highlight)`} />
+        <path d={domeClosedArc} fill={`url(#${instId}-highlight)`} />
 
-        {/* Dome structural frame */}
-        <ellipse cx={domeCX} cy={groundY} rx={domeW / 2} ry={domeRY} fill="none" stroke="#9c948840" strokeWidth={1.2} />
-        {/* Horizontal rib */}
+        {/* Dome structural frame — arc outline + flat base */}
+        <path d={domeArc} fill="none" stroke="#9c948860" strokeWidth={1.2} />
+        <line x1={domeCX - halfDomeW} y1={groundY} x2={domeCX + halfDomeW} y2={groundY} stroke="#9c948860" strokeWidth={1.2} />
+
+        {/* Horizontal ribs */}
         {[0.35, 0.6].map((f) => {
           const ribY = groundY - domeRY * f;
-          const ribHalfW = (domeW / 2) * Math.sqrt(1 - f * f);
+          const ribHalfW = halfDomeW * Math.sqrt(1 - f * f);
           return (
-            <line key={f} x1={domeCX - ribHalfW} y1={ribY} x2={domeCX + ribHalfW} y2={ribY} stroke="#9c9488" strokeWidth={0.3} opacity={0.12} />
+            <line key={f} x1={domeCX - ribHalfW} y1={ribY} x2={domeCX + ribHalfW} y2={ribY} stroke="#9c9488" strokeWidth={0.3} opacity={0.15} />
           );
         })}
         {/* Vertical ribs */}
         {[0.2, 0.4, 0.5, 0.6, 0.8].map((t) => {
-          const ribX = domeCX - domeW / 2 + domeW * t;
+          const ribX = domeCX - halfDomeW + domeW * t;
           const normalized = (t - 0.5) * 2;
           const ribH = Math.sqrt(Math.max(0, 1 - normalized * normalized)) * domeRY;
           return (
-            <line key={t} x1={ribX} y1={groundY} x2={ribX} y2={groundY - ribH} stroke="#9c9488" strokeWidth={0.3} opacity={0.1} />
+            <line key={t} x1={ribX} y1={groundY} x2={ribX} y2={groundY - ribH} stroke="#9c9488" strokeWidth={0.3} opacity={0.12} />
           );
         })}
 
-        {/* === INTERIOR (clipped) === */}
+        {/* === INTERIOR (clipped to half-dome) === */}
         <g clipPath={`url(#${instId}-clip)`}>
           {/* Interior ambient glow from LEDs */}
           <ellipse cx={domeCX} cy={groundY - 10} rx={domeW * 0.4} ry={domeRY * 0.5} fill={`url(#${instId}-glow)`} />
 
           {/* Interior floor */}
-          <rect x={domeCX - domeW / 2 + 15} y={groundY - 5} width={domeW - 30} height={6} rx={1} fill="#14110e" />
+          <rect x={domeCX - halfDomeW + 15} y={groundY - 5} width={domeW - 30} height={6} rx={1} fill="#14110e" />
 
           {/* LED grow lights on ceiling */}
           {Array.from({ length: 7 }, (_, i) => {
@@ -431,7 +468,7 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
 
           {/* Sensor nodes on walls */}
           {[0.15, 0.85].map((t) => {
-            const nx = domeCX - domeW / 2 + domeW * t;
+            const nx = domeCX - halfDomeW + domeW * t;
             const ny = groundY - domeRY * 0.3;
             return (
               <g key={t}>
@@ -442,14 +479,6 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
               </g>
             );
           })}
-        </g>
-
-        {/* Airlock module */}
-        <g>
-          <rect x={domeCX + domeW / 2 - 4} y={groundY - 20} width={14} height={20} rx={2} fill="#161412" stroke="#9c948850" strokeWidth={0.8} />
-          <rect x={domeCX + domeW / 2 + 1} y={groundY - 16} width={6} height={10} rx={1} fill="#211f1b" stroke="#9c948830" strokeWidth={0.5} />
-          {/* Door light */}
-          <circle cx={domeCX + domeW / 2 + 4} cy={groundY - 18} r={0.8} fill="#4ead6b" opacity={0.5} />
         </g>
 
         {/* SOL label */}

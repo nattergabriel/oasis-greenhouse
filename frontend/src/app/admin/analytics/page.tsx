@@ -3,96 +3,95 @@
 import { mockAgentPerformance } from "@/lib/mock-data"
 import { Card } from "@/components/ui/card"
 
+function scoreStatus(score: number, good = 80, ok = 60) {
+  if (score >= good) return { color: "var(--color-status-healthy)", label: "Good" }
+  if (score >= ok) return { color: "var(--color-status-warning)", label: "Fair" }
+  return { color: "var(--color-status-critical)", label: "Critical" }
+}
+
 export default function AgentAnalyticsPage() {
   const perf = mockAgentPerformance
 
-  const formatResponseTime = (ms: number) => {
-    if (ms >= 1000) {
-      return `${(ms / 1000).toFixed(1)}s`
-    }
-    return `${ms}ms`
-  }
+  const totalDecisions = perf.autonomousActionsCount + perf.humanOverridesCount
+  const autoPercent = Math.round((perf.autonomousActionsCount / totalDecisions) * 100)
+  const accuracyStatus = scoreStatus(perf.decisionAccuracyPercent)
 
-  const autoRatio = perf.autonomousActionsCount / (perf.autonomousActionsCount + perf.humanOverridesCount)
-  const humanRatio = 1 - autoRatio
+  const metrics = [
+    { label: "Avg Response", value: perf.avgResponseTimeMs >= 1000 ? `${(perf.avgResponseTimeMs / 1000).toFixed(1)}s` : `${perf.avgResponseTimeMs}ms`, score: Math.max(0, 100 - perf.avgResponseTimeMs / 50), color: "var(--color-mars-blue)" },
+    { label: "Resource Efficiency", value: `${perf.resourceEfficiencyScore}`, score: perf.resourceEfficiencyScore, color: "var(--color-mars-green)" },
+    { label: "Nutrition Hit Rate", value: `${Math.round(perf.nutritionalTargetHitRate * 100)}%`, score: perf.nutritionalTargetHitRate * 100, color: "var(--color-mars-yellow)" },
+    { label: "Crop Diversity", value: `${perf.diversityScore}`, score: perf.diversityScore, color: "var(--color-mars-purple)" },
+    { label: "Crisis Response", value: `${perf.crisisResponseScore}`, score: perf.crisisResponseScore, color: "var(--color-mars-amber)" },
+  ]
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <h1 className="text-2xl font-semibold tracking-tight">Agent Analytics</h1>
 
-      {/* Stat Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        <StatCard label="Decision Accuracy" value={`${perf.decisionAccuracyPercent}%`} percent={perf.decisionAccuracyPercent} />
-        <StatCard label="Avg Response Time" value={formatResponseTime(perf.avgResponseTimeMs)} />
-        <StatCard label="Resource Efficiency" value={`${perf.resourceEfficiencyScore}/100`} percent={perf.resourceEfficiencyScore} />
-        <StatCard label="Nutritional Hit Rate" value={`${Math.round(perf.nutritionalTargetHitRate * 100)}%`} percent={perf.nutritionalTargetHitRate * 100} />
-        <StatCard label="Diversity Score" value={`${perf.diversityScore}/100`} percent={perf.diversityScore} />
-        <StatCard label="Crisis Response" value={`${perf.crisisResponseScore}/100`} percent={perf.crisisResponseScore} />
+      {/* Hero: Decision Accuracy */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">Decision Accuracy</span>
+            <div className="mt-1 flex items-baseline gap-3">
+              <span className="font-mono text-5xl tabular-nums font-bold" style={{ color: accuracyStatus.color }}>
+                {perf.decisionAccuracyPercent}%
+              </span>
+              <span className="text-sm font-medium" style={{ color: accuracyStatus.color }}>{accuracyStatus.label}</span>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {totalDecisions} total decisions · {perf.autonomousActionsCount} autonomous · {perf.humanOverridesCount} overrides
+            </p>
+          </div>
+          <div className="relative w-24 h-24 shrink-0">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border)" strokeWidth="8" />
+              <circle
+                cx="50" cy="50" r="42" fill="none"
+                stroke={accuracyStatus.color} strokeWidth="8"
+                strokeDasharray={`${perf.decisionAccuracyPercent * 2.64} 264`}
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
+        </div>
+      </Card>
+
+      {/* Performance Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {metrics.map((m) => (
+          <Card key={m.label} className="p-4 border-l-2" style={{ borderLeftColor: m.color }}>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{m.label}</span>
+            <div className="mt-1.5 font-mono text-2xl tabular-nums">{m.value}</div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: "var(--border)" }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${m.score}%`, backgroundColor: m.color }} />
+            </div>
+          </Card>
+        ))}
       </div>
 
       {/* Autonomy Ratio */}
       <Card className="p-6">
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">
-          Autonomy vs Human Override
-        </span>
-        <div className="mt-4 grid grid-cols-2 gap-4 text-center">
-          <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              Autonomous Actions
-            </div>
-            <div className="text-3xl font-mono tabular-nums">{perf.autonomousActionsCount}</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              Human Overrides
-            </div>
-            <div className="text-3xl font-mono tabular-nums">{perf.humanOverridesCount}</div>
-          </div>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">Autonomy Ratio</span>
+        <div className="mt-4 h-3 w-full overflow-hidden rounded-full flex border border-border">
+          <div className="h-full bg-primary" style={{ width: `${autoPercent}%` }} />
+          <div className="h-full bg-destructive/20" style={{ width: `${100 - autoPercent}%` }} />
         </div>
-
-        <div className="mt-4 w-full bg-muted rounded-full h-6 overflow-hidden flex border border-border">
-          <div
-            className="h-full bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground"
-            style={{ width: `${autoRatio * 100}%` }}
-          >
-            {Math.round(autoRatio * 100)}%
-          </div>
-          <div
-            className="h-full bg-destructive/20 flex items-center justify-center text-xs font-medium text-destructive"
-            style={{ width: `${humanRatio * 100}%` }}
-          >
-            {Math.round(humanRatio * 100)}%
-          </div>
-        </div>
-
-        <div className="mt-3 flex justify-between text-xs text-muted-foreground">
+        <div className="mt-3 flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-primary" />
-            <span>Autonomous</span>
+            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+            <span className="text-muted-foreground">Autonomous</span>
+            <span className="font-mono tabular-nums font-medium">{perf.autonomousActionsCount}</span>
+            <span className="text-muted-foreground">({autoPercent}%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-destructive/30" />
-            <span>Human Override</span>
+            <div className="h-2.5 w-2.5 rounded-full bg-destructive/30" />
+            <span className="text-muted-foreground">Override</span>
+            <span className="font-mono tabular-nums font-medium">{perf.humanOverridesCount}</span>
+            <span className="text-muted-foreground">({100 - autoPercent}%)</span>
           </div>
         </div>
       </Card>
     </div>
-  )
-}
-
-function StatCard({ label, value, percent }: { label: string; value: string; percent?: number }) {
-  return (
-    <Card className="p-4">
-      <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
-      <div className="mt-2 text-2xl font-mono tabular-nums">{value}</div>
-      {percent !== undefined && (
-        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted border border-border">
-          <div
-            className="h-full bg-primary transition-all"
-            style={{ width: `${percent}%` }}
-          />
-        </div>
-      )}
-    </Card>
   )
 }

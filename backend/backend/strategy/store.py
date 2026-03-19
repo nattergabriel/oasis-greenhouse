@@ -1,7 +1,7 @@
 """Strategy document storage and retrieval."""
 from pathlib import Path
 
-from backend.config import settings
+from ..config import settings
 
 
 class StrategyStore:

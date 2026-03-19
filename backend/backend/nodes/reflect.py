@@ -2,10 +2,10 @@
 import logging
 from typing import Any
 
-from backend.models.state import AgentState
-from backend.agent.llm import bedrock_client
-from backend.agent.prompts import SYSTEM_PROMPT, build_reflect_prompt
-from backend.strategy.store import strategy_store
+from ..models.state import AgentState
+from ..agent.llm import bedrock_client
+from ..agent.prompts import SYSTEM_PROMPT, build_reflect_prompt
+from ..strategy.store import strategy_store
 
 logger = logging.getLogger(__name__)
 

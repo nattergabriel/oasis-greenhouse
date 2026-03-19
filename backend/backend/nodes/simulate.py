@@ -2,9 +2,9 @@
 import logging
 from typing import Any
 
-from backend.models.state import AgentState, GreenhouseState
-from backend.sim_client import sim_client
-from backend.nodes._snapshot import create_snapshot
+from ..models.state import AgentState, GreenhouseState
+from ..sim_client import sim_client
+from ._snapshot import create_snapshot
 
 logger = logging.getLogger(__name__)
 

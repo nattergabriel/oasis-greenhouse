@@ -3,8 +3,8 @@ from typing import Any
 
 import httpx
 
-from backend.config import settings
-from backend.models.state import GreenhouseState, SimEngineConfig
+from .config import settings
+from .models.state import GreenhouseState, SimEngineConfig
 
 
 class SimEngineClient:
