@@ -31,9 +31,7 @@ export function Navbar() {
           <Divider />
           <NavLink href="/greenhouse" label="Greenhouse" />
           <Divider />
-          <NavLink href="/agent" label="Agent" />
-          <Divider />
-          <NavLink href="/alerts" label="Alerts" />
+          <NavLink href="/activity" label="Activity" />
           <Divider />
           <NavLink href="/crops" label="Crops" />
           <Divider />

@@ -130,7 +130,7 @@ export default function DashboardPage() {
 
       {/* Row 3: Alerts + Agent Status */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <Link href="/alerts" className="block">
+        <Link href="/activity" className="block">
           <Card className="p-4 hover:bg-secondary transition-colors h-full">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wide text-muted-foreground">Alerts</span>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/agent" className="block">
+        <Link href="/activity" className="block">
           <Card className="p-4 hover:bg-secondary transition-colors h-full">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wide text-muted-foreground">AI Agent</span>

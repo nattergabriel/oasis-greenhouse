@@ -54,7 +54,7 @@ export function StatusPopover({ alerts, recommendations, totalIssues }: StatusPo
                 Open Alerts
               </span>
               <Link
-                href="/alerts"
+                href="/activity"
                 onClick={() => setOpen(false)}
                 className="text-xs text-primary hover:underline"
               >
@@ -102,7 +102,7 @@ export function StatusPopover({ alerts, recommendations, totalIssues }: StatusPo
                 Pending Actions
               </span>
               <Link
-                href="/agent"
+                href="/activity"
                 onClick={() => setOpen(false)}
                 className="text-xs text-primary hover:underline"
               >
