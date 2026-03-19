@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useSimulation } from "@/providers/simulation-provider";
 import { emptySensorSnapshot } from "@/lib/defaults";
-import { api, useApi } from "@/lib/api";
+import { api, useApi, useApiState } from "@/lib/api";
 import { GreenhouseCrossSection } from "@/components/greenhouse-cross-section";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { PlantSlot, SensorStatus } from "@/lib/types";
 import { fmt, fmtInt } from "@/lib/utils";
 import {
@@ -63,9 +64,13 @@ export default function GreenhousePage() {
   const selectedGhId = state.selectedGreenhouseId;
   const skip = !hydrated || !selectedGhId;
 
-  const greenhouseDetail = useApi(() => api.greenhouses.get(selectedGhId!), null, [selectedGhId], skip);
+  const { data: greenhouseDetail, loading: greenhouseLoading } = useApiState(() => api.greenhouses.get(selectedGhId!), null, [selectedGhId], skip);
   const sensors = useApi(() => api.greenhouses.sensorsLatest(selectedGhId!), emptySensorSnapshot, [selectedGhId], skip);
   const sensorHistory = useApi(() => api.greenhouses.sensorsHistory(selectedGhId!, { from: new Date(Date.now() - 86400000).toISOString(), to: new Date().toISOString(), interval: "1h" }).then(r => r.readings), [] as import("@/lib/types").SensorHistoryReading[], [selectedGhId], skip);
+
+  if (!hydrated || greenhouseLoading) {
+    return <GreenhousePageSkeleton />;
+  }
 
   if (!selectedGhId || !greenhouseDetail) {
     return (
@@ -74,7 +79,7 @@ export default function GreenhousePage() {
           Greenhouse Environment
         </h1>
         <Card className="p-8 text-center text-muted-foreground">
-          {!selectedGhId ? "No greenhouse selected" : "Loading greenhouse data…"}
+          {!selectedGhId ? "No greenhouse selected" : "No greenhouse data available"}
         </Card>
       </div>
     );
@@ -561,6 +566,94 @@ function ResourceBar({ label, percent, icon }: { label: string; percent: number;
       <div className="relative h-2 overflow-hidden rounded-full bg-card border border-border">
         <div className="h-full transition-all duration-500" style={{ width: `${percent}%`, backgroundColor: color }} />
       </div>
+    </div>
+  );
+}
+
+/* ── Full-page skeleton ───────────────────────────────── */
+
+function GreenhousePageSkeleton() {
+  return (
+    <div className="mx-auto max-w-7xl space-y-4">
+      <h1 className="text-2xl font-semibold tracking-tight">Greenhouse Environment</h1>
+
+      {/* Cross-section + Resources */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <Card className="lg:col-span-2 p-4">
+          <Skeleton className="w-full aspect-[2/1] rounded-lg" />
+        </Card>
+        <Card className="p-4 flex flex-col overflow-hidden">
+          <Skeleton className="h-3 w-28" />
+          <div className="mt-4 space-y-6">
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="h-4 w-4 rounded" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                  <Skeleton className="h-3.5 w-8" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 border-t border-border pt-4 flex-1 min-h-0 flex flex-col">
+            <Skeleton className="h-3 w-12" />
+            <div className="mt-3 space-y-2">
+              {Array.from({ length: 4 }, (_, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-2 w-2 rounded-full" />
+                    <Skeleton className="h-3.5 w-16" />
+                  </div>
+                  <Skeleton className="h-3.5 w-14" />
+                </div>
+              ))}
+              <div className="mt-1 pt-2 border-t border-border flex items-center justify-between">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-14" />
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Environmental Sensors */}
+      <Card className="p-4">
+        <Skeleton className="h-3 w-32" />
+        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-1.5 w-1.5 rounded-full" />
+              </div>
+              <Skeleton className="h-7 w-16" />
+              <Skeleton className="h-6 w-full rounded" />
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Top-Down View */}
+      <Card className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <Skeleton className="h-3 w-36" />
+          <div className="flex gap-1">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} className="h-6 w-14 rounded" />
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-center py-2">
+          <Skeleton className="w-full max-w-2xl aspect-square rounded-full" />
+        </div>
+        <Skeleton className="mt-4 h-16 w-full rounded-lg" />
+      </Card>
     </div>
   );
 }

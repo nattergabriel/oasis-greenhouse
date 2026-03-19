@@ -1,13 +1,14 @@
 "use client"
 
 import { emptySimulationDetail } from "@/lib/defaults"
-import { api, useApi } from "@/lib/api"
+import { api, useApi, useApiState } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { SimControls } from "@/components/layout/sim-controls"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function SimulationManagementPage() {
-  const simulations = useApi(() => api.simulations.list().then(r => r.simulations), [] as import("@/lib/types").SimulationSummary[])
+  const { data: simulations, loading: simulationsLoading } = useApiState(() => api.simulations.list().then(r => r.simulations), [] as import("@/lib/types").SimulationSummary[])
   const simulation = useApi(() => simulations[0] ? api.simulations.get(simulations[0].id) : Promise.reject(), emptySimulationDetail, [simulations])
 
   const statusColor = (status: string) => {
@@ -30,71 +31,111 @@ export default function SimulationManagementPage() {
         <SimControls />
       </div>
 
-      {/* Current Simulation */}
-      <Card className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <span className="text-lg font-semibold">{simulation.name}</span>
-          <Badge variant="outline" className={statusColor(simulation.status)}>{simulation.status}</Badge>
-        </div>
+      {/* Current Simulation — Loading */}
+      {simulationsLoading && (
+        <Card className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-6 w-24 rounded-lg" />
+          </div>
+          <div className="grid grid-cols-5 gap-4">
+            {Array.from({ length: 5 }, (_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-8 w-16" />
+              </div>
+            ))}
+          </div>
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-4 w-full" />
+        </Card>
+      )}
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-5 gap-4">
-          <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Mission Day</div>
-            <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.missionDay}</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Water Reserve</div>
-            <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.waterReservePercent}%</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Nutrient Reserve</div>
-            <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.nutrientReservePercent}%</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Energy Reserve</div>
-            <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.energyReservePercent}%</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Total Yield</div>
-            <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.totalYieldKg} kg</div>
-          </div>
-        </div>
+      {/* Current Simulation — Empty */}
+      {!simulationsLoading && simulations.length === 0 && (
+        <Card className="p-8 text-center">
+          <p className="text-muted-foreground">No simulations</p>
+          <p className="text-xs text-muted-foreground mt-1">No simulation data available. Create a simulation to get started.</p>
+        </Card>
+      )}
 
-        {/* Learning Goal */}
-        <div>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Learning Goal</div>
-          <p className="text-muted-foreground">{simulation.learningGoal}</p>
-        </div>
+      {/* Current Simulation — Data */}
+      {!simulationsLoading && simulations.length > 0 && (
+        <Card className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-semibold">{simulation.name}</span>
+            <Badge variant="outline" className={statusColor(simulation.status)}>{simulation.status}</Badge>
+          </div>
 
-        {/* Config Summary */}
-        <div>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Configuration</div>
-          <div className="grid grid-cols-4 gap-4 text-sm">
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-5 gap-4">
             <div>
-              <span className="text-muted-foreground">Autonomy Level:</span>{" "}
-              <span className="font-medium">{simulation.agentConfig.autonomyLevel}</span>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Mission Day</div>
+              <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.missionDay}</div>
             </div>
             <div>
-              <span className="text-muted-foreground">Risk Tolerance:</span>{" "}
-              <span className="font-medium">{simulation.agentConfig.riskTolerance}</span>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Water Reserve</div>
+              <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.waterReservePercent}%</div>
             </div>
             <div>
-              <span className="text-muted-foreground">Crew Size:</span>{" "}
-              <span className="font-medium font-mono">{simulation.crewSize}</span>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Nutrient Reserve</div>
+              <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.nutrientReservePercent}%</div>
             </div>
             <div>
-              <span className="text-muted-foreground">Yield Target:</span>{" "}
-              <span className="font-medium font-mono">{simulation.yieldTarget} kg</span>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Energy Reserve</div>
+              <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.energyReservePercent}%</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Total Yield</div>
+              <div className="text-2xl font-mono tabular-nums">{simulation.currentMetrics.totalYieldKg} kg</div>
             </div>
           </div>
-        </div>
-      </Card>
+
+          {/* Learning Goal */}
+          <div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Learning Goal</div>
+            <p className="text-muted-foreground">{simulation.learningGoal}</p>
+          </div>
+
+          {/* Config Summary */}
+          <div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Configuration</div>
+            <div className="grid grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Autonomy Level:</span>{" "}
+                <span className="font-medium">{simulation.agentConfig.autonomyLevel}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Risk Tolerance:</span>{" "}
+                <span className="font-medium">{simulation.agentConfig.riskTolerance}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Crew Size:</span>{" "}
+                <span className="font-medium font-mono">{simulation.crewSize}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Yield Target:</span>{" "}
+                <span className="font-medium font-mono">{simulation.yieldTarget} kg</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Past Simulations */}
       <Card className="p-6">
         <span className="text-xs uppercase tracking-wide text-muted-foreground">Past Simulations</span>
-        <table className="w-full text-sm mt-4">
+        {simulationsLoading && (
+          <div className="mt-4 space-y-3">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        )}
+        {!simulationsLoading && simulations.length === 0 && (
+          <p className="text-muted-foreground text-sm mt-4">No simulation history available.</p>
+        )}
+        <table className={`w-full text-sm mt-4 ${simulationsLoading || simulations.length === 0 ? "hidden" : ""}`}>
           <thead>
             <tr className="border-b border-border">
               <th className="text-left py-2 font-medium text-muted-foreground">Name</th>
