@@ -260,11 +260,12 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   if (!detail) return null;
 
   const viewW = 480;
-  const viewH = compact ? 200 : 240;
-  const groundY = viewH - 28;
+  const viewH = compact ? 220 : 280;
+  const groundY = viewH - 30;
   const domeW = viewW - 60;
   const domeCX = viewW / 2;
-  const domeRY = groundY - 25;
+  const skyHeight = compact ? 55 : 75;
+  const domeRY = groundY - skyHeight;
   const halfDomeW = domeW / 2;
   const isDusty = weather.dustStormIndex > 3;
 
@@ -275,10 +276,10 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   // Sun position — follows an arc across the sky based on mission day
   const solPhase = (state.currentMissionDay % 5) / 5;
   const sunAngle = Math.PI * (0.15 + solPhase * 0.7);
-  const sunArcRX = viewW * 0.38;
-  const sunArcRY = viewH * 0.52;
+  const domeTopY = groundY - domeRY;
+  const sunArcRX = viewW * 0.4;
   const sunX = domeCX - sunArcRX * Math.cos(sunAngle);
-  const sunY = groundY - sunArcRY * Math.sin(sunAngle);
+  const sunY = domeTopY - 15 - Math.sin(sunAngle) * (compact ? 20 : 30);
   const sunHeight = Math.sin(sunAngle);
   const starBrightness = Math.max(0.08, 0.35 - sunHeight * 0.3);
 
@@ -293,7 +294,7 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
       <svg
         viewBox={`0 0 ${viewW} ${viewH}`}
         className="w-full"
-        style={{ display: "block", height: compact ? "100%" : "280px" }}
+        style={{ display: "block", height: compact ? "100%" : undefined }}
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
