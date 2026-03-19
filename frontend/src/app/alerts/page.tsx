@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useSimulation } from "@/providers/simulation-provider";
 import {
   AlertTriangle,
@@ -107,35 +106,20 @@ export default function AlertsPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2">
-        <Button
-          variant={filter === "ALL" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilter("ALL")}
-        >
-          ALL
-        </Button>
-        <Button
-          variant={filter === "OPEN" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilter("OPEN")}
-        >
-          OPEN
-        </Button>
-        <Button
-          variant={filter === "ACKNOWLEDGED" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilter("ACKNOWLEDGED")}
-        >
-          ACKNOWLEDGED
-        </Button>
-        <Button
-          variant={filter === "RESOLVED" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilter("RESOLVED")}
-        >
-          RESOLVED
-        </Button>
+      <div className="flex gap-1">
+        {(["ALL", "OPEN", "ACKNOWLEDGED", "RESOLVED"] as FilterStatus[]).map((status) => (
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+              filter === status
+                ? "border-primary bg-primary/10 text-foreground"
+                : "border-border bg-card text-muted-foreground hover:bg-accent"
+            }`}
+          >
+            {status === "ALL" ? "All" : status.charAt(0) + status.slice(1).toLowerCase()}
+          </button>
+        ))}
       </div>
 
       {/* Alert list */}
@@ -270,23 +254,22 @@ function AlertCard({ alert }: { alert: Alert }) {
             {/* Action buttons */}
             <div className="flex gap-2">
               {alert.status === "OPEN" && (
-                <Button
-                  size="sm"
-                  variant="outline"
+                <button
                   onClick={handleAcknowledge}
                   disabled={isAcknowledging}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
                 >
                   {isAcknowledging ? "Acknowledging..." : "Acknowledge"}
-                </Button>
+                </button>
               )}
               {alert.status === "ACKNOWLEDGED" && (
-                <Button
-                  size="sm"
+                <button
                   onClick={handleResolve}
                   disabled={isResolving}
+                  className="rounded-lg border border-primary bg-primary/10 px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-primary/20 disabled:opacity-50"
                 >
                   {isResolving ? "Resolving..." : "Resolve"}
-                </Button>
+                </button>
               )}
             </div>
           </div>

@@ -8,15 +8,13 @@ import {
   YAxis,
   ResponsiveContainer,
   Tooltip,
-  BarChart,
-  Bar,
   CartesianGrid,
   ReferenceLine,
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Apple, TrendingUp, TrendingDown } from "lucide-react";
-import type { DailyNutritionEntry, CoverageHeatmap } from "@/lib/types";
+import { useSimulation } from "@/providers/simulation-provider";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 // === Helpers ===
 function formatShortDate(isoString: string): string {
@@ -25,9 +23,9 @@ function formatShortDate(isoString: string): string {
 }
 
 function getCoverageColor(percent: number): string {
-  if (percent > 80) return "#5a9a6b"; // green
-  if (percent >= 50) return "#c4a344"; // yellow
-  return "#c75a3a"; // red
+  if (percent > 80) return "var(--color-status-healthy)";
+  if (percent >= 50) return "var(--color-status-warning)";
+  return "var(--color-status-critical)";
 }
 
 // === Custom Tooltip Component ===
@@ -41,17 +39,9 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div
-      className="rounded border px-3 py-2 text-sm"
-      style={{
-        backgroundColor: "#1a1917",
-        borderColor: "#2e2b27",
-      }}
-    >
-      <p className="mb-1 font-medium" style={{ color: "#d4924a" }}>
-        {label}
-      </p>
-      <p className="text-gray-300">
+    <div className="rounded border border-border bg-card px-3 py-2 text-sm">
+      <p className="mb-1 font-medium text-primary">{label}</p>
+      <p className="text-foreground">
         {payload[0].name}: {Math.round(payload[0].value).toLocaleString()}
       </p>
     </div>
@@ -60,6 +50,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 
 // === Page Component ===
 export default function NutritionPage() {
+  const { state } = useSimulation();
   const latestEntry = mockNutritionEntries[mockNutritionEntries.length - 1];
 
   // Prepare chart data
@@ -81,25 +72,25 @@ export default function NutritionPage() {
       name: "Protein",
       value: latestEntry.proteinG,
       target: macroTargets.protein,
-      color: "#4a7c9e",
+      color: "var(--color-mars-blue)",
     },
     {
       name: "Carbs",
       value: latestEntry.carbsG,
       target: macroTargets.carbs,
-      color: "#d4924a",
+      color: "var(--color-mars-amber)",
     },
     {
       name: "Fat",
       value: latestEntry.fatG,
       target: macroTargets.fat,
-      color: "#c4a344",
+      color: "var(--color-mars-yellow)",
     },
     {
       name: "Fiber",
       value: latestEntry.fiberG,
       target: macroTargets.fiber,
-      color: "#5a9a6b",
+      color: "var(--color-mars-green)",
     },
   ];
 
@@ -108,58 +99,53 @@ export default function NutritionPage() {
   );
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-[#d4924a] p-2">
-          <Apple className="h-6 w-6 text-[#1a1917]" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-100">
-            Nutritional Tracking
-          </h1>
-          <p className="text-sm text-gray-400">
-            4-person crew nutritional status and coverage
-          </p>
-        </div>
+        <h1 className="text-xl font-medium tracking-tight">
+          Nutritional Tracking
+        </h1>
+        <Badge variant="outline" className="font-mono text-xs tabular-nums">
+          SOL {state.currentMissionDay} / {state.totalMissionDays}
+        </Badge>
       </div>
 
       {/* Section 1: Calorie Tracker */}
-      <Card className="border-[#2e2b27] bg-[#1a1917] p-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-100">
+      <Card className="p-6">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
           Daily Calorie Intake
-        </h2>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        </span>
+        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Left: Big number */}
           <div className="flex flex-col justify-center">
             <div className="mb-2 flex items-baseline gap-2">
-              <span className="text-5xl font-bold text-[#d4924a]">
+              <span className="text-5xl font-bold text-primary font-mono tabular-nums">
                 {latestEntry.totalCalories.toLocaleString()}
               </span>
-              <span className="text-2xl text-gray-400">/</span>
-              <span className="text-2xl text-gray-400">
+              <span className="text-2xl text-muted-foreground">/</span>
+              <span className="text-2xl text-muted-foreground font-mono tabular-nums">
                 {latestEntry.targetCalories.toLocaleString()}
               </span>
-              <span className="text-lg text-gray-500">kcal</span>
+              <span className="text-lg text-muted-foreground">kcal</span>
             </div>
             <div className="flex items-center gap-2">
               <Badge
                 variant={caloriePercentage >= 90 ? "default" : "secondary"}
                 className={
                   caloriePercentage >= 90
-                    ? "bg-[#5a9a6b] text-white hover:bg-[#5a9a6b]"
-                    : "bg-[#c4a344] text-white hover:bg-[#c4a344]"
+                    ? "bg-[var(--color-status-healthy)] text-white hover:bg-[var(--color-status-healthy)]"
+                    : "bg-[var(--color-status-warning)] text-white hover:bg-[var(--color-status-warning)]"
                 }
               >
                 {caloriePercentage}% of target
               </Badge>
               {caloriePercentage >= 90 ? (
-                <TrendingUp className="h-4 w-4 text-[#5a9a6b]" />
+                <TrendingUp className="h-4 w-4" style={{ color: "var(--color-status-healthy)" }} />
               ) : (
-                <TrendingDown className="h-4 w-4 text-[#c4a344]" />
+                <TrendingDown className="h-4 w-4" style={{ color: "var(--color-status-warning)" }} />
               )}
             </div>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-muted-foreground">
               Latest day: {formatShortDate(latestEntry.date)}
             </p>
           </div>
@@ -170,29 +156,29 @@ export default function NutritionPage() {
               <AreaChart data={calorieChartData}>
                 <defs>
                   <linearGradient id="calorieGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#d4924a" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#d4924a" stopOpacity={0} />
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2e2b27" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   dataKey="date"
-                  stroke="#2e2b27"
-                  tick={{ fill: "#6b7280", fontSize: 12 }}
+                  stroke="var(--border)"
+                  tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                 />
                 <YAxis
-                  stroke="#2e2b27"
-                  tick={{ fill: "#6b7280", fontSize: 12 }}
+                  stroke="var(--border)"
+                  tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                   domain={[7000, 11000]}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <ReferenceLine
                   y={latestEntry.targetCalories}
-                  stroke="#d4924a"
+                  stroke="var(--primary)"
                   strokeDasharray="5 5"
                   label={{
                     value: "Target",
-                    fill: "#d4924a",
+                    fill: "var(--primary)",
                     fontSize: 11,
                     position: "right",
                   }}
@@ -201,7 +187,7 @@ export default function NutritionPage() {
                   type="monotone"
                   dataKey="calories"
                   name="Calories"
-                  stroke="#d4924a"
+                  stroke="var(--primary)"
                   strokeWidth={2}
                   fill="url(#calorieGradient)"
                 />
@@ -212,24 +198,24 @@ export default function NutritionPage() {
       </Card>
 
       {/* Section 2: Macro Breakdown */}
-      <Card className="border-[#2e2b27] bg-[#1a1917] p-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-100">
+      <Card className="p-6">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
           Macronutrient Breakdown
-        </h2>
-        <div className="space-y-4">
+        </span>
+        <div className="mt-4 space-y-4">
           {macros.map((macro) => {
             const percentage = Math.min((macro.value / macro.target) * 100, 100);
             return (
               <div key={macro.name} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-gray-300">
+                  <span className="font-medium">
                     {macro.name}
                   </span>
-                  <span className="text-gray-400">
+                  <span className="text-muted-foreground font-mono tabular-nums">
                     {macro.value}g / {macro.target}g
                   </span>
                 </div>
-                <div className="relative h-6 overflow-hidden rounded-full bg-[#0f0e0d]">
+                <div className="relative h-2 overflow-hidden rounded-full bg-muted border border-border">
                   <div
                     className="h-full rounded-full transition-all duration-300"
                     style={{
@@ -245,17 +231,13 @@ export default function NutritionPage() {
       </Card>
 
       {/* Section 3: Nutritional Coverage Heatmap */}
-      <Card className="border-[#2e2b27] bg-[#1a1917] p-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-100">
+      <Card className="p-6">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
           Nutritional Coverage Heatmap
-        </h2>
-        <p className="mb-4 text-sm text-gray-400">
-          Mission days {mockCoverageHeatmap.missionDays[0]} -{" "}
-          {
-            mockCoverageHeatmap.missionDays[
-              mockCoverageHeatmap.missionDays.length - 1
-            ]
-          }
+        </span>
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">
+          Mission days {mockCoverageHeatmap.missionDays[0]} –{" "}
+          {mockCoverageHeatmap.missionDays[mockCoverageHeatmap.missionDays.length - 1]}
         </p>
 
         <div className="overflow-x-auto">
@@ -266,7 +248,7 @@ export default function NutritionPage() {
               {mockCoverageHeatmap.missionDays.map((day) => (
                 <div
                   key={day}
-                  className="flex h-8 w-[40px] shrink-0 items-center justify-center text-xs text-gray-400"
+                  className="flex h-8 w-[40px] shrink-0 items-center justify-center text-xs text-muted-foreground"
                 >
                   {day}
                 </div>
@@ -277,7 +259,7 @@ export default function NutritionPage() {
             {mockCoverageHeatmap.nutrients.map((nutrient, rowIndex) => (
               <div key={nutrient} className="flex">
                 {/* Row label */}
-                <div className="flex w-24 shrink-0 items-center text-sm font-medium text-gray-300">
+                <div className="flex w-24 shrink-0 items-center text-sm font-medium">
                   {nutrient}
                 </div>
 
@@ -296,7 +278,6 @@ export default function NutritionPage() {
                         }}
                         title={`${nutrient} - Day ${mockCoverageHeatmap.missionDays[colIndex]}: ${percent}%`}
                       />
-                      {/* Optional: show percentage on hover */}
                       <div className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
                         {percent}%
                       </div>
@@ -309,26 +290,17 @@ export default function NutritionPage() {
         </div>
 
         {/* Legend */}
-        <div className="mt-4 flex items-center justify-end gap-4 text-xs text-gray-400">
+        <div className="mt-4 flex items-center justify-end gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div
-              className="h-4 w-4 rounded"
-              style={{ backgroundColor: "#c75a3a" }}
-            />
+            <div className="h-3 w-3 rounded" style={{ backgroundColor: "var(--color-status-critical)" }} />
             <span>&lt; 50%</span>
           </div>
           <div className="flex items-center gap-2">
-            <div
-              className="h-4 w-4 rounded"
-              style={{ backgroundColor: "#c4a344" }}
-            />
-            <span>50-80%</span>
+            <div className="h-3 w-3 rounded" style={{ backgroundColor: "var(--color-status-warning)" }} />
+            <span>50–80%</span>
           </div>
           <div className="flex items-center gap-2">
-            <div
-              className="h-4 w-4 rounded"
-              style={{ backgroundColor: "#5a9a6b" }}
-            />
+            <div className="h-3 w-3 rounded" style={{ backgroundColor: "var(--color-status-healthy)" }} />
             <span>&gt; 80%</span>
           </div>
         </div>

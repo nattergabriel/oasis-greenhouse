@@ -53,20 +53,20 @@ function formatExpiresIn(expiresAt: string | null): string {
 
 // Helper: Get confidence color
 function getConfidenceColor(confidence: number): string {
-  if (confidence > 0.7) return "bg-green-500";
-  if (confidence >= 0.5) return "bg-yellow-500";
-  return "bg-red-500";
+  if (confidence > 0.7) return "bg-[var(--color-status-healthy)]";
+  if (confidence >= 0.5) return "bg-[var(--color-status-warning)]";
+  return "bg-[var(--color-status-critical)]";
 }
 
 // Helper: Get urgency badge colors
 function getUrgencyColors(urgency: Urgency): string {
   switch (urgency) {
     case "CRITICAL":
-      return "bg-red-500/20 text-red-400 border-red-500/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
     case "HIGH":
-      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
+      return "bg-primary/20 text-primary border-primary/30";
     case "MEDIUM":
-      return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      return "bg-[var(--color-status-warning)]/20 text-[var(--color-status-warning)] border-[var(--color-status-warning)]/30";
     case "LOW":
       return "bg-muted text-muted-foreground border-border";
   }
@@ -76,11 +76,11 @@ function getUrgencyColors(urgency: Urgency): string {
 function getOutcomeColors(outcome: AgentOutcome): string {
   switch (outcome) {
     case "SUCCESS":
-      return "bg-green-500/20 text-green-400 border-green-500/30";
+      return "bg-[var(--color-status-healthy)]/20 text-[#5a9a6b] border-[var(--color-status-healthy)]/30";
     case "PENDING":
-      return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      return "bg-[var(--color-status-warning)]/20 text-[#c4a344] border-[var(--color-status-warning)]/30";
     case "FAILED":
-      return "bg-red-500/20 text-red-400 border-red-500/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
   }
 }
 
@@ -97,12 +97,9 @@ function RecommendationCard({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <Card className="p-4 border-border bg-card">
+    <Card className="p-4">
       <div className="flex items-start gap-3">
-        <div
-          className="p-2 rounded-lg mt-1"
-          style={{ backgroundColor: "#7c6aad20", color: "#7c6aad" }}
-        >
+        <div className="p-2 rounded-lg mt-1 bg-[var(--color-mars-purple)]/20 text-[var(--color-mars-purple)]">
           <Brain className="w-4 h-4" />
         </div>
         <div className="flex-1 space-y-3">
@@ -110,10 +107,7 @@ function RecommendationCard({
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <Badge
-                  variant="outline"
-                  className="text-xs font-mono border-border"
-                >
+                <Badge variant="outline" className="text-xs font-mono">
                   {recommendation.actionType}
                 </Badge>
                 <Badge
@@ -123,7 +117,7 @@ function RecommendationCard({
                   {recommendation.urgency}
                 </Badge>
               </div>
-              <p className="text-sm text-foreground">
+              <p className="text-sm">
                 {recommendation.description}
               </p>
             </div>
@@ -155,11 +149,11 @@ function RecommendationCard({
               <span className="text-xs uppercase tracking-wide text-muted-foreground">
                 Confidence
               </span>
-              <span className="text-xs font-mono tabular-nums text-foreground">
+              <span className="text-xs font-mono tabular-nums">
                 {Math.round(recommendation.confidence * 100)}%
               </span>
             </div>
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+            <div className="h-1.5 bg-muted border border-border rounded-full overflow-hidden">
               <div
                 className={`h-full ${getConfidenceColor(recommendation.confidence)}`}
                 style={{ width: `${recommendation.confidence * 100}%` }}
@@ -178,7 +172,7 @@ function RecommendationCard({
                 variant="outline"
                 size="sm"
                 onClick={() => onApprove(recommendation.id)}
-                className="border-green-500/30 text-green-400 hover:bg-green-500/20"
+                className="border-[var(--color-status-healthy)]/30 text-[#5a9a6b] hover:bg-[var(--color-status-healthy)]/20"
               >
                 <Check className="w-3 h-3 mr-1" />
                 Approve
@@ -187,7 +181,6 @@ function RecommendationCard({
                 variant="outline"
                 size="sm"
                 onClick={() => onDismiss(recommendation.id)}
-                className="border-border text-muted-foreground hover:bg-muted"
               >
                 <X className="w-3 h-3 mr-1" />
                 Dismiss
@@ -205,12 +198,9 @@ function LogEntryCard({ entry }: { entry: AgentLogEntry }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <Card className="p-4 border-border bg-card">
+    <Card className="p-4">
       <div className="flex items-start gap-3">
-        <div
-          className="p-2 rounded-lg mt-1"
-          style={{ backgroundColor: "#7c6aad20", color: "#7c6aad" }}
-        >
+        <div className="p-2 rounded-lg mt-1 bg-[var(--color-mars-purple)]/20 text-[var(--color-mars-purple)]">
           <Bot className="w-4 h-4" />
         </div>
         <div className="flex-1 space-y-2">
@@ -227,14 +217,11 @@ function LogEntryCard({ entry }: { entry: AgentLogEntry }) {
                 >
                   {entry.outcome}
                 </Badge>
-                <Badge
-                  variant="outline"
-                  className="text-xs font-mono border-border"
-                >
+                <Badge variant="outline" className="text-xs font-mono">
                   {entry.actionType}
                 </Badge>
               </div>
-              <p className="text-sm text-foreground">{entry.description}</p>
+              <p className="text-sm">{entry.description}</p>
             </div>
           </div>
 
@@ -305,39 +292,49 @@ export default function AgentPage() {
 
   const handleApprove = (id: string) => {
     console.log("Approve recommendation:", id);
-    // TODO: dispatch action to update recommendation status
   };
 
   const handleDismiss = (id: string) => {
     console.log("Dismiss recommendation:", id);
-    // TODO: dispatch action to update recommendation status
   };
 
+  const filterButtons: Array<{ value: AgentOutcome | "ALL"; label: string }> = [
+    { value: "ALL", label: "All" },
+    { value: "SUCCESS", label: "Success" },
+    { value: "PENDING", label: "Pending" },
+    { value: "FAILED", label: "Failed" },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <h1 className="text-xl font-medium tracking-tight">AI Agent</h1>
+        <Badge variant="outline" className="font-mono text-xs tabular-nums">
+          SOL {state.currentMissionDay} / {state.totalMissionDays}
+        </Badge>
+        <Badge variant="outline" className="text-xs">
+          {state.agentLog.length} actions
+        </Badge>
+      </div>
+
       {/* Recommended Actions Queue */}
       <section>
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-xl font-semibold text-foreground">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
             Pending Actions
-          </h2>
+          </span>
           {pendingRecommendations.length > 0 && (
-            <Badge
-              variant="outline"
-              className="bg-primary/20 text-primary border-primary/30"
-            >
+            <Badge variant="destructive" className="text-xs">
               {pendingRecommendations.length}
             </Badge>
           )}
         </div>
 
         {pendingRecommendations.length === 0 ? (
-          <Card className="p-8 border-border bg-card text-center">
-            <div
-              className="inline-flex p-3 rounded-full mb-3"
-              style={{ backgroundColor: "#7c6aad20" }}
-            >
-              <Bot className="w-6 h-6" style={{ color: "#7c6aad" }} />
+          <Card className="p-8 text-center">
+            <div className="inline-flex p-3 rounded-full mb-3 bg-[var(--color-mars-purple)]/20">
+              <Bot className="w-6 h-6 text-[var(--color-mars-purple)]" />
             </div>
             <p className="text-sm text-muted-foreground">
               No pending actions — agent is operating autonomously
@@ -360,63 +357,28 @@ export default function AgentPage() {
       {/* Activity Log */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-foreground">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
             Agent Activity Log
-          </h2>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={outcomeFilter === "ALL" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setOutcomeFilter("ALL")}
-              className={
-                outcomeFilter === "ALL"
-                  ? "bg-primary text-primary-foreground"
-                  : ""
-              }
-            >
-              ALL
-            </Button>
-            <Button
-              variant={outcomeFilter === "SUCCESS" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setOutcomeFilter("SUCCESS")}
-              className={
-                outcomeFilter === "SUCCESS"
-                  ? "bg-green-500 text-white hover:bg-green-600"
-                  : "border-green-500/30 text-green-400"
-              }
-            >
-              SUCCESS
-            </Button>
-            <Button
-              variant={outcomeFilter === "PENDING" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setOutcomeFilter("PENDING")}
-              className={
-                outcomeFilter === "PENDING"
-                  ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                  : "border-yellow-500/30 text-yellow-400"
-              }
-            >
-              PENDING
-            </Button>
-            <Button
-              variant={outcomeFilter === "FAILED" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setOutcomeFilter("FAILED")}
-              className={
-                outcomeFilter === "FAILED"
-                  ? "bg-red-500 text-white hover:bg-red-600"
-                  : "border-red-500/30 text-red-400"
-              }
-            >
-              FAILED
-            </Button>
+          </span>
+          <div className="flex items-center gap-1">
+            {filterButtons.map((btn) => (
+              <button
+                key={btn.value}
+                onClick={() => setOutcomeFilter(btn.value)}
+                className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+                  outcomeFilter === btn.value
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-border bg-card text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                {btn.label}
+              </button>
+            ))}
           </div>
         </div>
 
         {sortedLog.length === 0 ? (
-          <Card className="p-8 border-border bg-card text-center">
+          <Card className="p-8 text-center">
             <p className="text-sm text-muted-foreground">
               No activity log entries match the current filter
             </p>
