@@ -18,7 +18,7 @@ from src.models import (
     Metrics,
     ResourcePool,
     StoredFood,
-    Zone,
+    Slot,
 )
 
 
@@ -64,15 +64,21 @@ def default_resources() -> ResourcePool:
 
 
 @pytest.fixture
-def default_zone() -> Zone:
-    """Empty zone with default 15 m² area."""
-    return Zone(id=1, area_m2=config.ZONE_AREA_M2, crops=[])
+def default_slot() -> Slot:
+    """Empty slot with default 4 m² area."""
+    return Slot(id=0, row=0, col=0, area_m2=config.SLOT_AREA_M2, crops=[])
 
 
 @pytest.fixture
-def default_zones() -> list[Zone]:
-    """4 empty zones."""
-    return [Zone(id=i, area_m2=config.ZONE_AREA_M2, crops=[]) for i in range(1, 5)]
+def default_slots() -> list[Slot]:
+    """4 empty slots in a 2×2 grid."""
+    slots = []
+    slot_id = 0
+    for row in range(config.GREENHOUSE_ROWS):
+        for col in range(config.GREENHOUSE_COLS):
+            slots.append(Slot(id=slot_id, row=row, col=col, area_m2=config.SLOT_AREA_M2, crops=[]))
+            slot_id += 1
+    return slots
 
 
 @pytest.fixture
@@ -89,11 +95,11 @@ def empty_food_supply() -> FoodSupply:
 
 @pytest.fixture
 def sample_crop() -> Crop:
-    """A fresh potato crop in zone 1."""
+    """A fresh potato crop in slot 0."""
     return Crop(
-        id="crop_1_1",
+        id="crop_0_1",
         type="potato",
-        zone_id=1,
+        slot_id=0,
         footprint_m2=config.CROPS["potato"].footprint_m2,
         planted_day=0,
         age=0,
@@ -105,12 +111,12 @@ def sample_crop() -> Crop:
 
 
 @pytest.fixture
-def default_state(default_zones: list[Zone]) -> GreenhouseState:
-    """Initial simulation state with 4 empty zones."""
+def default_state(default_slots: list[Slot]) -> GreenhouseState:
+    """Initial simulation state with 4 empty slots."""
     return GreenhouseState(
         day=0,
         environment=Environment(),
-        zones=default_zones,
+        slots=default_slots,
         resources=ResourcePool(),
         food_supply=FoodSupply(),
         stored_food=StoredFood(),
@@ -126,9 +132,9 @@ def default_state(default_zones: list[Zone]) -> GreenhouseState:
 def populated_state() -> GreenhouseState:
     """State with crops, food, events — for serialization roundtrip tests."""
     potato = Crop(
-        id="crop_1_1",
+        id="crop_0_1",
         type="potato",
-        zone_id=1,
+        slot_id=0,
         footprint_m2=2.0,
         planted_day=10,
         age=45,
@@ -138,9 +144,9 @@ def populated_state() -> GreenhouseState:
         growth_cycle_days=90,
     )
     lettuce = Crop(
-        id="crop_2_1",
+        id="crop_1_1",
         type="lettuce",
-        zone_id=2,
+        slot_id=1,
         footprint_m2=0.5,
         planted_day=20,
         age=15,
@@ -149,12 +155,14 @@ def populated_state() -> GreenhouseState:
         active_stress="heat",
         growth_cycle_days=37,
     )
-    zone1 = Zone(id=1, area_m2=15.0, crops=[potato], artificial_light=True,
-                 water_allocation=1.0, crop_plan={"potato": 0.6, "beans_peas": 0.4})
-    zone2 = Zone(id=2, area_m2=15.0, crops=[lettuce], artificial_light=False,
-                 water_allocation=0.8, crop_plan={"lettuce": 1.0})
-    zone3 = Zone(id=3, area_m2=15.0, crops=[], crop_plan={})
-    zone4 = Zone(id=4, area_m2=15.0, crops=[], crop_plan={})
+    slot0 = Slot(id=0, row=0, col=0, area_m2=4.0, crops=[potato], artificial_light=True,
+                 water_allocation=1.0, crop_type="potato")
+    slot1 = Slot(id=1, row=0, col=1, area_m2=4.0, crops=[lettuce], artificial_light=False,
+                 water_allocation=0.8, crop_type="lettuce")
+    # Fill remaining slots empty (2×2 grid = 4 total)
+    slots = [slot0, slot1]
+    slots.append(Slot(id=2, row=1, col=0, area_m2=4.0, crops=[]))
+    slots.append(Slot(id=3, row=1, col=1, area_m2=4.0, crops=[]))
 
     food_supply = FoodSupply(items={
         "potato": FoodItem(kg=12.0, kcal=9240.0, protein_g=240.0),
@@ -181,7 +189,7 @@ def populated_state() -> GreenhouseState:
             energy_needed=38.0,
             energy_deficit=0.0,
         ),
-        zones=[zone1, zone2, zone3, zone4],
+        slots=slots,
         resources=ResourcePool(water=8423.0, nutrients=3891.0, water_availability=0.95),
         food_supply=food_supply,
         stored_food=StoredFood(remaining_calories=4_800_000.0),

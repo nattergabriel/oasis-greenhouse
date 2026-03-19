@@ -21,11 +21,11 @@ from . import config
 
 @dataclass
 class Crop:
-    """A single crop planting in a zone."""
+    """A single crop planting in a slot."""
 
     id: str
     type: str
-    zone_id: int
+    slot_id: int
     footprint_m2: float
     planted_day: int
     age: int = 0
@@ -42,18 +42,20 @@ class Crop:
 
 
 @dataclass
-class Zone:
-    """A greenhouse zone with area and crops."""
+class Slot:
+    """A 2×2m greenhouse slot in the grid."""
 
     id: int
-    area_m2: float = config.ZONE_AREA_M2
+    row: int = 0
+    col: int = 0
+    area_m2: float = config.SLOT_AREA_M2
+    crop_type: str | None = None
     crops: list[Crop] = field(default_factory=list)
     artificial_light: bool = True
     water_allocation: float = 1.0
-    crop_plan: dict[str, float] = field(default_factory=dict)
 
     def used_area(self) -> float:
-        """Total area occupied by crops in this zone."""
+        """Total area occupied by crops in this slot."""
         return sum(c.footprint_m2 for c in self.crops)
 
     def available_area(self) -> float:
@@ -201,7 +203,7 @@ class GreenhouseState:
 
     day: int = 0
     environment: Environment = field(default_factory=Environment)
-    zones: list[Zone] = field(default_factory=list)
+    slots: list[Slot] = field(default_factory=list)
     resources: ResourcePool = field(default_factory=ResourcePool)
     food_supply: FoodSupply = field(default_factory=FoodSupply)
     stored_food: StoredFood = field(default_factory=StoredFood)
@@ -221,7 +223,7 @@ def _crop_to_dict(crop: Crop) -> dict[str, Any]:
     return {
         "id": crop.id,
         "type": crop.type,
-        "zone_id": crop.zone_id,
+        "slot_id": crop.slot_id,
         "footprint_m2": crop.footprint_m2,
         "planted_day": crop.planted_day,
         "age": crop.age,
@@ -236,7 +238,7 @@ def _dict_to_crop(d: dict[str, Any]) -> Crop:
     return Crop(
         id=d["id"],
         type=d["type"],
-        zone_id=d["zone_id"],
+        slot_id=d["slot_id"],
         footprint_m2=d["footprint_m2"],
         planted_day=d["planted_day"],
         age=d["age"],
@@ -247,25 +249,29 @@ def _dict_to_crop(d: dict[str, Any]) -> Crop:
     )
 
 
-def _zone_to_dict(zone: Zone) -> dict[str, Any]:
+def _slot_to_dict(slot: Slot) -> dict[str, Any]:
     return {
-        "id": zone.id,
-        "area_m2": zone.area_m2,
-        "crops": [_crop_to_dict(c) for c in zone.crops],
-        "artificial_light": zone.artificial_light,
-        "water_allocation": zone.water_allocation,
-        "crop_plan": zone.crop_plan,
+        "id": slot.id,
+        "row": slot.row,
+        "col": slot.col,
+        "area_m2": slot.area_m2,
+        "crop_type": slot.crop_type,
+        "crops": [_crop_to_dict(c) for c in slot.crops],
+        "artificial_light": slot.artificial_light,
+        "water_allocation": slot.water_allocation,
     }
 
 
-def _dict_to_zone(d: dict[str, Any]) -> Zone:
-    return Zone(
+def _dict_to_slot(d: dict[str, Any]) -> Slot:
+    return Slot(
         id=d["id"],
+        row=d.get("row", 0),
+        col=d.get("col", 0),
         area_m2=d["area_m2"],
+        crop_type=d.get("crop_type"),
         crops=[_dict_to_crop(c) for c in d["crops"]],
         artificial_light=d["artificial_light"],
         water_allocation=d["water_allocation"],
-        crop_plan=d.get("crop_plan", {}),
     )
 
 
@@ -432,7 +438,7 @@ def state_to_dict(state: GreenhouseState) -> dict[str, Any]:
     return {
         "day": state.day,
         "environment": _environment_to_dict(state.environment),
-        "zones": [_zone_to_dict(z) for z in state.zones],
+        "slots": [_slot_to_dict(s) for s in state.slots],
         "resources": _resource_pool_to_dict(state.resources),
         "food_supply": _food_supply_to_dict(state.food_supply),
         "stored_food": _stored_food_to_dict(state.stored_food),
@@ -450,7 +456,7 @@ def dict_to_state(d: dict[str, Any]) -> GreenhouseState:
     return GreenhouseState(
         day=d["day"],
         environment=_dict_to_environment(d["environment"]),
-        zones=[_dict_to_zone(z) for z in d["zones"]],
+        slots=[_dict_to_slot(s) for s in d["slots"]],
         resources=_dict_to_resource_pool(d["resources"]),
         food_supply=_dict_to_food_supply(d["food_supply"]),
         stored_food=_dict_to_stored_food(d["stored_food"]),
@@ -471,9 +477,9 @@ class InitRequest(BaseModel):
     """Request to create initial simulation state."""
 
     seed: int = 42
-    zone_plans: dict[int, dict[str, float]] = Field(
+    crop_assignments: dict[int, str] = Field(
         default_factory=dict,
-        description="Zone ID → {crop_type: fraction}. Fractions should sum to ~1.0.",
+        description="Slot ID → crop_type. Assigns one crop type per slot.",
     )
 
 

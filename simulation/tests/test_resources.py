@@ -15,7 +15,7 @@ def _make_crop(crop_type: str) -> Crop:
     return Crop(
         id=f"test_{crop_type}",
         type=crop_type,
-        zone_id=1,
+        slot_id=1,
         footprint_m2=cfg.footprint_m2,
         planted_day=0,
         growth_cycle_days=cfg.growth_cycle_days,

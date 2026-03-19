@@ -9,10 +9,10 @@ from __future__ import annotations
 import math
 
 from . import config
-from .models import Environment, Zone
+from .models import Environment, Slot
 
 
-def update_environment(env: Environment, day: int, zones: list[Zone]) -> None:
+def update_environment(env: Environment, day: int, slots: list[Slot]) -> None:
     """Update environment for the given sol.
 
     Computes seasonal solar hours and outside temperature via sine curves,
@@ -22,7 +22,7 @@ def update_environment(env: Environment, day: int, zones: list[Zone]) -> None:
     Args:
         env: Environment state to mutate in place.
         day: Current mission day (1-450).
-        zones: List of zones (needed to count lit zones for energy cost).
+        slots: List of slots (needed to count lit slots for energy cost).
     """
     seasonal_angle = 2.0 * math.pi * day / config.MARTIAN_YEAR_SOLS
 
@@ -44,8 +44,8 @@ def update_environment(env: Environment, day: int, zones: list[Zone]) -> None:
     # Energy budget
     env.energy_generated = env.solar_hours * config.SOLAR_PANEL_EFFICIENCY
 
-    lit_zones = sum(1 for z in zones if z.artificial_light)
-    lighting_cost = lit_zones * config.LIGHTING_COST_PER_ZONE
+    lit_slots = sum(1 for s in slots if s.artificial_light)
+    lighting_cost = lit_slots * config.LIGHTING_COST_PER_SLOT
     heating_cost = config.HEATING_COST_FACTOR * (env.internal_temp - env.outside_temp)
     heating_cost = max(0.0, heating_cost)  # no cost if greenhouse is colder than outside
 

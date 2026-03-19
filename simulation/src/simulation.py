@@ -1,6 +1,6 @@
 """Simulation orchestrator: create initial state, run tick loop.
 
-Wires together environment, events, crops, zones, resources, and feeding
+Wires together environment, events, crops, slots, resources, and feeding
 into the day loop defined in SIMULATION-SPEC.md.
 """
 
@@ -33,12 +33,12 @@ from .models import (
     Metrics,
     ResourcePool,
     StoredFood,
-    Zone,
+    Slot,
     dict_to_state,
     state_to_dict,
 )
 from .resources import consume_resources, recycle_resources
-from .zones import auto_replant, fill_zone, set_zone_plan
+from .slots import auto_replant, fill_slot
 
 logger = logging.getLogger(__name__)
 
@@ -49,26 +49,31 @@ logger = logging.getLogger(__name__)
 
 def create_initial_state(
     seed: int = 42,
-    zone_plans: dict[int, dict[str, float]] | None = None,
+    crop_assignments: dict[int, str] | None = None,
 ) -> GreenhouseState:
     """Create the day-0 greenhouse state.
 
-    Greenhouse starts empty. If zone_plans are provided, zones are filled
-    with initial crops according to the plans.
+    Greenhouse is a 4×4 grid of 2×2m slots. If crop_assignments are provided,
+    slots are filled with the assigned crop types.
 
     Args:
         seed: RNG seed for deterministic simulation.
-        zone_plans: Optional {zone_id: {crop_type: fraction}} plans.
+        crop_assignments: Optional {slot_id: crop_type} assignments.
 
     Returns:
         Initial GreenhouseState ready for tick simulation.
     """
-    zones = [Zone(id=i, area_m2=config.ZONE_AREA_M2) for i in range(1, config.NUM_ZONES + 1)]
+    slots = []
+    slot_id = 0
+    for row in range(config.GREENHOUSE_ROWS):
+        for col in range(config.GREENHOUSE_COLS):
+            slots.append(Slot(id=slot_id, row=row, col=col, area_m2=config.SLOT_AREA_M2))
+            slot_id += 1
 
     state = GreenhouseState(
         day=0,
         environment=Environment(),
-        zones=zones,
+        slots=slots,
         resources=ResourcePool(),
         food_supply=FoodSupply(),
         stored_food=StoredFood(),
@@ -79,14 +84,14 @@ def create_initial_state(
         seed=seed,
     )
 
-    # Apply zone plans and initial fill
-    if zone_plans:
-        for zone in state.zones:
-            plan = zone_plans.get(zone.id)
-            if plan:
-                set_zone_plan(zone, plan)
-                new_crops, state.next_crop_id = fill_zone(
-                    zone, day=0, next_crop_id_counter=state.next_crop_id,
+    # Apply crop assignments and initial fill
+    if crop_assignments:
+        for slot in state.slots:
+            crop_type = crop_assignments.get(slot.id)
+            if crop_type and crop_type in config.CROPS:
+                slot.crop_type = crop_type
+                _, state.next_crop_id = fill_slot(
+                    slot, day=0, next_crop_id_counter=state.next_crop_id,
                 )
 
     return state
@@ -159,7 +164,9 @@ def _apply_single_action(
     warnings: list[str],
 ) -> None:
     """Apply a single agent action."""
-    if action_type == "plant":
+    if action_type == "set_crop":
+        _action_set_crop(action, state, warnings)
+    elif action_type == "plant":
         _action_plant(action, state, warnings)
     elif action_type == "harvest":
         _action_harvest(action, state, warnings)
@@ -171,43 +178,41 @@ def _apply_single_action(
         _action_light_toggle(action, state, warnings)
     elif action_type == "set_temperature":
         _action_set_temperature(action, state, warnings)
-    elif action_type == "set_zone_plan":
-        _action_set_zone_plan(action, state, warnings)
     else:
         warnings.append(f"Unknown action type: '{action_type}'")
 
 
-def _find_zone(state: GreenhouseState, zone_id: int) -> Zone | None:
-    for z in state.zones:
-        if z.id == zone_id:
-            return z
+def _find_slot(state: GreenhouseState, slot_id: int) -> Slot | None:
+    for s in state.slots:
+        if s.id == slot_id:
+            return s
     return None
 
 
 def _action_plant(action: dict, state: GreenhouseState, warnings: list[str]) -> None:
     crop_type = action.get("crop_type", "")
-    zone_id = action.get("zone_id")
-    zone = _find_zone(state, zone_id) if zone_id is not None else None
-    if zone is None:
-        warnings.append(f"plant: zone {zone_id} not found")
+    slot_id = action.get("slot_id")
+    slot = _find_slot(state, slot_id) if slot_id is not None else None
+    if slot is None:
+        warnings.append(f"plant: slot {slot_id} not found")
         return
-    if not zone.can_plant(crop_type):
-        warnings.append(f"plant: no space for '{crop_type}' in zone {zone_id}")
+    if not slot.can_plant(crop_type):
+        warnings.append(f"plant: no space for '{crop_type}' in slot {slot_id}")
         return
-    from .zones import create_crop
-    crop_id = f"crop_{zone_id}_{state.next_crop_id}"
-    crop = create_crop(crop_type, zone_id, state.day, crop_id)
+    from .slots import create_crop
+    crop_id = f"crop_{slot_id}_{state.next_crop_id}"
+    crop = create_crop(crop_type, slot_id, state.day, crop_id)
     if crop is None:
         warnings.append(f"plant: unknown crop type '{crop_type}'")
         return
-    zone.crops.append(crop)
+    slot.crops.append(crop)
     state.next_crop_id += 1
 
 
 def _action_harvest(action: dict, state: GreenhouseState, warnings: list[str]) -> None:
     crop_id = action.get("crop_id", "")
-    for zone in state.zones:
-        for crop in zone.crops:
+    for slot in state.slots:
+        for crop in slot.crops:
             if crop.id == crop_id:
                 if not is_harvestable(crop):
                     warnings.append(f"harvest: crop {crop_id} not ready")
@@ -215,39 +220,39 @@ def _action_harvest(action: dict, state: GreenhouseState, warnings: list[str]) -
                 food = harvest_crop(crop)
                 _add_food_to_supply(state.food_supply, crop.type, food)
                 state.metrics.total_harvested_kg += food.kg
-                zone.crops.remove(crop)
+                slot.crops.remove(crop)
                 return
     warnings.append(f"harvest: crop {crop_id} not found")
 
 
 def _action_remove(action: dict, state: GreenhouseState, warnings: list[str]) -> None:
     crop_id = action.get("crop_id", "")
-    for zone in state.zones:
-        for crop in zone.crops:
+    for slot in state.slots:
+        for crop in slot.crops:
             if crop.id == crop_id:
-                zone.crops.remove(crop)
+                slot.crops.remove(crop)
                 return
     warnings.append(f"remove: crop {crop_id} not found")
 
 
 def _action_water_adjust(action: dict, state: GreenhouseState, warnings: list[str]) -> None:
-    zone_id = action.get("zone_id")
+    slot_id = action.get("slot_id")
     multiplier = action.get("multiplier", 1.0)
-    zone = _find_zone(state, zone_id) if zone_id is not None else None
-    if zone is None:
-        warnings.append(f"water_adjust: zone {zone_id} not found")
+    slot = _find_slot(state, slot_id) if slot_id is not None else None
+    if slot is None:
+        warnings.append(f"water_adjust: slot {slot_id} not found")
         return
-    zone.water_allocation = max(0.0, min(1.5, float(multiplier)))
+    slot.water_allocation = max(0.0, min(1.5, float(multiplier)))
 
 
 def _action_light_toggle(action: dict, state: GreenhouseState, warnings: list[str]) -> None:
-    zone_id = action.get("zone_id")
+    slot_id = action.get("slot_id")
     on = action.get("on", True)
-    zone = _find_zone(state, zone_id) if zone_id is not None else None
-    if zone is None:
-        warnings.append(f"light_toggle: zone {zone_id} not found")
+    slot = _find_slot(state, slot_id) if slot_id is not None else None
+    if slot is None:
+        warnings.append(f"light_toggle: slot {slot_id} not found")
         return
-    zone.artificial_light = bool(on)
+    slot.artificial_light = bool(on)
 
 
 def _action_set_temperature(action: dict, state: GreenhouseState, warnings: list[str]) -> None:
@@ -258,14 +263,23 @@ def _action_set_temperature(action: dict, state: GreenhouseState, warnings: list
     state.environment.target_temp = float(target)
 
 
-def _action_set_zone_plan(action: dict, state: GreenhouseState, warnings: list[str]) -> None:
-    zone_id = action.get("zone_id")
-    plan = action.get("plan", {})
-    zone = _find_zone(state, zone_id) if zone_id is not None else None
-    if zone is None:
-        warnings.append(f"set_zone_plan: zone {zone_id} not found")
+def _action_set_crop(action: dict, state: GreenhouseState, warnings: list[str]) -> None:
+    slot_id = action.get("slot_id")
+    crop_type = action.get("crop_type", "")
+    slot = _find_slot(state, slot_id) if slot_id is not None else None
+    if slot is None:
+        warnings.append(f"set_crop: slot {slot_id} not found")
         return
-    set_zone_plan(zone, plan)
+    if crop_type and crop_type not in config.CROPS:
+        warnings.append(f"set_crop: unknown crop type '{crop_type}'")
+        return
+    # Clear existing crops and assign new type
+    slot.crops.clear()
+    slot.crop_type = crop_type or None
+    if slot.crop_type:
+        _, state.next_crop_id = fill_slot(
+            slot, state.day, state.next_crop_id,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -349,8 +363,8 @@ def _check_threshold_breaches(state: GreenhouseState) -> dict[str, Any] | None:
     Returns stop_reason dict if a breach is found, None otherwise.
     """
     # Crop health below threshold
-    for zone in state.zones:
-        for crop in zone.crops:
+    for slot in state.slots:
+        for crop in slot.crops:
             if crop.health < config.EARLY_STOP_CROP_HEALTH_THRESHOLD:
                 return {
                     "type": "threshold_breach",
@@ -460,7 +474,7 @@ def simulate_tick(
             day_log["water_remaining"] = state.resources.water
             day_log["stored_food_remaining"] = state.stored_food.remaining_calories
             day_log["active_events"] = [e.type for e in state.active_events]
-            day_log["crop_count"] = sum(len(z.crops) for z in state.zones)
+            day_log["crop_count"] = sum(len(s.crops) for s in state.slots)
             daily_logs.append(day_log)
             days_simulated += 1
             stopped_early = True
@@ -476,7 +490,7 @@ def simulate_tick(
         apply_events(state.active_events, state.environment, state.resources)
 
         # -- 3. Update environment (seasonal, energy budget) --
-        update_environment(state.environment, day, state.zones)
+        update_environment(state.environment, day, state.slots)
 
         # -- 4. Track energy deficit streak --
         if state.environment.energy_deficit > 0:
@@ -485,58 +499,58 @@ def simulate_tick(
             state.consecutive_energy_deficit_days = 0
 
         # -- 5. Compute global water availability --
-        all_crops = [c for z in state.zones for c in z.crops]
+        all_crops = [c for s in state.slots for c in s.crops]
         state.resources.water_availability = compute_water_availability(
             state.resources, all_crops,
         )
 
         # -- 6. Grow crops + detect/apply stress --
-        for zone in state.zones:
-            for crop in zone.crops:
-                grow_crop(crop, state.environment, state.resources, zone)
+        for slot in state.slots:
+            for crop in slot.crops:
+                grow_crop(crop, state.environment, state.resources, slot)
                 crop.active_stress = detect_stress(
-                    crop, state.environment, state.resources, zone,
+                    crop, state.environment, state.resources, slot,
                 )
                 apply_stress(crop)
 
         # -- 7. Remove dead crops + auto-replant --
-        for zone in state.zones:
-            dead = [c for c in zone.crops if is_dead(c)]
+        for slot in state.slots:
+            dead = [c for c in slot.crops if is_dead(c)]
             for crop in dead:
-                zone.crops.remove(crop)
+                slot.crops.remove(crop)
                 state.metrics.crops_lost += 1
                 day_log["deaths"].append({"id": crop.id, "type": crop.type,
                                           "stress": crop.active_stress})
                 new_crop, state.next_crop_id = auto_replant(
-                    zone, crop.type, day, state.next_crop_id,
+                    slot, crop.type, day, state.next_crop_id,
                 )
 
         # -- 8. Resources: consume + recycle --
-        all_crops = [c for z in state.zones for c in z.crops]
+        all_crops = [c for s in state.slots for c in s.crops]
         consume_resources(state.resources, all_crops)
         recycle_resources(state.resources, all_crops)
 
         # -- 9. Auto-harvest + auto-replant --
-        for zone in state.zones:
-            harvestable = [c for c in zone.crops if is_harvestable(c)]
+        for slot in state.slots:
+            harvestable = [c for c in slot.crops if is_harvestable(c)]
             for crop in harvestable:
                 food = harvest_crop(crop)
                 _add_food_to_supply(state.food_supply, crop.type, food)
                 state.metrics.total_harvested_kg += food.kg
-                zone.crops.remove(crop)
+                slot.crops.remove(crop)
                 day_log["harvests"].append({
                     "id": crop.id, "type": crop.type,
                     "kg": food.kg, "kcal": food.kcal,
                 })
                 new_crop, state.next_crop_id = auto_replant(
-                    zone, crop.type, day, state.next_crop_id,
+                    slot, crop.type, day, state.next_crop_id,
                 )
 
-        # -- 10. Fill any unfilled zones --
-        for zone in state.zones:
-            if zone.crop_plan and zone.available_area() > 0:
-                new_crops, state.next_crop_id = fill_zone(
-                    zone, day, state.next_crop_id,
+        # -- 10. Fill any unfilled slots --
+        for slot in state.slots:
+            if slot.crop_type and slot.available_area() > 0:
+                _, state.next_crop_id = fill_slot(
+                    slot, day, state.next_crop_id,
                 )
 
         # -- 11. Feed crew --
@@ -560,7 +574,7 @@ def simulate_tick(
         day_log["water_remaining"] = state.resources.water
         day_log["stored_food_remaining"] = state.stored_food.remaining_calories
         day_log["active_events"] = [e.type for e in state.active_events]
-        day_log["crop_count"] = sum(len(z.crops) for z in state.zones)
+        day_log["crop_count"] = sum(len(s.crops) for s in state.slots)
 
         daily_logs.append(day_log)
         days_simulated += 1

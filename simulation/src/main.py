@@ -29,11 +29,11 @@ app = FastAPI(
 def init_simulation(request: InitRequest) -> SimulationResponse:
     """Create initial simulation state.
 
-    Optionally provide zone_plans to pre-fill zones with crops on day 0.
+    Optionally provide crop_assignments to pre-fill slots with crops on day 0.
     """
     state = create_initial_state(
         seed=request.seed,
-        zone_plans=request.zone_plans if request.zone_plans else None,
+        crop_assignments=request.crop_assignments if request.crop_assignments else None,
     )
     return SimulationResponse(
         state=state_to_dict(state),
