@@ -4,6 +4,7 @@ import { useId } from "react";
 import { useSimulation } from "@/providers/simulation-provider";
 import { emptyWeather } from "@/lib/defaults";
 import { api, useApi } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { PlantSlot } from "@/lib/types";
 
 // Unique SVG IDs per instance to avoid clashes when rendered multiple times
@@ -258,7 +259,7 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   const detail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), null, [ghId], !hydrated);
   const weather = useApi(() => api.weather.current(), emptyWeather);
 
-  if (!detail) return null;
+  if (!detail) return <Skeleton className="h-full min-h-[220px] rounded-lg" />;
 
   const viewW = 480;
   const viewH = compact ? 220 : 280;
