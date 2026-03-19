@@ -1,6 +1,7 @@
 package com.example.managementbackend.domain;
 
 import com.example.managementbackend.model.enums.GreenhouseStatus;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,5 +33,6 @@ public class Greenhouse {
     private Instant createdAt;
 
     @OneToMany(mappedBy = "greenhouse", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<PlantSlot> slots = new ArrayList<>();
 }
