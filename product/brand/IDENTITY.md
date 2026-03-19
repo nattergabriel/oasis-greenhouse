@@ -1,6 +1,7 @@
 # Brand Identity — Terra Nova
 
-> Design system for presentation, frontend, and all project materials.
+> **Final design system for presentation, frontend, and all project materials.**
+> Updated: Day 2 — post design audit + mentor feedback.
 
 ---
 
@@ -13,60 +14,47 @@
 
 ## Design Philosophy
 
-We blend two worlds: the harsh, futuristic reality of Mars with the organic, grounded nature of agriculture. The design must feel scientifically credible but approachable — matching Syngenta's own brand philosophy of making complex technology feel human.
+**Cinematic realism meets clean data.** We draw directly from the Syngenta/AWS enablement session's visual language: photorealistic Mars greenhouse imagery for emotional hero moments, paired with clean dark layouts for data and architecture slides.
 
-**Dark theme (primary):** For the presentation and dashboard. Mars night sky with terracotta accents.
-**Light accents:** Agricultural greens for growth indicators and health states.
+Two modes:
+- **Cinematic slides** (1, 5, 7): Full-bleed Mars greenhouse imagery, atmospheric, emotional. Dark starry sky blending into red Martian terrain with green plants visible inside a dome. This image *is* the brand — it bridges Mars and agriculture without needing to choose between orange and green.
+- **Content slides** (2, 3, 4, 6): Dark navy backgrounds with card panels. Clean, structured, readable. Green accents for life/growth, terracotta for Mars/alerts.
 
 ---
 
 ## Color Palette
 
-### Primary palette (Mars dark theme)
+### Core palette (4 colors + 2 text)
 
 | Role | Color | Hex | Usage |
 |------|-------|-----|-------|
-| Background Deep | Royal Dark Blue | `#070B34` | Deepest background, slide base |
-| Background Card | Blue Zodiac | `#102849` | Cards, panels, modular content |
-| Surface Elevated | Champion Blue | `#161B36` | Navigation, modals, elevated surfaces |
-| Accent Primary | Terracotta | `#E2725B` | Primary CTA buttons, key highlights |
-| Accent Warning | Rust Orange | `#B7410E` | Warning states, critical thresholds |
-| Accent Data | Vibrant Orange | `#FDA600` | Data peaks, chart highlights |
-| Text Primary | Pale Martian | `#F0E7E7` | Primary text (off-white, no halation) |
-| Text Secondary | Muted Lavender | `#A0A0C0` | Secondary text, captions |
+| **Background** | Dark Navy | `#0A1628` | Content slide backgrounds, primary canvas |
+| **Card / Panel** | Slate Blue | `#122240` | Cards, panels, elevated content areas |
+| **Primary accent** | Greenhouse Green | `#4CAF50` | Brand color. Logo, headlines, positive metrics, KB indicators, growth |
+| **Secondary accent** | Terracotta | `#E2725B` | Mars references, key data highlights, alerts, CTA buttons |
+| **Text primary** | Off-white | `#F0E7E7` | All primary text |
+| **Text muted** | Muted Lavender | `#A0A0C0` | Captions, secondary text, labels |
 
-### Biological indicators (agriculture accents)
+### Extended palette (dashboard / charts only)
 
-| Role | Color | Hex | Usage |
-|------|-------|-----|-------|
-| Growth/Healthy | Chlorophyll | `#6B911B` | Healthy crop states, positive metrics |
-| Secondary Bio | Desert Aloe | `#A9B8A8` | Inactive states, borders, secondary elements |
-| Crop Health Good | Garlic Green | `#869F39` | Progress bars, growth indicators |
+| Role | Color | Hex |
+|------|-------|-----|
+| Data highlight | `#FDA600` |
+| Alert/warning | `#B7410E` |
+| Muted green | `#A9B8A8` |
+| Syngenta Blue | `#36398E` |
+| Syngenta Green | `#009F3C` |
 
-### Syngenta alignment
-
-| Syngenta Color | Hex | How we reference it |
-|---|---|---|
-| King Blue | `#36398E` | Used subtly in gradient overlays and "powered by" sections |
-| Super Green | `#009F3C` | Used in Syngenta logo placement and KB reference indicators |
-
-### CSS Variables
+### CSS Variables (for frontend)
 
 ```css
 :root {
-  --bg-deep: #070B34;
-  --bg-card: #102849;
-  --bg-surface: #161B36;
-  --accent-primary: #E2725B;
-  --accent-warning: #B7410E;
-  --accent-data: #FDA600;
+  --bg-deep: #0A1628;
+  --bg-card: #122240;
+  --accent-green: #4CAF50;
+  --accent-terra: #E2725B;
   --text-primary: #F0E7E7;
-  --text-secondary: #A0A0C0;
-  --bio-healthy: #6B911B;
-  --bio-secondary: #A9B8A8;
-  --bio-growth: #869F39;
-  --syngenta-blue: #36398E;
-  --syngenta-green: #009F3C;
+  --text-muted: #A0A0C0;
 }
 ```
 
@@ -76,74 +64,124 @@ We blend two worlds: the harsh, futuristic reality of Mars with the organic, gro
 
 ### Font pairing: Space Grotesk + Inter
 
-| Role | Font | Weight | Usage |
-|------|------|--------|-------|
-| Display / Headings | Space Grotesk | Bold (700) | Slide titles, section headers, big numbers |
-| Subheadings | Space Grotesk | Semi-bold (600) | Card titles, labels, metric names |
-| Body text | Inter | Regular (400) | Paragraphs, descriptions, explanations |
-| Data / Mono | Space Mono | Regular (400) | Code blocks, data values, terminal output |
-| Small / Caption | Inter | Regular (400), 12px | Axis labels, timestamps, footnotes |
-
-**Why this pairing:**
-- Space Grotesk: mechanical, slightly quirky geometric sans-serif. Based on Space Mono. Feels technical and futuristic without being unreadable. Perfect for Mars/space-tech.
-- Inter: the standard for UI data presentation. Tall x-height, clinical geometry, zero ambiguity for numbers. Lets the data speak.
-
-**Google Fonts import:**
-```css
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
-```
+| Role | Font | Weight | Size (slides) |
+|------|------|--------|---------------|
+| Hero numbers | Space Grotesk | Bold (700) | 72pt+ |
+| Slide titles | Space Grotesk | Bold (700) | 36-44pt |
+| Section labels | Space Grotesk | Semi-bold (600) | 12pt, UPPERCASE, letter-spaced |
+| Body text | Inter | Regular (400) | 16-20pt |
+| Captions | Inter | Regular (400) | 10-12pt |
+| Data / Mono | Space Mono | Regular (400) | 14pt |
 
 ---
 
-## Slide Design Guidelines (for Figma / PowerPoint)
+## Logo
 
-### Layout rules
-- **Dark backgrounds only** for slides — never white
-- **One idea per slide** — no walls of text
-- **Big numbers** in Space Grotesk Bold, 72pt+ — let data breathe
-- **Minimal text** — 3-5 bullet points max per slide, short phrases not sentences
-- **Full-bleed images** where possible — Mars landscape, greenhouse visualization
-- **Consistent margins** — 80px from edges in Figma
+"TERRA NOVA" in Space Grotesk Bold, all caps, generous letter-spacing. Small stylized leaf icon to the left in Greenhouse Green (#4CAF50).
 
-### Visual hierarchy
-1. **Hero number or visual** — the first thing the eye sees
-2. **Headline** — Space Grotesk Bold, 1 line
-3. **Supporting text** — Inter Regular, 2-3 lines max
-4. **Source/footnote** — Inter 12px, text-secondary color
+Variants: green text on dark, white text on image. Leaf always green.
 
-### Charts and data
-- Use terracotta (#E2725B) for primary data series
-- Use chlorophyll (#6B911B) for growth/positive metrics
-- Use vibrant orange (#FDA600) for secondary data or peaks
-- Background of charts: Blue Zodiac (#102849)
-- Grid lines: very subtle, 10% opacity white
-- Labels: Inter 12px, text-secondary
+---
 
-### Logo placement
-- Our logo (if we make one): top-left of first and last slide
-- Syngenta + AWS logos: bottom of tech stack slide and last slide
-- "Powered by Syngenta Knowledge Base + AWS Bedrock": small text near logos
+## Slide-by-slide spec
+
+### SLIDE 1 — Hook (Mode A: Cinematic)
+- Background: Mars greenhouse hero image (round dome, 4×4 grid visible, red terrain, starry sky)
+- Left side: dark gradient overlay for text readability
+- "4 astronauts. 450 days. One greenhouse." — 38-42pt, off-white
+- "Can an AI agent learn to keep them fed — and transform how we grow food on Earth?" — 20pt, muted
+- TERRA NOVA logo bottom-left, tagline in italic
+
+### SLIDE 2 — The Challenge (Mode B: Content)
+- Section label: "THE CHALLENGE" in green
+- Headline: "An extreme test for agriculture — on Mars and Earth"
+- Two cards side by side:
+  - Left: "MARS CONSTRAINTS" (terracotta) — temp, water, energy, crew data with icons
+  - Right: "SYNGENTA KNOWLEDGE BASE" (green) — 7 domains, 5 crops, 7 stress types, 7 micronutrients
+- Bottom italic: "Pre-packaged food degrades. The greenhouse isn't a luxury — it's a lifeline."
+
+### SLIDE 3 — The AI Agent (Mode B: Content) ⭐ KEY SLIDE — UPDATED
+- Section label: "THE AI AGENT" in green
+- Headline: "An autonomous agent that learns to farm"
+- **System architecture diagram** (not just a process flow):
+
+```
+┌──────────────── AWS Cloud (Bedrock + AgentCore) ────────────────┐
+│                                                                   │
+│   Syngenta MCP KB ──→ ┌──────────────────────────┐              │
+│   (via AgentCore)      │      AI AGENT LOOP       │              │
+│                        │  PLAN → SIMULATE → REACT  │ ←── Simulation
+│   Strategy Doc ──────→ │         ↓                 │     Engine
+│   (persistent,         │       LEARN               │    (env data)
+│    evolves) ←──────────│   ↗ "strategy improves"   │              │
+│                        └──────────────────────────┘              │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+  - **AWS Cloud** as a wrapper around the entire system (AWS logo visible)
+  - **Three data sources** feeding the agent: Syngenta MCP KB (static knowledge, via AgentCore), Strategy Document (learned knowledge, persistent), Simulation Engine (environment data)
+  - **Learning loop arrow** from LEARN back to Strategy Document back to PLAN — with subtle label "strategy improves each run"
+  - The diagram communicates: AWS deployment, data flow, self-learning, and the complete architecture in one visual
+
+- Below diagram: 2-column feature strip:
+  - "KB-Grounded" — every decision backed by Syngenta's 7-domain Knowledge Base
+  - "Self-Improving" — strategy document evolves with each mission
+
+### SLIDE 4 — Demo Video (Mode C: Demo)
+- "LIVE DEMO" title card or switch directly to video
+- Dashboard showing circular greenhouse + 4×4 grid
+- Narrate: mission start → crop growth → crisis → resolution → final metrics
+
+### SLIDE 5 — Mars to Earth (Mode A: Cinematic)
+- Background: Mars-to-Earth transition image
+- Headline: "The same technology powers a $108B industry"
+- Big numbers: "$108B → $420B" (CEA) + "$9.6B / 19.3% CAGR" (vertical farming)
+- Callout box: "What's missing is the autonomous decision layer. Train in simulation. Deploy to real environments."
+
+### SLIDE 6 — Tech Stack & What's Next (Mode B: Content)
+- Section label: "DEPLOYED ON AWS" in green (not just "BUILT WITH")
+- Left: tech stack cards with **AWS prominently branded**:
+  - AWS Bedrock — Claude Sonnet for agent decisions
+  - AWS AgentCore Gateway — Syngenta MCP Knowledge Base
+  - LangGraph — Agent decision loop
+  - Simulation Engine — Stateless FastAPI, 192 tests
+  - Next.js + shadcn — Real-time dashboard
+- Right: "WHAT'S NEXT" timeline (NOW → 1-3 MO → 4-8 MO)
+- Syngenta + AWS logos prominent at bottom
+
+### SLIDE 7 — Close (Mode A: Cinematic)
+- Background: Mars greenhouse image (variant or interior view)
+- "TERRA NOVA" centered, 52pt, off-white
+- "An AI that learns to farm on Mars — and brings that intelligence back to Earth."
+- Tagline in green italic
+- Team names, Syngenta + AWS logos
+
+---
+
+## Demo Video Concept
+
+60-90 seconds. Cinematic mission briefing → dashboard → crisis → results.
+
+- 0:00-0:10: Epic music. "Mars Surface Mission — Day 1."
+- 0:10-0:30: Agent assigns crops, fast-forward growth
+- 0:30-0:50: Crisis. Agent reacts with KB guidance.
+- 0:50-1:10: Day 450 results. Mission complete.
+- 1:10-1:20: TERRA NOVA logo.
+
+---
+
+## Image Assets Needed
+
+| Asset | Source | Used on |
+|---|---|---|
+| Mars dome greenhouse | Midjourney | Slides 1, 7 |
+| Mars-to-Earth transition | Midjourney | Slide 5 |
+| Dashboard screenshot | Running frontend | Slide 4 / video |
+| TERRA NOVA logo | Build in Figma | All slides |
+| Syngenta + AWS logos | Brand assets | Slides 6, 7 |
 
 ---
 
 ## Tone & Voice
 
-| Attribute | Our voice |
-|-----------|-----------|
-| Formality | Professional but not corporate. Scientific but accessible. |
-| Energy | Confident, forward-looking, grounded in data. |
-| Personality | "Smart scientist who can explain complex things simply." |
-| We say | "AI that learns to farm" not "machine learning optimization pipeline" |
-| We avoid | Jargon overload. "Neural networks." "Algorithmic optimization." (Per IPSOS: this triggers resistance.) |
-
----
-
-## Assets Checklist
-
-- [ ] Slide deck (Figma or PowerPoint), 7 slides
-- [ ] Project logo / wordmark (text-based is fine)
-- [ ] Color palette exported as CSS variables
-- [ ] Font imports ready
-- [ ] Syngenta + AWS partner logos for credit slide
-- [ ] Demo screenshots / recording as backup
-- [ ] Architecture diagram (clean, for slide 3)
+Professional but not corporate. Scientific but accessible. "Smart scientist who explains complex things simply." We say "AI that learns to farm" not "machine learning optimization pipeline."
