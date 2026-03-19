@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { useSimulation } from "@/providers/simulation-provider";
 import { mockGreenhouseDetails, mockWeather } from "@/lib/mock-data";
+import { api, useApi } from "@/lib/api";
 import type { PlantSlot } from "@/lib/types";
 
 // Unique SVG IDs per instance to avoid clashes when rendered multiple times
@@ -254,8 +255,8 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   const instId = useInstanceId();
   const { state } = useSimulation();
   const ghId = state.selectedGreenhouseId ?? state.greenhouses[0]?.id;
-  const detail = ghId ? mockGreenhouseDetails[ghId] : null;
-  const weather = mockWeather;
+  const detail = useApi(() => ghId ? api.greenhouses.get(ghId) : Promise.resolve(null), ghId ? mockGreenhouseDetails[ghId] ?? null : null, [ghId]);
+  const weather = useApi(() => api.weather.current(), mockWeather);
 
   if (!detail) return null;
 

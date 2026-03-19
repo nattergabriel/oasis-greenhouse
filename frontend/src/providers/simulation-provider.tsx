@@ -11,11 +11,13 @@ import {
 import type { SimulationState } from "@/lib/types";
 import { initialSimulationState } from "@/lib/mock-data";
 import { simulationTick } from "@/lib/simulation";
+import { api } from "@/lib/api";
 
 type Action =
   | { type: "SET_SPEED"; speed: 0 | 1 | 10 }
   | { type: "TICK" }
-  | { type: "SELECT_GREENHOUSE"; id: string | null };
+  | { type: "SELECT_GREENHOUSE"; id: string | null }
+  | { type: "HYDRATE"; state: Partial<SimulationState> };
 
 interface SimulationContextValue {
   state: SimulationState;
@@ -39,6 +41,8 @@ function simulationReducer(
       return simulationTick(state);
     case "SELECT_GREENHOUSE":
       return { ...state, selectedGreenhouseId: action.id };
+    case "HYDRATE":
+      return { ...state, ...action.state };
     default:
       return state;
   }
@@ -49,6 +53,56 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     simulationReducer,
     initialSimulationState
   );
+
+  // Hydrate from API on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function hydrate() {
+      try {
+        const [ghList, weather, alertsRes, logRes, recsRes, timeline] = await Promise.all([
+          api.greenhouses.list(),
+          api.weather.current(),
+          api.alerts.list(),
+          api.agent.log(),
+          api.agent.recommendations(),
+          api.forecast.missionTimeline(),
+        ]);
+
+        if (cancelled) return;
+
+        const greenhouses = ghList.greenhouses;
+        const selectedId = greenhouses[0]?.id ?? null;
+
+        // Fetch detail for the first greenhouse to get resources
+        let resources = initialSimulationState.resources;
+        if (selectedId) {
+          try {
+            const detail = await api.greenhouses.get(selectedId);
+            resources = detail.resources;
+          } catch {}
+        }
+
+        dispatch({
+          type: "HYDRATE",
+          state: {
+            greenhouses,
+            selectedGreenhouseId: selectedId,
+            weather,
+            alerts: alertsRes.alerts,
+            agentLog: logRes.entries,
+            recommendations: recsRes.recommendations,
+            resources,
+            currentMissionDay: timeline.currentMissionDay,
+            totalMissionDays: timeline.totalMissionDays,
+          },
+        });
+      } catch {
+        // API unavailable — keep mock data
+      }
+    }
+    hydrate();
+    return () => { cancelled = true; };
+  }, []);
 
   const tick = useCallback(() => {
     dispatch({ type: "TICK" });

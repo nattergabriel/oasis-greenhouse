@@ -8,6 +8,7 @@ import {
   mockSensorSnapshot,
   mockSensorHistory,
 } from "@/lib/mock-data";
+import { api, useApi } from "@/lib/api";
 import { GreenhouseCrossSection } from "@/components/greenhouse-cross-section";
 import type { PlantSlot, SensorStatus } from "@/lib/types";
 import {
@@ -77,7 +78,7 @@ export default function GreenhousePage() {
     );
   }
 
-  const greenhouseDetail = mockGreenhouseDetails[selectedGhId];
+  const greenhouseDetail = useApi(() => api.greenhouses.get(selectedGhId), mockGreenhouseDetails[selectedGhId], [selectedGhId]);
   if (!greenhouseDetail) {
     return (
       <div className="mx-auto max-w-7xl space-y-4">
@@ -90,6 +91,9 @@ export default function GreenhousePage() {
       </div>
     );
   }
+
+  const sensors = useApi(() => api.greenhouses.sensorsLatest(selectedGhId), mockSensorSnapshot, [selectedGhId]);
+  const sensorHistory = useApi(() => api.greenhouses.sensorsHistory(selectedGhId, { from: "", to: "", interval: "1h" }).then(r => r.readings), mockSensorHistory, [selectedGhId]);
 
   const { name, rows, cols, slots, resources } = greenhouseDetail;
 
@@ -176,12 +180,12 @@ export default function GreenhousePage() {
           Environmental Sensors
         </span>
         <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          <SensorGauge label="Temperature" value={mockSensorSnapshot.temperature.value} unit="°C" status={mockSensorSnapshot.temperature.status} icon={<Thermometer className="h-4 w-4" />} history={mockSensorHistory.map((h) => h.temperature)} />
-          <SensorGauge label="Humidity" value={mockSensorSnapshot.humidity.value} unit="% RH" status={mockSensorSnapshot.humidity.status} icon={<Droplet className="h-4 w-4" />} history={mockSensorHistory.map((h) => h.humidity)} />
-          <SensorGauge label="CO₂" value={mockSensorSnapshot.co2.value} unit="ppm" status={mockSensorSnapshot.co2.status} icon={<Wind className="h-4 w-4" />} history={mockSensorHistory.map((h) => h.co2)} />
-          <SensorGauge label="PAR" value={mockSensorSnapshot.par.value} unit="µmol" status={mockSensorSnapshot.par.status} icon={<Leaf className="h-4 w-4" />} history={mockSensorHistory.map((h) => h.par)} />
-          <SensorGauge label="pH" value={mockSensorSnapshot.nutrientSolution.ph.value} unit="" status={mockSensorSnapshot.nutrientSolution.ph.status} icon={<Beaker className="h-4 w-4" />} history={mockSensorHistory.map((h) => h.nutrientSolutionPh)} />
-          <SensorGauge label="EC" value={mockSensorSnapshot.nutrientSolution.ec.value} unit="mS/cm" status={mockSensorSnapshot.nutrientSolution.ec.status} icon={<Zap className="h-4 w-4" />} history={mockSensorHistory.map((h) => h.nutrientSolutionEc)} />
+          <SensorGauge label="Temperature" value={sensors.temperature.value} unit="°C" status={sensors.temperature.status} icon={<Thermometer className="h-4 w-4" />} history={sensorHistory.map((h) => h.temperature)} />
+          <SensorGauge label="Humidity" value={sensors.humidity.value} unit="% RH" status={sensors.humidity.status} icon={<Droplet className="h-4 w-4" />} history={sensorHistory.map((h) => h.humidity)} />
+          <SensorGauge label="CO₂" value={sensors.co2.value} unit="ppm" status={sensors.co2.status} icon={<Wind className="h-4 w-4" />} history={sensorHistory.map((h) => h.co2)} />
+          <SensorGauge label="PAR" value={sensors.par.value} unit="µmol" status={sensors.par.status} icon={<Leaf className="h-4 w-4" />} history={sensorHistory.map((h) => h.par)} />
+          <SensorGauge label="pH" value={sensors.nutrientSolution.ph.value} unit="" status={sensors.nutrientSolution.ph.status} icon={<Beaker className="h-4 w-4" />} history={sensorHistory.map((h) => h.nutrientSolutionPh)} />
+          <SensorGauge label="EC" value={sensors.nutrientSolution.ec.value} unit="mS/cm" status={sensors.nutrientSolution.ec.status} icon={<Zap className="h-4 w-4" />} history={sensorHistory.map((h) => h.nutrientSolutionEc)} />
         </div>
       </Card>
 
