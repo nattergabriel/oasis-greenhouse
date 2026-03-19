@@ -56,8 +56,7 @@ function CropIcon({ name, size = "sm" }: { name: string; size?: "sm" | "lg" }) {
 
 function getGrowthColor(percent: number): string {
   if (percent >= 85) return "#4ead6b";
-  if (percent >= 67) return "#4a7c9e";
-  if (percent >= 34) return "#d4aa30";
+  if (percent >= 50) return "#d4aa30";
   return "#c75a3a";
 }
 
@@ -75,31 +74,30 @@ function CropCard({ crop, isExpanded, onToggle }: { crop: Crop; isExpanded: bool
       }`}
       onClick={onToggle}
     >
-      {/* Main row: [Icon area 1/3] [Text area 2/3] */}
-      <div className="flex">
-        {/* Large icon panel — 1/3 width */}
-        <div
-          className="w-1/3 shrink-0 flex items-center justify-center min-h-[80px]"
-          style={{ backgroundColor: cropColor + "14" }}
-        >
-          <CropIcon name={name} size="lg" />
-        </div>
-        {/* Text + category + chevron — 2/3 width */}
-        <div className="flex-1 min-w-0 p-3 flex flex-col justify-center">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <span
-                className="inline-flex items-center rounded-md border px-2.5 py-1 text-sm font-medium"
-                style={{ borderColor: catColor + "60", color: catColor }}
-              >
-                {name}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{category}</span>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
-            </div>
+      {/* Main row: 3-col grid aligned with bottom stats */}
+      <div className="grid grid-cols-3 items-center">
+        {/* Col 1: Icon — aligns with Protein */}
+        <div className="flex items-center justify-center p-3">
+          <div
+            className="w-full h-full rounded-lg flex items-center justify-center min-h-[56px]"
+            style={{ backgroundColor: cropColor + "14" }}
+          >
+            <CropIcon name={name} size="lg" />
           </div>
+        </div>
+        {/* Col 2: Crop name — aligns with Carbs */}
+        <div className="flex items-center justify-center">
+          <span
+            className="inline-flex items-center rounded-md border px-2.5 py-1 text-sm font-medium"
+            style={{ borderColor: catColor + "60", color: catColor }}
+          >
+            {name}
+          </span>
+        </div>
+        {/* Col 3: Category + chevron — aligns with Fat */}
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{category}</span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
         </div>
       </div>
 
@@ -316,9 +314,8 @@ function SlotCell({ slot }: { slot: PlantSlot }) {
 
   return (
     <div className={`border rounded-lg p-2 min-h-[56px] ${isStressed ? "border-destructive/40" : "border-border"}`}>
-      <div className="flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cropColor }} />
-        <span className="text-[11px] font-medium truncate">{slot.cropName}</span>
+      <div className="flex items-center">
+        <span className="text-xs font-medium truncate">{slot.cropName}</span>
       </div>
       <div className="mt-1.5">
         <div className="h-1 rounded-full bg-secondary overflow-hidden">
@@ -380,7 +377,6 @@ function PlantingQueueView({ items, slots }: { items: PlantingQueueItem[]; slots
               <span className="font-mono text-lg font-bold text-primary w-8 shrink-0">#{item.rank}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getCropColor(item.cropName) }} />
                   <span className="text-sm font-medium">{item.cropName}</span>
                   <Badge variant="outline" className="font-mono text-xs">SOL {item.missionDay}</Badge>
                 </div>

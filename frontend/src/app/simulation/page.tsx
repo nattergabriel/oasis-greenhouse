@@ -350,7 +350,7 @@ export default function SimulationPage() {
 
       {/* ========== Scenario Detail Dialog ========== */}
       <Dialog open={scenarioDetailOpen} onOpenChange={setScenarioDetailOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           {selectedScenario && (
             <>
               <DialogHeader>
@@ -409,7 +409,7 @@ export default function SimulationPage() {
 
       {/* ========== Inject Dialog ========== */}
       <Dialog open={injectOpen} onOpenChange={setInjectOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-lg">
           {injectScenario && (
             <>
               <DialogHeader>
@@ -468,7 +468,7 @@ export default function SimulationPage() {
 
       {/* ========== History Detail Dialog ========== */}
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl">
           {selectedSim && (
             <>
               <DialogHeader>
@@ -547,7 +547,7 @@ export default function SimulationPage() {
                         key={entry.day}
                         className="flex items-start gap-3 text-sm"
                       >
-                        <span className="shrink-0 font-mono tabular-nums text-muted-foreground w-12">
+                        <span className="shrink-0 font-mono tabular-nums text-muted-foreground whitespace-nowrap">
                           SOL {entry.day}
                         </span>
                         <span className="text-muted-foreground">{entry.event}</span>

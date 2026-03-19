@@ -45,7 +45,7 @@ function getCellColor(slot: PlantSlot, mode: MetricMode): string {
   if (mode === "growth") {
     if (!slot.cropId) return STATUS_COLORS.EMPTY;
     const t = slot.growthStagePercent / 100;
-    return `rgb(${Math.round(90 + 64 * t)}, ${Math.round(154 - 48 * t)}, 107)`;
+    return `rgb(${Math.round(199 - 120 * t)}, ${Math.round(90 + 64 * t)}, ${Math.round(58 + 49 * t)})`;
   }
   return STATUS_COLORS[slot.status];
 }
@@ -449,9 +449,10 @@ function TopViewLegend({
     // Generate gradient stops matching getCellColor for growth mode
     const gradientStops = Array.from({ length: 11 }, (_, i) => {
       const t = i / 10;
-      const r = Math.round(90 + 64 * t);
-      const g = Math.round(154 - 48 * t);
-      return `rgb(${r}, ${g}, 107)`;
+      const r = Math.round(199 - 120 * t);
+      const g = Math.round(90 + 64 * t);
+      const b = Math.round(58 + 49 * t);
+      return `rgb(${r}, ${g}, ${b})`;
     });
     const gradientCSS = `linear-gradient(to right, ${gradientStops.join(", ")})`;
 
