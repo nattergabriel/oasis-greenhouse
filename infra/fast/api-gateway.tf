@@ -138,10 +138,14 @@ resource "aws_apigatewayv2_integration" "management_backend" {
   api_id             = aws_apigatewayv2_api.main.id
   integration_type   = "HTTP_PROXY"
   integration_method = "ANY"
-  integration_uri    = "https://${aws_apprunner_service.management_backend.service_url}"
+  integration_uri    = "https://${aws_apprunner_service.management_backend.service_url}/{proxy}"
 
   payload_format_version = "1.0"
   timeout_milliseconds   = 10000 # 10 seconds
+
+  request_parameters = {
+    "overwrite:path" = "$request.path.proxy"
+  }
 }
 
 resource "aws_apigatewayv2_route" "management_backend" {
@@ -157,10 +161,14 @@ resource "aws_apigatewayv2_integration" "agent_backend" {
   api_id             = aws_apigatewayv2_api.main.id
   integration_type   = "HTTP_PROXY"
   integration_method = "ANY"
-  integration_uri    = "https://${aws_apprunner_service.agent_backend.service_url}"
+  integration_uri    = "https://${aws_apprunner_service.agent_backend.service_url}/{proxy}"
 
   payload_format_version = "1.0"
   timeout_milliseconds   = 30000 # 30 seconds (agent may need more time)
+
+  request_parameters = {
+    "overwrite:path" = "$request.path.proxy"
+  }
 }
 
 resource "aws_apigatewayv2_route" "agent_backend" {
@@ -176,10 +184,14 @@ resource "aws_apigatewayv2_integration" "simulation" {
   api_id             = aws_apigatewayv2_api.main.id
   integration_type   = "HTTP_PROXY"
   integration_method = "ANY"
-  integration_uri    = "https://${aws_apprunner_service.simulation.service_url}"
+  integration_uri    = "https://${aws_apprunner_service.simulation.service_url}/{proxy}"
 
   payload_format_version = "1.0"
   timeout_milliseconds   = 30000 # 30 seconds (simulation may need more time)
+
+  request_parameters = {
+    "overwrite:path" = "$request.path.proxy"
+  }
 }
 
 resource "aws_apigatewayv2_route" "simulation" {

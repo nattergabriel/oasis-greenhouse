@@ -1,17 +1,8 @@
 package com.example.managementbackend.service.impl;
 
-import com.example.managementbackend.domain.Crop;
-import com.example.managementbackend.domain.Greenhouse;
-import com.example.managementbackend.domain.MissionConfig;
-import com.example.managementbackend.domain.PlantSlot;
-import com.example.managementbackend.model.enums.CropCategory;
-import com.example.managementbackend.model.enums.GreenhouseStatus;
-import com.example.managementbackend.model.enums.SlotStatus;
-import com.example.managementbackend.model.enums.StressType;
-import com.example.managementbackend.model.enums.WaterRequirement;
-import com.example.managementbackend.repository.CropRepository;
-import com.example.managementbackend.repository.GreenhouseRepository;
-import com.example.managementbackend.repository.MissionConfigRepository;
+import com.example.managementbackend.domain.*;
+import com.example.managementbackend.model.enums.*;
+import com.example.managementbackend.repository.*;
 import com.example.managementbackend.service.DataSeederService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +22,9 @@ public class DataSeederServiceImpl implements DataSeederService {
     private final CropRepository cropRepository;
     private final GreenhouseRepository greenhouseRepository;
     private final MissionConfigRepository missionConfigRepository;
+    private final ScenarioRepository scenarioRepository;
+    private final StoredFoodRepository storedFoodRepository;
+    private final AgentConfigRepository agentConfigRepository;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -39,6 +33,9 @@ public class DataSeederServiceImpl implements DataSeederService {
         seedCrops();
         seedGreenhouse();
         seedMissionConfig();
+        seedScenarios();
+        seedStoredFood();
+        seedAgentConfig();
         log.info("Database seeding completed successfully");
     }
 
@@ -79,13 +76,13 @@ public class DataSeederServiceImpl implements DataSeederService {
         greenhouse.setName("Mars Greenhouse Alpha");
         greenhouse.setDescription("Primary hydroponic greenhouse for 450-day Mars surface mission");
         greenhouse.setRows(4);
-        greenhouse.setCols(15);
+        greenhouse.setCols(4);
         greenhouse.setOverallStatus(GreenhouseStatus.HEALTHY);
         greenhouse.setCreatedAt(Instant.now());
 
-        // Create 4x15 = 60 plant slots
+        // Create 4x4 = 16 plant slots (matches simulation engine grid)
         for (int row = 0; row < 4; row++) {
-            for (int col = 0; col < 15; col++) {
+            for (int col = 0; col < 4; col++) {
                 PlantSlot slot = new PlantSlot();
                 slot.setSlotRow(row);
                 slot.setSlotCol(col);
@@ -126,7 +123,71 @@ public class DataSeederServiceImpl implements DataSeederService {
         greenhouseRepository.deleteAll();
         cropRepository.deleteAll();
         missionConfigRepository.deleteAll();
+        scenarioRepository.deleteAll();
+        storedFoodRepository.deleteAll();
+        agentConfigRepository.deleteAll();
         log.info("All data cleared");
+    }
+
+    private void seedScenarios() {
+        if (scenarioRepository.count() > 0) {
+            log.info("Scenarios already exist, skipping seed");
+            return;
+        }
+        log.info("Seeding scenarios...");
+
+        Scenario waterDeg = new Scenario();
+        waterDeg.setName("Water Recycling Degradation");
+        waterDeg.setType(ScenarioType.WATER_RECYCLING_DEGRADATION);
+        waterDeg.setDescription("Water recycling system efficiency drops from 90% to 70-80%, accelerating water depletion.");
+        waterDeg.setSeverity(ScenarioSeverity.HIGH);
+        waterDeg.setDefaultDurationMinutes(7200); // 5 days in minutes
+
+        Scenario tempFailure = new Scenario();
+        tempFailure.setName("Temperature Control Failure");
+        tempFailure.setType(ScenarioType.TEMPERATURE_FAILURE);
+        tempFailure.setDescription("Temperature regulation fails, causing ±5°C drift from target. Crops experience heat or cold stress.");
+        tempFailure.setSeverity(ScenarioSeverity.HIGH);
+        tempFailure.setDefaultDurationMinutes(4320); // 3 days in minutes
+
+        scenarioRepository.saveAll(List.of(waterDeg, tempFailure));
+        log.info("Seeded 2 scenarios");
+    }
+
+    private void seedStoredFood() {
+        if (storedFoodRepository.count() > 0) {
+            log.info("Stored food already exists, skipping seed");
+            return;
+        }
+        log.info("Seeding stored food...");
+
+        StoredFood food = new StoredFood();
+        food.setId(1L);
+        food.setTotalCalories(5_400_000.0);       // 450 days × 4 crew × 3000 kcal
+        food.setRemainingCalories(5_400_000.0);
+
+        storedFoodRepository.save(food);
+        log.info("Seeded stored food: {} kcal", food.getTotalCalories());
+    }
+
+    private void seedAgentConfig() {
+        if (agentConfigRepository.count() > 0) {
+            log.info("Agent config already exists, skipping seed");
+            return;
+        }
+        log.info("Seeding agent config...");
+
+        AgentConfig config = new AgentConfig();
+        config.setId(1L);
+        config.setAutonomyLevel(AutonomyLevel.HYBRID);
+        config.setCertaintyThreshold(0.7);
+        config.setRiskTolerance(RiskTolerance.MODERATE);
+        config.setPriorityWeightYield(0.4);
+        config.setPriorityWeightDiversity(0.3);
+        config.setPriorityWeightResourceConservation(0.3);
+
+        agentConfigRepository.save(config);
+        log.info("Seeded agent config");
     }
 
     // ==================== CROP CREATION METHODS (MCP KB DATA) ====================

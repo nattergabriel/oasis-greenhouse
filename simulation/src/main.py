@@ -25,6 +25,17 @@ app = FastAPI(
 )
 
 
+@app.get("/health")
+def health_check():
+    """Health check endpoint for AWS App Runner."""
+    from datetime import datetime
+    return {
+        "status": "ok",
+        "service": "martian-greenhouse-simulation",
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
+
 @app.post("/simulate/init", response_model=SimulationResponse)
 def init_simulation(request: InitRequest) -> SimulationResponse:
     """Create initial simulation state.
