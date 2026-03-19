@@ -133,15 +133,6 @@ resource "aws_secretsmanager_secret_version" "agent_token" {
   secret_string = var.agent_token
 }
 
-resource "aws_secretsmanager_secret" "system_token" {
-  name = "${var.project}/system-token"
-}
-
-resource "aws_secretsmanager_secret_version" "system_token" {
-  secret_id     = aws_secretsmanager_secret.system_token.id
-  secret_string = var.system_token
-}
-
 resource "aws_secretsmanager_secret" "db_user" {
   name = "${var.project}/db-user"
 }
@@ -236,7 +227,6 @@ resource "aws_iam_role_policy" "apprunner_secrets" {
         aws_secretsmanager_secret.db_user.arn,
         aws_secretsmanager_secret.db_pass.arn,
         aws_secretsmanager_secret.agent_token.arn,
-        aws_secretsmanager_secret.system_token.arn,
         aws_secretsmanager_secret.anthropic_key.arn,
         aws_secretsmanager_secret.api_key.arn,
       ]
@@ -274,12 +264,11 @@ resource "aws_apprunner_service" "management_backend" {
       image_configuration {
         port = "8080"
         runtime_environment_secrets = {
-          DB_URL       = aws_secretsmanager_secret.db_url.arn
-          DB_USER      = aws_secretsmanager_secret.db_user.arn
-          DB_PASS      = aws_secretsmanager_secret.db_pass.arn
-          AGENT_TOKEN  = aws_secretsmanager_secret.agent_token.arn
-          SYSTEM_TOKEN = aws_secretsmanager_secret.system_token.arn
-          API_KEY      = aws_secretsmanager_secret.api_key.arn
+          DB_URL      = aws_secretsmanager_secret.db_url.arn
+          DB_USER     = aws_secretsmanager_secret.db_user.arn
+          DB_PASS     = aws_secretsmanager_secret.db_pass.arn
+          AGENT_TOKEN = aws_secretsmanager_secret.agent_token.arn
+          API_KEY     = aws_secretsmanager_secret.api_key.arn
         }
       }
     }
@@ -384,8 +373,7 @@ resource "aws_apprunner_service" "simulation" {
           BACKEND_URL = "https://${aws_apprunner_service.management_backend.service_url}"
         }
         runtime_environment_secrets = {
-          SYSTEM_TOKEN = aws_secretsmanager_secret.system_token.arn
-          API_KEY      = aws_secretsmanager_secret.api_key.arn
+          API_KEY = aws_secretsmanager_secret.api_key.arn
         }
       }
     }
