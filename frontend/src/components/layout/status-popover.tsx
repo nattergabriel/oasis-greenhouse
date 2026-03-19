@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { Alert, Recommendation } from "@/lib/types";
@@ -14,7 +15,21 @@ interface StatusPopoverProps {
 
 export function StatusPopover({ alerts, recommendations, totalIssues }: StatusPopoverProps) {
   const [open, setOpen] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [cleared, setCleared] = useState(false);
+  const prevTotalIssuesRef = useRef(totalIssues);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Reset acknowledged/cleared when new alerts come in
+  useEffect(() => {
+    if (totalIssues !== prevTotalIssuesRef.current) {
+      prevTotalIssuesRef.current = totalIssues;
+      if (totalIssues > 0) {
+        setAcknowledged(false);
+        setCleared(false);
+      }
+    }
+  }, [totalIssues]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -28,6 +43,31 @@ export function StatusPopover({ alerts, recommendations, totalIssues }: StatusPo
     }
   }, [open]);
 
+  // Derive badge display state
+  const badgeLabel = cleared ? "OK" : totalIssues > 0 ? totalIssues : "OK";
+  const badgeVariant: "destructive" | "outline" = (() => {
+    if (cleared || totalIssues === 0) return "outline";
+    if (acknowledged) return "outline";
+    return "destructive";
+  })();
+  const badgeColorStyle: React.CSSProperties | undefined = (() => {
+    if (cleared) return { backgroundColor: "var(--color-status-healthy)", color: "#fff", borderColor: "var(--color-status-healthy)" };
+    if (acknowledged && totalIssues > 0) return { backgroundColor: "color-mix(in srgb, var(--color-status-warning) 15%, transparent)", color: "var(--color-status-warning)", borderColor: "var(--color-status-warning)" };
+    return undefined;
+  })();
+  const showPulse = totalIssues > 0 && !acknowledged && !cleared;
+
+  function handleAcknowledge(e: React.MouseEvent) {
+    e.stopPropagation();
+    setAcknowledged(true);
+  }
+
+  function handleClear(e: React.MouseEvent) {
+    e.stopPropagation();
+    setCleared(true);
+    setAcknowledged(true);
+  }
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -35,18 +75,48 @@ export function StatusPopover({ alerts, recommendations, totalIssues }: StatusPo
         className="relative"
       >
         <Badge
-          variant={totalIssues > 0 ? "destructive" : "outline"}
+          variant={badgeVariant}
           className="text-xs tabular-nums cursor-pointer hover:opacity-80 transition-opacity"
+          style={badgeColorStyle}
         >
-          {totalIssues > 0 ? totalIssues : "OK"}
+          {badgeLabel}
         </Badge>
-        {totalIssues > 0 && (
+        {showPulse && (
           <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
         )}
       </button>
 
       {open && (
-        <Card className="absolute right-0 top-full mt-2 w-80 p-0 shadow-lg border z-50 overflow-hidden">
+        <Card className="absolute right-0 top-full mt-2 w-80 p-0 border border-border z-50 overflow-hidden rounded-lg">
+          {/* Header with notification management */}
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              Notifications
+            </span>
+            <div className="flex items-center gap-1">
+              {totalIssues > 0 && !cleared && (
+                <>
+                  {!acknowledged && (
+                    <button
+                      onClick={handleAcknowledge}
+                      aria-label="Acknowledge all notifications"
+                      className="inline-flex items-center justify-center h-5 w-5 rounded border border-border text-muted-foreground hover:text-[var(--color-status-warning)] hover:border-[var(--color-status-warning)] transition-colors"
+                    >
+                      <Check className="h-3 w-3" />
+                    </button>
+                  )}
+                  <button
+                    onClick={handleClear}
+                    aria-label="Clear all notifications"
+                    className="inline-flex items-center justify-center h-5 w-5 rounded border border-border text-muted-foreground hover:text-destructive hover:border-destructive transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Alerts section */}
           <div className="p-3 border-b border-border">
             <div className="flex items-center justify-between mb-2">
