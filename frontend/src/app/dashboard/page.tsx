@@ -30,7 +30,7 @@ export default function DashboardPage() {
   const weather = useApi(() => api.weather.current(), emptyWeather);
   const stockpile = useApi(() => api.crops.stockpile().then(r => r.items), [] as import("@/lib/types").StockpileItem[]);
   const storedFood = useApi(() => api.nutrition.storedFood(), emptyStoredFood);
-  const nutritionEntries = useApi(() => api.nutrition.consumption(new Date(Date.now() - 7 * 86400000).toISOString(), new Date().toISOString()).then(r => r.dailyEntries), [emptyNutritionEntry]);
+  const nutritionEntries = useApi(() => api.nutrition.consumption(new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10), new Date().toISOString().slice(0, 10)).then(r => r.dailyEntries), [emptyNutritionEntry]);
   const totalCalories = stockpile.reduce((s, i) => s + i.estimatedCalories, 0);
   const latestNutrition = nutritionEntries[nutritionEntries.length - 1];
   const ghFractionPct = Math.round(latestNutrition.calorieGhFraction * 100);
