@@ -170,7 +170,7 @@ def _calculate_metrics(state: dict) -> SimulationMetrics:
             if gh.stored_food.total_calories > 0
             else 0.0
         )
-        res_eff = (gh.resources.water / 10000 + gh.resources.nutrients / 5000) / 2
+        res_eff = (gh.resources.water / 40000 + gh.resources.nutrients / 20000) / 2
         events_handled = len(gh.active_events)
     else:
         stored_pct = 0.0

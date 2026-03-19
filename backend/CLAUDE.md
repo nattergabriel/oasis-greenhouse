@@ -82,8 +82,8 @@ Store as a markdown file on disk (`strategy/current_strategy.md`). The initial s
 ## Simulation Results Storage
 Store simulation results as JSON files in a `data/simulations/` directory. Use UUID for run IDs.
 
-## Important: The Agent Does NOT Plant/Harvest
-The agent sets **zone plans** (percentage-based crop allocations). The sim engine handles planting, harvesting, and replanting automatically. Read BACKEND-SUMMARY.md carefully.
+## Agent Actions
+The agent sends direct actions to the sim engine via `/simulate/tick`: `set_crop`, `plant`, `harvest`, `remove`, `water_adjust`, `light_toggle`, `set_temperature`. The sim engine handles auto-harvest and auto-replant independently. See `backend/docs/SIM-ENGINE-API.md` for the full action reference.
 
 ## Run Command
 The app should run with: `uvicorn src.main:app --host 0.0.0.0 --port 8000`

@@ -1,52 +1,56 @@
-# Market Fit
-
-> Does our solution actually fit into the case partner's world? This doc forces us to answer that honestly.
+# Market Fit — Where Our Solution Lives
 
 ---
 
-## Target User
+## Target Users
 
-- **Who:** _Be specific — "a field agronomist at a mid-size farm in Brazil" not "farmers"_
-- **Current workflow:** _How do they solve this problem today?_
-- **Biggest frustration:** _What's broken or slow about the current way?_
+### Primary: CEA Facility Operators
+Managers of vertical farms, commercial greenhouses, and indoor farming operations. They manage complex multi-variable environments (light, temperature, humidity, nutrients, water) and make daily crop allocation decisions. Currently rely on experience + basic sensor data. Need: autonomous decision-support that integrates agronomic knowledge.
+
+### Secondary: Syngenta's Cropwise Users
+The 40,000+ enterprise users across 70M hectares who already use Cropwise for farm management. They have the data infrastructure; they need the autonomous planning layer.
+
+### Tertiary: NASA / Space Agencies
+Actual mission planners designing life support systems for lunar and Mars habitats. Our simulation is directly applicable to mission planning.
 
 ---
 
 ## Value Proposition
 
-**For** [target user]
-**who** [has this problem],
-**our product** [does what]
-**so that** [outcome/benefit].
-**Unlike** [current alternative],
-**we** [key differentiator].
+**For** controlled environment agriculture operators
+**who** make daily crop management decisions in complex, resource-constrained environments,
+**our product** is an AI agent that autonomously plans crop allocations, reacts to crises, and learns from each growing cycle
+**so that** they maximize yield, minimize resource waste, and respond to problems faster than human monitoring allows.
+**Unlike** current CEA management tools (manual dashboards, basic alerting),
+**we** integrate Syngenta's deep agronomic knowledge base with an autonomous learning loop that improves with every cycle.
 
 ---
 
 ## Competitive Landscape
 
-| Existing solution | What it does well | Where it falls short | Our edge |
-|-------------------|-------------------|----------------------|----------|
-| _Status quo / manual_ | | | |
-| _Competitor A_ | | | |
-| _Their own tools_ | | | |
+| Solution | What it does well | Where it falls short | Our edge |
+|---|---|---|---|
+| Manual CEA management | Human expertise, intuition | Can't scale, slow crisis response, no learning | Autonomous agent with KB-grounded decisions |
+| Basic sensor dashboards (Argus, Priva) | Real-time monitoring | Alert but don't decide | We decide AND learn |
+| Cropwise Operations (Syngenta) | Comprehensive farm data | Display layer, not autonomous | We add the decision layer on top |
+| Bowery OS | AI-driven farm management | Proprietary, single-company | KB-grounded, open architecture, learnable |
 
 ---
 
-## Outside the Box
+## The Outside-the-Box Opportunity
 
-_The brief tells us the problem. But what's the opportunity they haven't articulated? What adjacent problem could we solve that would make judges say "we didn't think of that"?_
+The brief says "manage a greenhouse on Mars." Most teams will build a greenhouse simulator with a chatbot. We went further:
 
--
--
+1. **Learning agent** — the strategy document that rewrites itself is a novel approach to agricultural AI. No fine-tuning, no retraining. Just a text document that gets sharper.
+2. **Mars-to-Earth bridge** — we're not just solving a space problem. We're demonstrating the exact technology Syngenta is building toward: AI that makes farming decisions accessible, trustworthy, and grounded in agronomic science.
+3. **Syngenta integration story** — we directly reference their Cropwise Open Platform, their IPSOS research, their AI Manifesto, and their executive vision. This isn't a generic hack — it's a prototype for their product roadmap.
 
 ---
 
 ## Validation Signals
 
-_How do we know this matters? Even in a hackathon, we can point to evidence._
-
-- _Industry reports / stats_
-- _Quotes from the brief_
-- _Common complaints in farming forums / ag-tech discussions_
-- _Team member domain knowledge_
+- Syngenta's CEO at Davos 2026: "urgent action and real solutions" needed in agriculture
+- IPSOS research: farmers want "proof of returns" and "simplification" — our agent delivers both
+- CEA market growing at 14.5% CAGR — structural demand for autonomous management tools
+- NASA technology already powers commercial vertical farms — our simulation extends this with AI
+- Syngenta invested $130M in BioSTaR and partnered with QuantumBasel — they're betting on AI + biology convergence

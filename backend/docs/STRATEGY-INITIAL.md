@@ -1,45 +1,44 @@
 # Initial Strategy Document
 
-This is the default strategy document used on the first simulation run (before any learning has occurred). It's based on KB recommendations and serves as a starting point that gets refined through simulation runs.
+Default strategy used on the first simulation run before any learning. Based on KB recommendations.
 
-The greenhouse supplements packaged food. The goal is to maximize fresh food production to slow packaged food depletion and provide micronutrients that packaged food lacks.
+The greenhouse supplements packaged food. Goal: maximize fresh food production to slow packaged food depletion and provide micronutrients.
 
 ---
 
-## Zone Plans
+## Slot Assignments
 
-4 zones, 15 m² each, 60 m² total. Each zone gets a crop plan — the engine fills it and auto-replants after every harvest.
+16 slots in a 4×4 grid, 4 m² each (64 m² total). Each slot gets one crop type — the engine fills it and auto-replants after every harvest.
 
-- Zone 1: `{"potato": 1.0}` — pure caloric backbone (7 plantings × 2.0 m² = 14 m²)
-- Zone 2: `{"potato": 0.5, "beans_peas": 0.5}` — calories + protein mix
-- Zone 3: `{"lettuce": 0.5, "radish": 0.3, "herbs": 0.2}` — micronutrients + diversity + morale
-- Zone 4: `{"beans_peas": 0.7, "herbs": 0.3}` — protein focus + morale
-
-This gives roughly 37% potato, 30% beans, 17% lettuce, 10% radish, 6% herbs by area across the greenhouse.
+- Slots 0-5: **potato** — caloric backbone (2 plantings × 2.0 m² = 4 m² per slot)
+- Slots 6-9: **beans_peas** — protein source (2 plantings × 1.5 m² = 3 m², 1 m² unused per slot)
+- Slots 10-12: **lettuce** — micronutrients (8 plantings × 0.5 m² = 4 m² per slot)
+- Slots 13-14: **herbs** — morale + micronutrient diversity (13 plantings × 0.3 m² = 3.9 m² per slot)
+- Slot 15: **radish** — fast-cycle micronutrient filler (8 plantings × 0.5 m² = 4 m²)
 
 ## Environment Settings
 
-- Temperature: 20°C (compromise across all crops, within optimal range for most)
-- Artificial light: ON for all zones initially
-- Water allocation: 1.0 (default) for all zones
+- Temperature: 20°C (compromise across all crops)
+- Artificial light: ON for all slots
+- Water allocation: 1.0 (default) for all slots
 
 ## Resource Management
 
-- Water (10,000L starting): maintain >20% reserve. If below, reduce water allocation on zone 3 first (short-cycle crops recover faster from water gaps).
-- Nutrients (5,000 starting): monitor closely. Beans and lettuce are nitrogen-hungry.
-- Energy: if deficit occurs, toggle lights off in zone 3 first (short-cycle crops recover faster from light gaps). Shorten photoperiod before cutting zones entirely.
+- Water (40,000L): maintain >20% reserve. If low, reduce water on low-priority slots first (lettuce recovers fastest).
+- Nutrients (20,000): monitor closely. Beans and lettuce are nutrient-hungry.
+- Energy: if deficit, toggle lights off on slot 2 first (short-cycle crops recover faster).
 
 ## Crisis Priorities
 
 1. Human safety (temperature extremes)
-2. Water preservation (hardest to replace, recycling at 90%)
-3. Protect potato zones (caloric backbone, longest cycle to recover from loss)
-4. Protect bean zones (protein, moderate cycle)
+2. Water preservation (hardest to replace, 90% recycling)
+3. Protect potato slot (caloric backbone, longest cycle to recover)
+4. Protect beans slot (protein source, moderate cycle)
 5. Sacrifice short-cycle crops first (lettuce, radish, herbs) — they recover fastest
 
-## Nutritional Correction via Zone Plan Changes
+## Nutritional Corrections
 
-- Low calorie fraction: shift a zone plan toward more potato allocation
-- Low protein fraction: shift a zone plan toward more beans, optimize bean conditions (18-22°C)
-- Micronutrient gaps: ensure at least one zone has lettuce and herbs — greenhouse is primary micronutrient source
-- Packaged food depleting too fast: prioritize calorie-dense zone plans (potato-heavy) temporarily
+- Low calorie fraction: swap a slot to potato
+- Low protein: swap a slot to beans_peas, optimize conditions (18-22°C)
+- Micronutrient gaps: ensure at least one slot has lettuce or herbs
+- Packaged food depleting fast: prioritize calorie-dense assignments temporarily

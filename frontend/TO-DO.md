@@ -1,34 +1,46 @@
 # TO-DO
-## /nutrition
-- Update cards: "calorie gh fraction" and "protein gh fraction" - maybe change terminology to make it easier to understand what is meant by that or add a better small info text to the card?
-- Only the x-y graph updates when changing selection for each **astronaut** — other data is static; either implement all things to be dynamic if data is already there or add expand more data and implement that feature
-- Maybe implement a "recommendation" popup that can be clicked on "x" or removed at the top below Nutrition title that its just like a suggestion or reminder when e.g. a specific nutritional value like protein intake for that day or for some days have been significantly low that it reminds that when this intake continues it could lead to some health issues. For this we may need to consider different cases of issues related to nutrition or rather malnutrition and its following issues. Vitamins, macros, micros are all important. We dont want to make it too complicated right now but some general different cases that could be implemented would be useful.
+## /Simulation Page
+**Simulation** the pause play and fast forward buttons should not be a controlled global button but for each running simulation available.
 
-## /forecast
-- Add title
-- Add subtitles for 7 day forecast and milestones
+---
 
-## /crops
-- Stockpile Selection View:
-  - Add headers for rows
-  - Add legend to let user know what red circle/border means
-- Planting Queue:
-  - implement view to show grid where to plant next
-- Catalog:
-  - Use a card design with 3 cards in a row but dont put everything on it, make it also expandable to not clutter the simple fast view and animate the expanding where it shows it in detail
+**Scenarios** UI Change:
+- Top Left the level of hardness or extremity like "Low" or "High" 
+- Top Right the Tag Type of the Injection
+- Row below the title of the Injection
+- Row below the description of injection
+- At the bottom button "inject" should always be same height/position for each card
+- On Card click → pop up for detailed information for cases like when description is too long so user can read full description
+- Description should be kept to a max length and after that cut off and "..." added to have good UI/UX
 
-## /agent + /alerts
-- Merge those two into one; think of a good combined name (maybe /notifications ?)
-- remove divider line from /agent when merging
-- add the alerts above the activity log
-- if agents needs more than one decision make it to a stack where you can expand to see all choice needed to free up space
+When pressed "Inject" pop-up comes, checks for running simulation and lets user inject into running sim
 
-## /greenhouse
-- Move sun/ to always above/outside greenhouse - you can make the component card bigger both for dashboard and greenhouse page to make sun fit if needed.
-- make the greenhouse animated drawing the same size of the dashboard page and move resource reserves to the right side of the animated view of the greenhouse
-- Move the environmental sensors component to be after the new changes to be below the animated drawing and resource reserves component after the environmental sensor component will be the greenhouse from the top down view
-- Top view of greenhouse change to a circular visualization to match greenhouse circular design, you can use the full width now as the resource reserves component is now gone to a different place. when you draw the top view and make it circular you also need to make the quadratic slots for plants adapt accordingly for example if they touch the border of the greenhouse so it does not overflow its lines.
+---
 
-## NavBar
-- Remove Water / Energy / Nutri?
-- Remove badge?
+**In History** the past runs should be clickable to make pop-up to reveal details of simulation step by step
+
+## /Crops Page
+**Catalog** I would like to have the icon which should display a picture of a crop be at least 1/3 the size of the row width wise and the text, type and dropdown can be in the other 2/3 of width space. The type of of crop can be aligned to the far right of the component.
+
+---
+
+**Planting Queue** In the greenhouse map the color of the line indicating the progress of the crop should be the same color based on its progress that makes it easier to read what will be soon ready and what not. The circle before each crop type can indicate and group different types of crops.
+
+---
+
+## /Greenhouse Page
+**Greenhouse** The Map Greenhouse Top View can you make sure that no matter what size, 2x2, 4x4 or others it will be always scaled appropraitely and also make each slot/zone not touch the borders if possible. The legend of colors what indicates what is not that optimal, at least for growth and yield. and too small too.
+
+## /Dashboard Page
+**Info Cards** The water, nutri, energy cards have all the same color, make it more distinguishable. And it also should be clickable and link to the greenhouse page.
+
+---
+
+**Environment** The spacing and styling is not matched to the new height of this component and its also not clickable. Use all available space. You can add something new even if you want.
+
+---
+
+**Mars Weather** This card is also not clickable. And has too much empty space as well. Inspire yourself from the /forecast page to style it better.
+
+## Navbar
+**Badge** The badge has currently no way of clearing the number of notifications like an arrow to acknowledge or an x to clear all notifications. When acknowledged the badge changes color but still shows the amount of notifications but when pressing x it clears all notifications and the badge shows 0 and changes color to green.

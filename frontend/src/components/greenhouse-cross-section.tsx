@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId } from "react";
 import { useSimulation } from "@/providers/simulation-provider";
 import { mockGreenhouseDetails, mockWeather } from "@/lib/mock-data";
 import type { PlantSlot } from "@/lib/types";
 
 // Unique SVG IDs per instance to avoid clashes when rendered multiple times
-let instanceCounter = 0;
 function useInstanceId() {
-  return useMemo(() => `gh-${++instanceCounter}`, []);
+  const id = useId();
+  return `gh-${id.replace(/:/g, "")}`;
 }
 
 function getGrowthStage(p: number) {
@@ -290,7 +290,7 @@ export function GreenhouseCrossSection({ compact = false }: { compact?: boolean 
   const plantAreaW = domeW - 80;
 
   return (
-    <div className="rounded-lg overflow-hidden border border-border bg-[#060504] h-full">
+    <div className="rounded-lg overflow-hidden border border-border h-full" style={{ background: "linear-gradient(to bottom, #0d0806 0%, #2d1810 70%, #2d1810 100%)" }}>
       <svg
         viewBox={`0 0 ${viewW} ${viewH}`}
         className="w-full"

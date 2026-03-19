@@ -81,23 +81,23 @@ class TestEnergyBudget:
     """Energy generation, consumption, and deficit."""
 
     def test_no_deficit_at_baseline(self) -> None:
-        """Day 0 with all 4 lit slots should have manageable energy budget."""
+        """Day 0 with all 16 lit slots should have manageable energy budget."""
         env = Environment()
         update_environment(env, day=0, slots=_make_slots())
-        # energy_generated = 12 * 4.5 = 54
-        assert env.energy_generated == pytest.approx(54.0, abs=0.5)
-        assert env.energy_deficit == pytest.approx(0.0, abs=1.0)
+        # energy_generated = 12 * 6.5 = 78
+        assert env.energy_generated == pytest.approx(78.0, abs=0.5)
+        assert env.energy_deficit == pytest.approx(0.0, abs=3.0)
 
     def test_deficit_in_winter(self) -> None:
         """Deep winter: low solar + high heating = energy deficit expected."""
         env = Environment()
         low_day = 3 * config.MARTIAN_YEAR_SOLS // 4
         update_environment(env, day=low_day, slots=_make_slots())
-        # solar ~9h → generated ~40.5
+        # solar ~9h → generated ~58.5
         # heating: 0.5 * (22 - (-83)) ≈ 52.5
-        # lighting: 4 * 2.0 = 8
+        # lighting: 16 * 2.0 = 32
         # pumps: 1.0
-        # needed ≈ 61.5 → deficit ≈ 21
+        # needed ≈ 85.5 → deficit ≈ 27
         assert env.energy_deficit > 0, "Expected energy deficit in winter"
         assert env.energy_generated < env.energy_needed
 
@@ -106,9 +106,9 @@ class TestEnergyBudget:
         env = Environment()
         peak_day = config.MARTIAN_YEAR_SOLS // 4
         update_environment(env, day=peak_day, slots=_make_slots())
-        # solar ~15h → generated ~67.5
+        # solar ~15h → generated ~97.5
         # heating: 0.5 * (22 - (-43)) ≈ 32.5
-        # lighting: 4 * 2.0 = 8, pumps: 1 → needed ≈ 41.5
+        # lighting: 16 * 2.0 = 32, pumps: 1 → needed ≈ 65.5
         # Should have surplus
         assert env.energy_deficit == pytest.approx(0.0, abs=1.0)
 

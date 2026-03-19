@@ -1,74 +1,67 @@
-# Value Roadmap
-
-> The hackathon demo is Phase 1. This doc shows the judges we're thinking about what comes after. It answers: "If we gave you funding and 12 months, what would you build?"
+# Value Roadmap — From Hackathon to Product
 
 ---
 
 ## Phase 0 — Hackathon MVP (now)
 
-**Goal:** Prove the concept works and the value is real.
+**Goal:** Prove the concept works and the science is real.
 
-- Core feature 1: _TBD_
-- Core feature 2: _TBD_
-- Demo-ready, not production-ready
-- Key proof point: _"We showed that X is possible and valuable"_
+- ✅ Simulation engine grounded in all 7 KB domains (192 tests)
+- ✅ AI agent loop: plan → execute → react → learn (LangGraph + Bedrock)
+- ✅ 450-day simulation with verified results (~17% calorie fraction)
+- ✅ Live dashboard with greenhouse visualization
+- ✅ Strategy document learning across simulation runs
 
----
-
-## Phase 1 — Pilot (months 1–3)
-
-**Goal:** Test with real users in a controlled environment.
-
-- _Deploy with 5–10 real farms / agronomists_
-- _Integrate with Syngenta's existing data sources_
-- _Collect feedback and usage data_
-- _Refine core UX based on real workflows_
-
-**Key milestone:** _First real user gets value from the product_
+**Key proof point:** "An AI agent can autonomously manage a closed-environment greenhouse using Syngenta's Knowledge Base, learn from each run, and produce scientifically plausible results."
 
 ---
 
-## Phase 2 — Scale (months 4–8)
+## Phase 1 — Pilot (months 1-3)
 
-**Goal:** Expand to more users and geographies.
+**Goal:** Validate with real CEA operators.
 
-- _Add features based on pilot feedback_
-- _Multi-language / multi-region support_
-- _Integration with Syngenta's product catalog / Cropwise_
-- _Build admin dashboard for Syngenta internal teams_
+- Deploy in 3-5 commercial CEA facilities (vertical farms, greenhouse operations)
+- Replace simulated environment data with real sensor data (temperature, humidity, PAR, CO₂)
+- Connect to Cropwise Operations via Open Platform APIs for field data integration
+- Expand crop library using Cropwise's full agronomic models (80,000+ crop growth stages)
+- A/B test agent recommendations against human expert decisions
 
-**Key milestone:** _100+ active users, measurable business impact_
-
----
-
-## Phase 3 — Mature (months 9–12)
-
-**Goal:** Full product with sustainable business model.
-
-- _Advanced analytics and reporting_
-- _API for third-party integrations_
-- _Machine learning models trained on accumulated data_
-- _Self-service onboarding for new regions_
-
-**Key milestone:** _Standalone product line or embedded feature with clear ROI_
+**Key milestone:** First commercial greenhouse operator uses agent recommendations to adjust crop allocation and sees measurable yield improvement.
 
 ---
 
-## Strategic Bets
+## Phase 2 — Scale (months 4-8)
 
-_What are the big assumptions we're making? Flag them honestly — it shows maturity._
+**Goal:** Integrate into Syngenta's ecosystem.
 
-| Assumption | Risk if wrong | How we'd validate |
-|-----------|---------------|-------------------|
-| | | |
+- Publish as a module on the Cropwise Open Platform
+- Multi-crop, multi-facility support (managing 10+ greenhouses simultaneously)
+- Integration with Syngenta's predictive pest/disease outbreak system (launching 2026)
+- Taranis computer vision integration for automated plant health assessment
+- Regional localization (different crops, climates, regulatory environments)
+
+**Key milestone:** 50+ facilities using the system, measurable improvement in resource efficiency across the portfolio.
+
+---
+
+## Phase 3 — Agricultural Intelligence (months 9-12)
+
+**Goal:** Become the autonomous decision layer for CEA.
+
+- Full integration with Cropwise Grower chatbot (agent communicates recommendations in natural language to farmers)
+- Cross-facility learning (strategy documents shared and adapted across similar operations)
+- Predictive resource forecasting using historical simulation data
+- Compliance and sustainability reporting integration (Cropwise Financials & Sustainability module)
+
+**Key milestone:** The agent manages end-to-end crop operations autonomously, with human oversight for high-stakes decisions only — exactly the "hybrid autonomy" model in Syngenta's AI Manifesto.
 
 ---
 
 ## Visualization
 
-_For the pitch, consider a simple timeline graphic:_
-
 ```
-[Hackathon MVP] → [Pilot: 1-3mo] → [Scale: 4-8mo] → [Mature: 9-12mo]
-   Prove it          Test it          Grow it          Own it
+[Hackathon]      [Pilot: 1-3mo]      [Scale: 4-8mo]       [AI Layer: 9-12mo]
+  Prove it    →    Test it with    →    Integrate into   →    Become the
+  on Mars          real CEA ops         Cropwise              decision layer
+                                        ecosystem             for global CEA
 ```

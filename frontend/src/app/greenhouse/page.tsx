@@ -45,7 +45,7 @@ function getCellColor(slot: PlantSlot, mode: MetricMode): string {
   if (mode === "growth") {
     if (!slot.cropId) return STATUS_COLORS.EMPTY;
     const t = slot.growthStagePercent / 100;
-    return `rgb(${Math.round(90 + 64 * t)}, ${Math.round(154 - 48 * t)}, 107)`;
+    return `rgb(${Math.round(199 - 120 * t)}, ${Math.round(90 + 64 * t)}, ${Math.round(58 + 49 * t)})`;
   }
   return STATUS_COLORS[slot.status];
 }
@@ -211,21 +211,7 @@ export default function GreenhousePage() {
         <CircularTopView slots={slots} rows={rows} cols={cols} metricMode={metricMode} />
 
         {/* Legend */}
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-[10px]">
-          {metricMode === "status" &&
-            Object.entries(STATUS_COLORS).map(([key, color]) => (
-              <div key={key} className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded" style={{ backgroundColor: color }} />
-                <span className="text-muted-foreground">{key.replace("_", " ").toLowerCase()}</span>
-              </div>
-            ))}
-          {metricMode === "growth" && (
-            <span className="text-muted-foreground">Intensity = growth stage (0–100%)</span>
-          )}
-          {metricMode === "yield" && (
-            <span className="text-muted-foreground">Estimated yield (kg)</span>
-          )}
-        </div>
+        <TopViewLegend metricMode={metricMode} slots={slots} />
       </Card>
     </div>
   );
@@ -249,13 +235,33 @@ function CircularTopView({
   const cy = svgSize / 2;
   const outerR = 220;
 
-  const cellSize = 75;
-  const colGap = 8;
-  const rowGap = 12;
-  const gridW = cellSize * cols + colGap * (cols - 1);
-  const gridH = cellSize * rows + rowGap * (rows - 1);
+  // Inset from circle edge so cells never touch the border
+  const circlePadding = 28;
+  const usableR = outerR - circlePadding;
+
+  // Determine the largest square inscribed in the usable circle
+  const inscribedSide = usableR * Math.sqrt(2);
+
+  // Gap between cells scales with grid density
+  const maxDim = Math.max(rows, cols);
+  const gap = Math.max(4, Math.min(12, Math.round(inscribedSide / (maxDim * 6))));
+
+  // Calculate cell size to fill the inscribed area with gaps
+  const cellW = (inscribedSide - gap * (cols - 1)) / cols;
+  const cellH = (inscribedSide - gap * (rows - 1)) / rows;
+  const cellSize = Math.floor(Math.min(cellW, cellH));
+
+  // Actual grid dimensions
+  const gridW = cellSize * cols + gap * (cols - 1);
+  const gridH = cellSize * rows + gap * (rows - 1);
   const gridX0 = cx - gridW / 2;
   const gridY0 = cy - gridH / 2;
+
+  // Dynamic font sizes based on cell size
+  const labelFontSize = Math.max(7, Math.min(11, Math.round(cellSize / 7.5)));
+  const valueFontSize = Math.max(8, Math.min(12, Math.round(cellSize / 6.5)));
+  const cornerRadius = Math.max(4, Math.min(10, Math.round(cellSize / 10)));
+  const stressDotR = Math.max(2, Math.min(4, Math.round(cellSize / 24)));
 
   return (
     <div className="flex justify-center py-2">
@@ -266,7 +272,7 @@ function CircularTopView({
       >
         <defs>
           <clipPath id="topview-clip">
-            <circle cx={cx} cy={cy} r={outerR} />
+            <circle cx={cx} cy={cy} r={outerR - 1} />
           </clipPath>
           <radialGradient id="topview-glow" cx="50%" cy="50%" r="60%">
             <stop offset="0%" stopColor="#7c6aad" stopOpacity={0.04} />
@@ -288,7 +294,7 @@ function CircularTopView({
         <g clipPath="url(#topview-clip)">
           {/* Zone divider lines */}
           {Array.from({ length: rows - 1 }, (_, i) => {
-            const y = gridY0 + (i + 1) * cellSize + i * rowGap + rowGap / 2;
+            const y = gridY0 + (i + 1) * cellSize + i * gap + gap / 2;
             return (
               <line
                 key={i}
@@ -308,8 +314,8 @@ function CircularTopView({
               const slot = slots.find(
                 (s) => s.position.row === r && s.position.col === c
               );
-              const x = gridX0 + c * (cellSize + colGap);
-              const y = gridY0 + r * (cellSize + rowGap);
+              const x = gridX0 + c * (cellSize + gap);
+              const y = gridY0 + r * (cellSize + gap);
               const color = slot ? getCellColor(slot, metricMode) : "#1a1917";
               const isEmpty = !slot || slot.status === "EMPTY";
 
@@ -325,7 +331,7 @@ function CircularTopView({
                     y={y}
                     width={cellSize}
                     height={cellSize}
-                    rx={8}
+                    rx={cornerRadius}
                     fill={color}
                     stroke="#2e2b27"
                     strokeWidth={1}
@@ -334,10 +340,10 @@ function CircularTopView({
                     <>
                       <text
                         x={x + cellSize / 2}
-                        y={y + cellSize / 2 - 5}
+                        y={y + cellSize / 2 - valueFontSize * 0.4}
                         textAnchor="middle"
                         fill="white"
-                        fontSize={10}
+                        fontSize={labelFontSize}
                         fontWeight={500}
                         opacity={0.9}
                       >
@@ -345,10 +351,10 @@ function CircularTopView({
                       </text>
                       <text
                         x={x + cellSize / 2}
-                        y={y + cellSize / 2 + 10}
+                        y={y + cellSize / 2 + valueFontSize * 0.9}
                         textAnchor="middle"
                         fill="white"
-                        fontSize={11}
+                        fontSize={valueFontSize}
                         fontFamily="monospace"
                         opacity={0.8}
                       >
@@ -357,7 +363,12 @@ function CircularTopView({
                           : `${slot.growthStagePercent}%`}
                       </text>
                       {slot.activeStressTypes.length > 0 && (
-                        <circle cx={x + cellSize - 8} cy={y + 8} r={3} fill="#c75a3a">
+                        <circle
+                          cx={x + cellSize - stressDotR * 2.5}
+                          cy={y + stressDotR * 2.5}
+                          r={stressDotR}
+                          fill="#c75a3a"
+                        >
                           <animate
                             attributeName="opacity"
                             values="0.5;1;0.5"
@@ -376,7 +387,7 @@ function CircularTopView({
 
         {/* Zone labels at circle edge */}
         {Array.from({ length: rows }, (_, i) => {
-          const rowCenterY = gridY0 + i * (cellSize + rowGap) + cellSize / 2;
+          const rowCenterY = gridY0 + i * (cellSize + gap) + cellSize / 2;
           const dy = rowCenterY - cy;
           const circleEdgeX = cx - Math.sqrt(Math.max(0, outerR * outerR - dy * dy));
           return (
@@ -398,6 +409,116 @@ function CircularTopView({
         {/* Outer highlight ring */}
         <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="#9c9488" strokeWidth={0.5} opacity={0.15} />
       </svg>
+    </div>
+  );
+}
+
+/* ── Top View Legend ────────────────────────────────────── */
+
+function TopViewLegend({
+  metricMode,
+  slots,
+}: {
+  metricMode: MetricMode;
+  slots: PlantSlot[];
+}) {
+  if (metricMode === "status") {
+    return (
+      <div className="mt-4 rounded-lg border border-border bg-card/50 px-4 py-3">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
+          Status Legend
+        </span>
+        <div className="mt-2.5 flex flex-wrap items-center gap-5">
+          {Object.entries(STATUS_COLORS).map(([key, color]) => (
+            <div key={key} className="flex items-center gap-2">
+              <div
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              <span className="text-xs text-muted-foreground capitalize">
+                {key.replace("_", " ").toLowerCase()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (metricMode === "growth") {
+    // Generate gradient stops matching getCellColor for growth mode
+    const gradientStops = Array.from({ length: 11 }, (_, i) => {
+      const t = i / 10;
+      const r = Math.round(199 - 120 * t);
+      const g = Math.round(90 + 64 * t);
+      const b = Math.round(58 + 49 * t);
+      return `rgb(${r}, ${g}, ${b})`;
+    });
+    const gradientCSS = `linear-gradient(to right, ${gradientStops.join(", ")})`;
+
+    return (
+      <div className="mt-4 rounded-lg border border-border bg-card/50 px-4 py-3">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
+          Growth Stage
+        </span>
+        <div className="mt-2.5 space-y-1.5">
+          <div
+            className="h-3 w-full rounded-full"
+            style={{ background: gradientCSS }}
+          />
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
+              0%
+            </span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+              Seedling — Vegetative — Mature
+            </span>
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
+              100%
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // yield mode
+  const yieldValues = slots
+    .map((s) => s.estimatedYieldKg)
+    .filter((v): v is number => v !== null);
+  const minYield = yieldValues.length > 0 ? Math.min(...yieldValues) : 0;
+  const maxYield = yieldValues.length > 0 ? Math.max(...yieldValues) : 1;
+
+  // Yield uses the same status-based coloring, so show a gradient from low to high yield
+  const yieldGradientStops = [
+    STATUS_COLORS.CRITICAL,
+    STATUS_COLORS.NEEDS_ATTENTION,
+    STATUS_COLORS.HEALTHY,
+  ];
+  const yieldGradientCSS = `linear-gradient(to right, ${yieldGradientStops.join(", ")})`;
+
+  return (
+    <div className="mt-4 rounded-lg border border-border bg-card/50 px-4 py-3">
+      <span className="text-xs uppercase tracking-wide text-muted-foreground">
+        Estimated Yield
+      </span>
+      <div className="mt-2.5 space-y-1.5">
+        <div
+          className="h-3 w-full rounded-full"
+          style={{ background: yieldGradientCSS }}
+        />
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+            {minYield.toFixed(1)} kg
+          </span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+            Low — Medium — High
+          </span>
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+            {maxYield.toFixed(1)} kg
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

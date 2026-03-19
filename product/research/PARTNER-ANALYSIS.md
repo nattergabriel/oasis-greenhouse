@@ -1,52 +1,66 @@
 # Partner Analysis — Syngenta
 
-> Understand the case partner deeply before building anything. The best hackathon solutions feel like they were built by someone who gets the business.
+> Based on deep dive research (see research/Syngenta_Cropwise_Platform_Deep_Dive.pdf)
 
 ---
 
 ## Company Overview
 
-- **What they do:** _Global agriculture company — crop protection, seeds, digital farming tools_
-- **HQ:** _Basel, Switzerland (now part of ChemChina / Syngenta Group)_
-- **Scale:** _~$30B+ revenue, operates in 90+ countries_
-- **Key segments:** _Crop Protection, Seeds, Digital Agriculture_
+**Syngenta Group** — Global agricultural technology conglomerate. 56,000+ employees, 90+ countries. Part of Syngenta Group (formed 2020 from merger of Syngenta AG, ADAMA, Sinochem agriculture). HQ: Basel, Switzerland.
+
+Core business: crop protection chemicals, seeds, and increasingly **digital agriculture** via the Cropwise platform.
 
 ---
 
-## Their World
+## Their Digital Strategy (This Is What Matters for Us)
 
-### Industry context
-- _What's happening in agriculture right now? (sustainability pressure, climate change, precision farming, regulatory shifts)_
+### Cropwise Platform
+- Flagship digital farm management ecosystem
+- 70M+ hectares monitored, 30+ countries, 40,000+ enterprise users
+- Modules: Operations, Seed Selector, Spray Assist, Financials, Protector, Grower
+- AI-powered: GenAI chatbot (2M+ farmers in India, 95% diagnostic accuracy), predictive pest/disease outbreaks, precision application optimization
 
-### Digital landscape
-- _What digital products do they already have? (e.g., Cropwise platform)_
-- _Where are the gaps?_
+### Cropwise Open Platform (Nov 2025)
+- Opened APIs to third-party developers worldwide
+- Developers get access to: remote sensing APIs, agronomic model APIs, in-field intelligence APIs, integration services
+- Strategy: become the "Android/AWS of agriculture" — the foundational operating system
+- Data sovereignty guaranteed: farmers control their data, explicit consent required
 
-### Key stakeholders
-- _Who are their customers? (farmers, agronomists, distributors, cooperatives)_
-- _Who inside Syngenta would champion this solution?_
-
----
-
-## Pain Points (hypothesized, refine after challenge drop)
-
-| Pain point | Who feels it | Severity |
-|-----------|-------------|----------|
-| | | |
-
----
-
-## Their Language
-
-_Use their terminology in the pitch, not tech jargon. Note key terms here._
-
-- _e.g., "grower" not "user", "field" not "location", "application" (as in crop application) not "usage"_
+### Agricultural Intelligence Vision (WEF Davos, Jan 2026)
+- AI as the engine of the "4th Agricultural Revolution"
+- AI Manifesto: human oversight, ethical integrity, transparency, no black boxes
+- $130M BioSTaR research center (UK, operational 2028), QuantumBasel partnership
+- SAP partnership for enterprise AI scaling
 
 ---
 
-## Sources
+## Key People (for name-dropping in pitch)
 
-- _Syngenta annual report / website_
-- _Industry articles_
-- _Challenge brief_
-- _Team member knowledge_
+- **Jeff Rowe** — CEO, 5th-generation Illinois farmer. Champions AI equity.
+- **Feroz Sheikh** — CDO. Architect of Cropwise Open Platform. Led WEF sessions.
+
+---
+
+## Their Language (Use This in the Pitch)
+
+| Their term | Not this |
+|---|---|
+| "Agricultural Intelligence" | "AI for farming" |
+| "Grower" or "farmer" | "User" |
+| "Crop protection" | "Pesticides" |
+| "Decision-support" | "Automation" |
+| "Equitable access" | "Disruption" |
+| "Knowledge Base" | "Database" |
+
+---
+
+## What They Want to See from Us
+
+Based on the challenge brief + Syngenta's public strategy:
+
+1. **Working agent system** — not just slides. They want to see AI making real decisions.
+2. **KB integration** — actually using their MCP Knowledge Base, not ignoring it.
+3. **Scientific accuracy** — grounded in real agronomic data, not made up.
+4. **Mars-to-Earth story** — the challenge doc explicitly mentions "autonomous cropping systems for use on Earth."
+5. **Visual quality** — they have a Head of Digital Marketing & Branding on the jury (Marco Issenmann).
+6. **AI that augments, not replaces** — per their AI Manifesto: human oversight, transparent reasoning.
