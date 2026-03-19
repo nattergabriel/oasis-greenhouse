@@ -2,11 +2,7 @@
 import logging
 from typing import Any
 
-from ..models.state import (
-    AgentState,
-    GreenhouseState,
-    SimEngineConfig,
-)
+from ..models.state import AgentState
 from ..sim_client import sim_client
 from ..kb.cache import kb_cache
 from ..strategy.store import strategy_store
@@ -20,12 +16,15 @@ async def init_node(state: AgentState) -> dict[str, Any]:
     run_id = state.get("run_id", "unknown")
     logger.info("[INIT] Starting initialization for run %s", run_id)
 
-    # Build config from state dict
-    config_dict = state.get("config") or {}
-    config = SimEngineConfig(**config_dict) if config_dict else SimEngineConfig()
+    config = state.get("config") or {}
+    seed = config.get("seed", 42)
+    crop_assignments = config.get("crop_assignments")
 
     # Initialize greenhouse via sim engine
-    greenhouse = await sim_client.init(config)
+    greenhouse = await sim_client.init(
+        seed=seed,
+        crop_assignments=crop_assignments,
+    )
 
     # Load KB cache (crop profiles + nutrition targets)
     await kb_cache.load()
@@ -36,7 +35,7 @@ async def init_node(state: AgentState) -> dict[str, Any]:
     # Create initial snapshot
     snapshot = create_snapshot(greenhouse)
 
-    logger.info("[INIT] Greenhouse initialized at day %d", greenhouse.mission_day)
+    logger.info("[INIT] Greenhouse initialized at day %d", greenhouse.day)
 
     return {
         "greenhouse": greenhouse,

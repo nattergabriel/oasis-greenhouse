@@ -14,9 +14,8 @@ async def reflect_node(state: AgentState) -> dict[str, Any]:
     """Reflect on completed simulation and rewrite strategy."""
     gh = state["greenhouse"]
 
-    logger.info("[REFLECT] Reflecting on completed mission (day %d)", gh.mission_day)
+    logger.info("[REFLECT] Reflecting on completed mission (day %d)", gh.day)
 
-    # Calculate final averages
     cal_fracs = state.get("calorie_fractions", [])
     prot_fracs = state.get("protein_fractions", [])
     micro_counts = state.get("micronutrient_counts", [])
@@ -50,7 +49,6 @@ async def reflect_node(state: AgentState) -> dict[str, Any]:
 
     new_strategy = response.get("strategy_document", state["strategy_doc"])
 
-    # Save rewritten strategy
     strategy_store.write(new_strategy)
     logger.info("[REFLECT] Strategy document saved (%d chars)", len(new_strategy))
 
@@ -59,13 +57,12 @@ async def reflect_node(state: AgentState) -> dict[str, Any]:
 
 def _build_events_summary(events: list) -> str:
     if not events:
-        return "No major events encountered"
+        return "No active events at mission end"
     lines = []
     for e in events:
-        status = "resolved" if e.resolved else "active"
         lines.append(
-            f"- {e.type} (severity {e.severity:.1f}) day {e.day_triggered} "
-            f"[{status}]: {e.details}"
+            f"- {e.type} (started day {e.started_day}, "
+            f"duration {e.duration_sols} sols, {e.remaining_sols} remaining)"
         )
     return "\n".join(lines)
 

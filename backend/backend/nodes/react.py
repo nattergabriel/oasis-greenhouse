@@ -14,15 +14,14 @@ logger = logging.getLogger(__name__)
 async def react_node(state: AgentState) -> dict[str, Any]:
     """React to an event or threshold breach."""
     gh = state["greenhouse"]
-    mission_day = gh.mission_day
+    mission_day = gh.day
     sim_result = state.get("sim_result") or {}
     stop_reason = sim_result.get("stop_reason", {})
     stop_type = stop_reason.get("type", "unknown")
 
     logger.info("[REACT] Alert at day %d — %s", mission_day, stop_type)
 
-    # Build stop details string
-    stop_details = _format_stop_details(stop_type, stop_reason)
+    stop_details = stop_reason.get("detail", str(stop_reason))
 
     # Query KB for scenario guidance (live, not cached)
     kb_guidance = await _get_kb_guidance(stop_type, stop_reason)
@@ -38,7 +37,7 @@ async def react_node(state: AgentState) -> dict[str, Any]:
         kb_scenario_guidance=kb_guidance,
         state_json=state_json,
         water=gh.resources.water,
-        water_recycling_efficiency=gh.resources.water_recycling_efficiency,
+        water_recycling_rate=gh.resources.water_recycling_rate,
         nutrients=gh.resources.nutrients,
         energy_generated=gh.environment.energy_generated,
         energy_needed=gh.environment.energy_needed,
@@ -74,44 +73,29 @@ async def react_node(state: AgentState) -> dict[str, Any]:
     }
 
 
-def _format_stop_details(stop_type: str, stop_reason: dict) -> str:
-    """Build a human-readable stop details string."""
-    if stop_type == "event_fired":
-        event = stop_reason.get("event", {})
-        return (
-            f"Event: {event.get('type', 'unknown')} "
-            f"(severity {event.get('severity', 0):.1f})\n"
-            f"{event.get('details', 'No details')}"
-        )
-    if stop_type == "threshold_breach":
-        breach = stop_reason.get("breach", {})
-        return (
-            f"Threshold breach: {breach.get('type', 'unknown')}\n"
-            f"Current value: {breach.get('value', 'unknown')}"
-        )
-    return str(stop_reason)
-
-
 async def _get_kb_guidance(stop_type: str, stop_reason: dict) -> str:
     """Query KB for relevant guidance based on the stop reason."""
     try:
         if stop_type == "event_fired":
-            event_type = stop_reason.get("event", {}).get("type", "")
-            if "water" in event_type:
-                return await kb_client.query_operational_scenario("water_recycling")
-            if "temperature" in event_type:
-                return await kb_client.query_operational_scenario("temperature_failure")
-            return await kb_client.query_operational_scenario(event_type)
+            events = stop_reason.get("events", [])
+            for event_type in events:
+                if "water" in event_type:
+                    return await kb_client.query_operational_scenario("water_recycling")
+                if "temperature" in event_type:
+                    return await kb_client.query_operational_scenario("temperature_failure")
+            if events:
+                return await kb_client.query_operational_scenario(events[0])
 
         if stop_type == "threshold_breach":
-            breach_type = stop_reason.get("breach", {}).get("type", "")
-            if "health" in breach_type:
+            trigger = stop_reason.get("trigger", "")
+            if "crop_health" in trigger:
                 return await kb_client.query_stress_response("crop health decline")
-            if "water" in breach_type:
+            if "water" in trigger:
                 return await kb_client.query_stress_response("drought")
-            if "energy" in breach_type:
+            if "energy" in trigger:
                 return await kb_client.query_operational_scenario("energy deficit")
-            return await kb_client.query(f"greenhouse {breach_type} response")
+            if "starvation" in trigger:
+                return await kb_client.query_operational_scenario("food shortage")
     except Exception as e:
         logger.warning("[REACT] KB query failed: %s", e)
 

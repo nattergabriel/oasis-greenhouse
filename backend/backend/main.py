@@ -12,7 +12,6 @@ from .config import settings
 from .graph import graph
 from .models.state import (
     AgentAction,
-    SimEngineConfig,
     SimulationListItem,
     SimulationMetrics,
     SimulationResult,
@@ -49,17 +48,18 @@ async def run_training_simulation(request: TrainingRunRequest) -> dict:
     run_id = str(uuid.uuid4())
     logger.info("Starting training run: %s", run_id)
 
-    config = request.config if request.config else SimEngineConfig().model_dump()
     strategy_before = strategy_store.read()
 
-    # Build initial state dict (TypedDict-style)
     initial_state = {
         "greenhouse": None,
         "strategy_doc": "",
         "kb_crop_profiles": "",
         "kb_nutrition_targets": "",
         "run_id": run_id,
-        "config": config,
+        "config": {
+            "seed": request.seed,
+            "crop_assignments": request.crop_assignments or None,
+        },
         "inject_events": request.inject_events,
         "agent_decisions": [],
         "daily_snapshots": [],
@@ -167,13 +167,7 @@ def _calculate_metrics(state: dict) -> SimulationMetrics:
             if gh.stored_food.total_calories > 0
             else 0.0
         )
-        initial_water = state.get("config", {}).get("initial_resources", {}).get("water", 10000)
-        initial_nutrients = state.get("config", {}).get("initial_resources", {}).get("nutrients", 5000)
-        res_eff = (
-            (gh.resources.water / initial_water + gh.resources.nutrients / initial_nutrients) / 2
-            if initial_water > 0 and initial_nutrients > 0
-            else 0.0
-        )
+        res_eff = (gh.resources.water / 10000 + gh.resources.nutrients / 5000) / 2
         events_handled = len(gh.active_events)
     else:
         stored_pct = 0.0

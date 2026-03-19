@@ -2,15 +2,15 @@
 from ..models.state import (
     GreenhouseState,
     DailySnapshot,
-    ZoneSnapshot,
+    SlotSnapshot,
     CropSnapshot,
 )
 
 
 def create_snapshot(greenhouse: GreenhouseState) -> DailySnapshot:
     """Create a lightweight daily snapshot from greenhouse state."""
-    zone_snapshots = []
-    for zone in greenhouse.zones:
+    slot_snapshots = []
+    for slot in greenhouse.slots:
         crop_snapshots = [
             CropSnapshot(
                 id=crop.id,
@@ -21,27 +21,28 @@ def create_snapshot(greenhouse: GreenhouseState) -> DailySnapshot:
                 growth=crop.growth,
                 active_stress=crop.active_stress,
             )
-            for crop in zone.crops
+            for crop in slot.crops
         ]
-        zone_snapshots.append(
-            ZoneSnapshot(
-                id=zone.id,
-                area_m2=zone.area_m2,
-                used_area_m2=zone.used_area(),
-                available_area_m2=zone.available_area(),
-                artificial_light=zone.artificial_light,
-                water_allocation=zone.water_allocation,
-                crop_plan=zone.crop_plan,
+        slot_snapshots.append(
+            SlotSnapshot(
+                id=slot.id,
+                row=slot.row,
+                col=slot.col,
+                area_m2=slot.area_m2,
+                used_area_m2=slot.used_area(),
+                available_area_m2=slot.available_area(),
+                crop_type=slot.crop_type,
+                artificial_light=slot.artificial_light,
+                water_allocation=slot.water_allocation,
                 crops=crop_snapshots,
             )
         )
 
     return DailySnapshot(
-        mission_day=greenhouse.mission_day,
-        zones=zone_snapshots,
+        day=greenhouse.day,
+        slots=slot_snapshots,
         environment=greenhouse.environment,
         resources=greenhouse.resources,
-        mars=greenhouse.mars,
         food_supply=greenhouse.food_supply,
         stored_food=greenhouse.stored_food,
         daily_nutrition=greenhouse.daily_nutrition,

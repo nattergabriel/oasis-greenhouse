@@ -13,20 +13,17 @@ logger = logging.getLogger(__name__)
 async def plan_node(state: AgentState) -> dict[str, Any]:
     """Plan actions for the next ~30-day batch."""
     gh = state["greenhouse"]
-    mission_day = gh.mission_day
+    mission_day = gh.day
 
     logger.info("[PLAN] Planning for day %d", mission_day)
 
-    # Build summaries
-    zone_summary = _build_zone_summary(gh.zones)
+    slot_summary = _build_slot_summary(gh.slots)
     food_supply_summary = _build_food_supply_summary(gh.food_supply)
     state_json = json.dumps(gh.model_dump(), indent=2, default=str)
 
-    # Plan horizon: min(30, days remaining)
     days_remaining = 450 - mission_day
     plan_horizon = min(30, days_remaining)
 
-    # Build prompt
     user_prompt = build_plan_prompt(
         strategy_doc=state["strategy_doc"],
         mission_day=mission_day,
@@ -36,20 +33,17 @@ async def plan_node(state: AgentState) -> dict[str, Any]:
         micronutrients_covered=gh.daily_nutrition.micronutrients_covered,
         micronutrient_count=gh.daily_nutrition.micronutrient_count,
         stored_food_remaining=gh.stored_food.remaining_calories,
-        stored_food_days_left=gh.daily_nutrition.stored_food_days_left,
         water=gh.resources.water,
         nutrients=gh.resources.nutrients,
-        water_recycling_efficiency=gh.resources.water_recycling_efficiency,
-        nutrient_recycling_efficiency=gh.resources.nutrient_recycling_efficiency,
+        water_recycling_rate=gh.resources.water_recycling_rate,
         energy_generated=gh.environment.energy_generated,
         energy_needed=gh.environment.energy_needed,
         energy_deficit=gh.environment.energy_deficit,
-        zone_summary=zone_summary,
+        slot_summary=slot_summary,
         food_supply_summary=food_supply_summary,
         plan_horizon=plan_horizon,
     )
 
-    # Call LLM
     response = await bedrock_client.call(SYSTEM_PROMPT, user_prompt)
 
     reasoning = response.get("reasoning", "No reasoning provided")
@@ -57,7 +51,6 @@ async def plan_node(state: AgentState) -> dict[str, Any]:
 
     logger.info("[PLAN] %d actions planned", len(actions))
 
-    # Log decision
     decision = AgentAction(
         day=mission_day,
         node="plan",
@@ -77,22 +70,18 @@ async def plan_node(state: AgentState) -> dict[str, Any]:
     }
 
 
-def _build_zone_summary(zones: list) -> str:
-    """Build readable zone summary with current plans."""
+def _build_slot_summary(slots: list) -> str:
+    """Build readable slot summary."""
     lines = []
-    for zone in zones:
-        used = zone.used_area()
-        available = zone.available_area()
-        plan_str = ", ".join(
-            f"{crop}: {pct * 100:.0f}%" for crop, pct in zone.crop_plan.items()
-        )
-        if not plan_str:
-            plan_str = "No plan set"
+    for slot in slots:
+        used = slot.used_area()
+        available = slot.available_area()
+        crop_str = slot.crop_type or "No crop assigned"
 
-        lines.append(f"Zone {zone.id}: {used:.1f}m² used / {available:.1f}m² available")
-        lines.append(f"  Plan: {plan_str}")
-        lines.append(f"  Light: {'ON' if zone.artificial_light else 'OFF'}, Water: {zone.water_allocation:.1f}x")
-        lines.append(f"  Crops: {len(zone.crops)} active")
+        lines.append(f"Slot {slot.id} (row {slot.row}, col {slot.col}): {used:.1f}m² used / {available:.1f}m² available")
+        lines.append(f"  Crop type: {crop_str}")
+        lines.append(f"  Light: {'ON' if slot.artificial_light else 'OFF'}, Water: {slot.water_allocation:.1f}x")
+        lines.append(f"  Crops: {len(slot.crops)} active")
     return "\n".join(lines)
 
 
@@ -104,11 +93,11 @@ def _build_food_supply_summary(food_supply) -> str:
         f"{food_supply.total_protein_g:.0f}g protein",
         "By crop type:",
     ]
-    for crop_type, stock in food_supply.by_type.items():
+    for crop_type, stock in food_supply.items.items():
         lines.append(
             f"  {crop_type}: {stock.kg:.1f} kg "
             f"({stock.kcal:.0f} kcal, {stock.protein_g:.0f}g protein)"
         )
-    if not food_supply.by_type:
+    if not food_supply.items:
         lines.append("  (empty)")
     return "\n".join(lines)

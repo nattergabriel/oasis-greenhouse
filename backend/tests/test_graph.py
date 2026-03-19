@@ -1,21 +1,19 @@
 """Tests for LangGraph wiring — route_after_simulate + build_graph."""
 import pytest
-from unittest.mock import MagicMock
 
 from backend.graph import route_after_simulate, build_graph
-from backend.models.state import GreenhouseState
 
 
 class TestRouteAfterSimulate:
     def test_mission_complete_returns_reflect(self, sample_greenhouse):
-        """When mission_day >= 450, route to reflect."""
-        gh = sample_greenhouse.model_copy(update={"mission_day": 450})
+        """When day >= 450, route to reflect."""
+        gh = sample_greenhouse.model_copy(update={"day": 450})
         state = {"greenhouse": gh, "sim_result": {}}
         assert route_after_simulate(state) == "reflect"
 
     def test_mission_past_complete_returns_reflect(self, sample_greenhouse):
-        """mission_day > 450 should also route to reflect."""
-        gh = sample_greenhouse.model_copy(update={"mission_day": 460})
+        """day > 450 should also route to reflect."""
+        gh = sample_greenhouse.model_copy(update={"day": 460})
         state = {"greenhouse": gh, "sim_result": {}}
         assert route_after_simulate(state) == "reflect"
 
@@ -55,6 +53,5 @@ class TestBuildGraph:
     def test_returns_compiled_graph(self):
         """build_graph should return a compiled LangGraph."""
         compiled = build_graph()
-        # A compiled graph has an ainvoke method
         assert hasattr(compiled, "ainvoke")
         assert callable(compiled.ainvoke)

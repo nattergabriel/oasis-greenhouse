@@ -1,82 +1,101 @@
 """Tests for Pydantic domain models and TypedDicts."""
 from backend.models.state import (
     Crop,
-    Zone,
+    Slot,
     GreenhouseState,
     AgentAction,
     DailySnapshot,
     SimulationMetrics,
     SimulationResult,
     AgentState,
-    SimEngineConfig,
     EnvironmentState,
     Resources,
-    MarsConditions,
     FoodSupply,
+    CropStock,
     StoredFood,
     DailyNutrition,
-    Event,
-    ZoneSnapshot,
+    ActiveEvent,
+    SlotSnapshot,
     CropSnapshot,
+    Metrics,
 )
 
 
 class TestCrop:
     def test_creation(self, sample_crop):
-        assert sample_crop.id == "potato-z1-1"
+        assert sample_crop.id == "potato-s0-1"
         assert sample_crop.type == "potato"
-        assert sample_crop.zone_id == 1
+        assert sample_crop.slot_id == 0
         assert sample_crop.footprint_m2 == 2.0
         assert sample_crop.health == 95.0
         assert sample_crop.active_stress is None
+        assert sample_crop.growth_cycle_days == 90
 
     def test_with_stress(self, sample_crop_stressed):
         assert sample_crop_stressed.active_stress == "drought"
         assert sample_crop_stressed.health == 40.0
 
 
-class TestZone:
-    def test_used_area(self, sample_zone):
-        # Zone has one crop with footprint 2.0
-        assert sample_zone.used_area() == 2.0
+class TestSlot:
+    def test_used_area(self, sample_slot):
+        assert sample_slot.used_area() == 2.0
 
-    def test_available_area(self, sample_zone):
-        assert sample_zone.available_area() == 15.0 - 2.0
+    def test_available_area(self, sample_slot):
+        assert sample_slot.available_area() == 4.0 - 2.0
 
-    def test_empty_zone(self):
-        z = Zone(id=2, area_m2=15.0)
-        assert z.used_area() == 0.0
-        assert z.available_area() == 15.0
-        assert z.crops == []
-        assert z.crop_plan == {}
+    def test_empty_slot(self):
+        s = Slot(id=1, row=0, col=1, area_m2=4.0)
+        assert s.used_area() == 0.0
+        assert s.available_area() == 4.0
+        assert s.crops == []
+        assert s.crop_type is None
 
     def test_multiple_crops(self):
         crops = [
-            Crop(id="c1", type="potato", zone_id=1, footprint_m2=3.0, planted_day=0, age=0, health=100, growth=0),
-            Crop(id="c2", type="lettuce", zone_id=1, footprint_m2=0.5, planted_day=0, age=0, health=100, growth=0),
+            Crop(id="c1", type="potato", slot_id=0, footprint_m2=2.0, planted_day=0, age=0, health=100, growth=0, growth_cycle_days=90),
+            Crop(id="c2", type="herbs", slot_id=0, footprint_m2=0.3, planted_day=0, age=0, health=100, growth=0, growth_cycle_days=30),
         ]
-        z = Zone(id=1, area_m2=15.0, crops=crops)
-        assert z.used_area() == 3.5
-        assert z.available_area() == 11.5
+        s = Slot(id=0, area_m2=4.0, crops=crops)
+        assert s.used_area() == 2.3
+        assert abs(s.available_area() - 1.7) < 1e-9
+
+
+class TestFoodSupply:
+    def test_empty(self):
+        fs = FoodSupply()
+        assert fs.total_kg == 0.0
+        assert fs.total_kcal == 0.0
+        assert fs.total_protein_g == 0.0
+
+    def test_with_items(self):
+        fs = FoodSupply(items={
+            "potato": CropStock(kg=10.0, kcal=7700.0, protein_g=200.0),
+            "lettuce": CropStock(kg=5.0, kcal=750.0, protein_g=70.0),
+        })
+        assert fs.total_kg == 15.0
+        assert fs.total_kcal == 8450.0
+        assert fs.total_protein_g == 270.0
 
 
 class TestGreenhouseState:
     def test_creation(self, sample_greenhouse):
-        assert sample_greenhouse.mission_day == 0
-        assert len(sample_greenhouse.zones) == 1
+        assert sample_greenhouse.day == 0
+        assert len(sample_greenhouse.slots) == 1
         assert sample_greenhouse.active_events == []
+        assert sample_greenhouse.seed == 42
+        assert sample_greenhouse.next_crop_id == 1
 
     def test_with_events(self, sample_greenhouse):
-        event = Event(
-            type="dust_storm",
-            severity=0.7,
-            day_triggered=10,
-            duration=5,
-            details="Major dust storm reducing solar output",
+        event = ActiveEvent(
+            type="water_recycling_degradation",
+            started_day=10,
+            duration_sols=10,
+            remaining_sols=8,
+            degraded_recycling=0.75,
         )
         gh = sample_greenhouse.model_copy(update={"active_events": [event]})
         assert len(gh.active_events) == 1
-        assert gh.active_events[0].type == "dust_storm"
+        assert gh.active_events[0].type == "water_recycling_degradation"
 
 
 class TestAgentAction:
@@ -85,7 +104,7 @@ class TestAgentAction:
             day=10,
             node="plan",
             reasoning="Need more protein",
-            actions=[{"action": "set_zone_plan", "zone_id": 1}],
+            actions=[{"action": "set_crop", "slot_id": 1, "crop_type": "beans_peas"}],
         )
         assert action.day == 10
         assert action.node == "plan"
@@ -95,20 +114,16 @@ class TestAgentAction:
 class TestDailySnapshot:
     def test_creation(self):
         snap = DailySnapshot(
-            mission_day=5,
-            zones=[],
-            environment=EnvironmentState(
-                solar_hours=6, outside_temp=-60, internal_temp=22,
-                energy_generated=500, energy_needed=450, energy_deficit=0,
-            ),
-            resources=Resources(water=8000, nutrients=4000),
-            mars=MarsConditions(solar_hours=6, outside_temp=-60),
+            day=5,
+            slots=[],
+            environment=EnvironmentState(),
+            resources=Resources(),
             food_supply=FoodSupply(),
-            stored_food=StoredFood(total_calories=5_400_000, remaining_calories=5_400_000),
+            stored_food=StoredFood(),
             daily_nutrition=DailyNutrition(),
             active_events=[],
         )
-        assert snap.mission_day == 5
+        assert snap.day == 5
 
 
 class TestSimulationMetrics:
@@ -154,7 +169,6 @@ class TestSimulationResult:
 
 class TestAgentState:
     def test_is_dict(self):
-        """AgentState is a TypedDict — it's just a dict at runtime."""
         state: AgentState = {
             "greenhouse": None,
             "strategy_doc": "test",
@@ -164,20 +178,10 @@ class TestAgentState:
         assert state["strategy_doc"] == "test"
 
 
-class TestSimEngineConfig:
+class TestTrainingRunRequest:
     def test_defaults(self):
-        config = SimEngineConfig()
-        assert config.num_zones == 4
-        assert config.zone_area_m2 == 15.0
-        assert config.mission_duration_days == 450
-        assert config.crew_size == 4
-        assert config.initial_resources["water"] == 10000
-        assert config.initial_resources["nutrients"] == 5000
-        assert config.initial_resources["water_recycling_efficiency"] == 0.90
-        assert config.initial_resources["nutrient_recycling_efficiency"] == 0.70
-
-    def test_custom(self):
-        config = SimEngineConfig(num_zones=6, zone_area_m2=20.0, crew_size=6)
-        assert config.num_zones == 6
-        assert config.zone_area_m2 == 20.0
-        assert config.crew_size == 6
+        from backend.models.state import TrainingRunRequest
+        req = TrainingRunRequest()
+        assert req.seed == 42
+        assert req.crop_assignments == {}
+        assert req.inject_events == []

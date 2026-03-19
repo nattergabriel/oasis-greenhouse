@@ -16,8 +16,10 @@ class TestSystemPrompt:
         assert "Mars" in SYSTEM_PROMPT
         assert "greenhouse" in SYSTEM_PROMPT
         assert "potato" in SYSTEM_PROMPT
-        assert "set_zone_plan" in SYSTEM_PROMPT
+        assert "set_crop" in SYSTEM_PROMPT
         assert "JSON" in SYSTEM_PROMPT
+        assert "4 slots" in SYSTEM_PROMPT
+        assert "4 m²" in SYSTEM_PROMPT
 
 
 class TestBuildPlanPrompt:
@@ -25,21 +27,19 @@ class TestBuildPlanPrompt:
         result = build_plan_prompt(
             strategy_doc="# Strategy",
             mission_day=10,
-            state_json='{"mission_day": 10}',
+            state_json='{"day": 10}',
             calorie_gh_fraction=0.05,
             protein_gh_fraction=0.03,
             micronutrients_covered=["vitamin_a", "vitamin_c"],
             micronutrient_count=2,
             stored_food_remaining=5_000_000.0,
-            stored_food_days_left=400.0,
             water=8000.0,
             nutrients=4000.0,
-            water_recycling_efficiency=0.90,
-            nutrient_recycling_efficiency=0.70,
+            water_recycling_rate=0.90,
             energy_generated=500.0,
             energy_needed=450.0,
             energy_deficit=0.0,
-            zone_summary="Zone 1: ...",
+            slot_summary="Slot 0: ...",
             food_supply_summary="Total: 0 kg",
         )
         assert isinstance(result, str)
@@ -58,15 +58,13 @@ class TestBuildPlanPrompt:
             micronutrients_covered=[],
             micronutrient_count=0,
             stored_food_remaining=0,
-            stored_food_days_left=0,
             water=0,
             nutrients=0,
-            water_recycling_efficiency=0,
-            nutrient_recycling_efficiency=0,
+            water_recycling_rate=0,
             energy_generated=0,
             energy_needed=0,
             energy_deficit=0,
-            zone_summary="",
+            slot_summary="",
             food_supply_summary="",
             plan_horizon=10,
         )
@@ -82,15 +80,13 @@ class TestBuildPlanPrompt:
             micronutrients_covered=[],
             micronutrient_count=0,
             stored_food_remaining=0,
-            stored_food_days_left=0,
             water=0,
             nutrients=0,
-            water_recycling_efficiency=0,
-            nutrient_recycling_efficiency=0,
+            water_recycling_rate=0,
             energy_generated=0,
             energy_needed=0,
             energy_deficit=0,
-            zone_summary="",
+            slot_summary="",
             food_supply_summary="",
         )
         assert "none" in result
@@ -102,11 +98,11 @@ class TestBuildReactPrompt:
             strategy_doc="# Strategy",
             event_day=50,
             stop_type="event_fired",
-            stop_details="Dust storm severity 0.8",
+            stop_details="Water recycling degradation detected",
             kb_scenario_guidance="Reduce water usage",
-            state_json='{"mission_day": 50}',
+            state_json='{"day": 50}',
             water=7000.0,
-            water_recycling_efficiency=0.90,
+            water_recycling_rate=0.90,
             nutrients=3500.0,
             energy_generated=300.0,
             energy_needed=450.0,
@@ -116,7 +112,7 @@ class TestBuildReactPrompt:
         assert isinstance(result, str)
         assert "day 50" in result
         assert "event_fired" in result
-        assert "Dust storm" in result
+        assert "Water recycling" in result
         assert "Reduce water usage" in result
         assert "400" in result
 
@@ -131,12 +127,12 @@ class TestBuildReflectPrompt:
             stored_food_remaining_pct=65.0,
             total_kg=450.0,
             crops_lost=2,
-            events_summary="Dust storm x1",
-            decisions_log="Day 0: planted potatoes",
+            events_summary="Water recycling degradation x1",
+            decisions_log="Day 0: set crops",
         )
         assert isinstance(result, str)
         assert "# Old Strategy" in result
         assert "15.0%" in result
         assert "450.0 kg" in result
         assert "2" in result
-        assert "Dust storm x1" in result
+        assert "Water recycling degradation x1" in result

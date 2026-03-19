@@ -31,7 +31,7 @@ class TestRootEndpoint:
 class TestTrainingRunEndpoint:
     def test_run_training(self, client, sample_greenhouse):
         """POST /api/training/run should invoke graph and return metrics."""
-        gh_final = sample_greenhouse.model_copy(update={"mission_day": 450})
+        gh_final = sample_greenhouse.model_copy(update={"day": 450})
 
         final_state = {
             "greenhouse": gh_final,
@@ -43,7 +43,6 @@ class TestTrainingRunEndpoint:
             "micronutrient_counts": [3, 4],
             "total_harvested_kg": 300.0,
             "crops_lost": 2,
-            "config": {},
         }
 
         with (
@@ -85,7 +84,6 @@ class TestTrainingRunEndpoint:
 
 class TestListSimulationsEndpoint:
     def test_list_empty(self, client, tmp_path):
-        """GET /api/simulations with no saved simulations returns []."""
         with patch("backend.main.settings") as mock_settings:
             mock_settings.simulations_dir = str(tmp_path / "empty_sims")
             response = client.get("/api/simulations")
@@ -94,7 +92,6 @@ class TestListSimulationsEndpoint:
         assert response.json() == []
 
     def test_list_with_results(self, client, tmp_path):
-        """GET /api/simulations should return saved simulations."""
         sim_dir = tmp_path / "sims"
         sim_dir.mkdir()
 
@@ -132,7 +129,6 @@ class TestListSimulationsEndpoint:
 
 class TestGetSimulationEndpoint:
     def test_get_existing(self, client, tmp_path):
-        """GET /api/simulations/{id} should return full result."""
         sim_dir = tmp_path / "sims"
         sim_dir.mkdir()
 
@@ -168,7 +164,6 @@ class TestGetSimulationEndpoint:
         assert data["final_metrics"]["total_harvested_kg"] == 500.0
 
     def test_get_nonexistent(self, client, tmp_path):
-        """GET /api/simulations/{id} should 404 for missing sim."""
         sim_dir = tmp_path / "sims"
         sim_dir.mkdir()
 
@@ -181,7 +176,6 @@ class TestGetSimulationEndpoint:
 
 class TestGetStrategyEndpoint:
     def test_get_strategy(self, client):
-        """GET /api/strategy should return strategy document."""
         with patch("backend.main.strategy_store") as mock_strategy:
             mock_strategy.read.return_value = "# Current Strategy\nPlant potatoes."
 

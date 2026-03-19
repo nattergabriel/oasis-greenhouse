@@ -84,21 +84,21 @@ class TestSimulateNode:
     @pytest.mark.asyncio
     async def test_simulate_node(self, sample_greenhouse):
         """simulate_node should call sim engine tick and accumulate metrics."""
-        gh_after = sample_greenhouse.model_copy(update={"mission_day": 30})
+        gh_after = sample_greenhouse.model_copy(update={"day": 30})
         tick_result = {
-            "final_state": gh_after,
+            "state": gh_after,
             "days_simulated": 30,
             "stopped_early": False,
-            "stop_reason": {},
-            "daily_log": [
+            "stop_reason": None,
+            "daily_logs": [
                 {
-                    "daily_nutrition": {
-                        "calorie_gh_fraction": 0.05,
-                        "protein_gh_fraction": 0.03,
-                        "micronutrient_count": 2,
-                    },
-                    "harvests": [{"yield_kg": 1.5}],
-                    "crop_stress_changes": [],
+                    "day": 1,
+                    "calorie_gh_fraction": 0.05,
+                    "protein_gh_fraction": 0.03,
+                    "micronutrient_count": 2,
+                    "harvests": [{"id": "c1", "type": "potato", "kg": 1.5, "kcal": 1155}],
+                    "deaths": [],
+                    "warnings": [],
                 },
             ],
         }
@@ -121,7 +121,7 @@ class TestSimulateNode:
             }
             result = await simulate_node(state)
 
-        assert result["greenhouse"].mission_day == 30
+        assert result["greenhouse"].day == 30
         assert result["total_harvested_kg"] == 1.5
         assert len(result["calorie_fractions"]) == 1
         assert result["calorie_fractions"][0] == 0.05
@@ -129,16 +129,22 @@ class TestSimulateNode:
 
     @pytest.mark.asyncio
     async def test_simulate_node_tracks_crop_losses(self, sample_greenhouse):
-        """simulate_node should count crops with health <= 0."""
-        gh_after = sample_greenhouse.model_copy(update={"mission_day": 30})
+        """simulate_node should count deaths from daily logs."""
+        gh_after = sample_greenhouse.model_copy(update={"day": 30})
         tick_result = {
-            "final_state": gh_after,
+            "state": gh_after,
             "days_simulated": 30,
             "stopped_early": False,
-            "daily_log": [
+            "stop_reason": None,
+            "daily_logs": [
                 {
+                    "day": 1,
+                    "calorie_gh_fraction": 0.0,
+                    "protein_gh_fraction": 0.0,
+                    "micronutrient_count": 0,
                     "harvests": [],
-                    "crop_stress_changes": [{"health": 0}],  # dead crop
+                    "deaths": [{"id": "c1", "type": "lettuce", "stress": "drought"}],
+                    "warnings": [],
                 },
             ],
         }
@@ -183,7 +189,9 @@ class TestReactNode:
                 "sim_result": {
                     "stop_reason": {
                         "type": "event_fired",
-                        "event": {"type": "water_leak", "severity": 0.7, "details": "Pipe burst"},
+                        "trigger": "random_event",
+                        "events": ["water_recycling_degradation"],
+                        "detail": "New event(s) fired: ['water_recycling_degradation']",
                     },
                 },
                 "agent_decisions": [],
@@ -194,7 +202,7 @@ class TestReactNode:
         assert len(result["agent_decisions"]) == 1
         decision = result["agent_decisions"][0]
         assert decision.node == "react"
-        assert "Water leak" in decision.reasoning
+        assert "Water recycling degradation" in decision.reasoning
         assert result["sim_result"]["plan_horizon"] == 10
 
 

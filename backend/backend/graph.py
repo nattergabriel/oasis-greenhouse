@@ -14,7 +14,7 @@ from .nodes.reflect import reflect_node
 def route_after_simulate(state: AgentState) -> Literal["reflect", "react", "plan"]:
     """Route after simulate based on mission status."""
     gh = state.get("greenhouse")
-    if gh and gh.mission_day >= 450:
+    if gh and gh.day >= 450:
         return "reflect"
 
     sim_result = state.get("sim_result") or {}
