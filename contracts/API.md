@@ -135,7 +135,16 @@ Greenhouses are the top-level physical unit. Each greenhouse fully owns its slot
     "waterReservePercent": "number",
     "nutrientReservePercent": "number",
     "energyReservePercent": "number"
-  }
+  },
+  "zones": [
+    {
+      "id": "number",
+      "areaM2": "number — total growing area in m²",
+      "cropPlan": "object — crop key to allocation fraction (e.g. { \"potato\": 0.6, \"beans_peas\": 0.4 })",
+      "artificialLight": "boolean",
+      "waterAllocation": "number — water multiplier 0.0–1.5"
+    }
+  ]
 }
 ```
 
@@ -1175,7 +1184,10 @@ Slots are the individual growing positions inside a greenhouse. They are created
         "ironMg": "number",
         "potassiumMg": "number",
         "magnesiumMg": "number"
-      }
+      },
+      "calorieGhFraction": "number — 0.0 to 1.0, fraction of calories sourced from greenhouse",
+      "proteinGhFraction": "number — 0.0 to 1.0, fraction of protein sourced from greenhouse",
+      "micronutrientsCovered": "number — count of micronutrients meeting daily targets (0–7)"
     }
   ]
 }
@@ -1214,6 +1226,25 @@ Slots are the individual growing positions inside a greenhouse. They are created
 **Errors:**
 - `400` — Missing or invalid fields
 - `404` — Crop not found
+
+---
+
+### Get stored food reserves
+
+`GET /api/nutrition/stored-food`
+
+**Purpose:** Total pre-launched food supply and remaining calories. Crew arrived with a fixed supply; this tracks consumption against that baseline.
+
+**Response (200):**
+```json
+{
+  "totalCalories": "number — total calories in the pre-launched food supply",
+  "remainingCalories": "number — calories remaining after crew consumption to date"
+}
+```
+
+**Errors:**
+- `503` — Data unavailable
 
 ---
 
@@ -1919,11 +1950,8 @@ All enum values are uppercase strings. Use exactly these values in requests and 
 ### ScenarioType
 | Value | Meaning |
 |---|---|
-| `WATER_LEAK` | Water supply is leaking or compromised |
-| `SOLAR_PANEL_FAILURE` | Energy input is reduced |
-| `DISEASE_OUTBREAK` | Pathogen spreading through crops |
-| `DUST_STORM` | Reduced sunlight and external pressure changes |
-| `EQUIPMENT_MALFUNCTION` | Sensor or actuation hardware failure |
+| `WATER_RECYCLING_DEGRADATION` | Water recycling efficiency drops, reducing available water |
+| `TEMPERATURE_FAILURE` | Temperature control system fails, causing internal temperature to drift |
 
 ### ScenarioSeverity
 | Value | Meaning |
@@ -1944,7 +1972,6 @@ All enum values are uppercase strings. Use exactly these values in requests and 
 |---|---|
 | `VEGETABLE` | Leafy or root vegetables |
 | `LEGUME` | Protein-rich beans and pulses |
-| `GRAIN` | Calorie-dense grains |
 | `HERB` | Flavouring and medicinal plants |
 
 ### WaterRequirement
@@ -2011,7 +2038,6 @@ All enum values are uppercase strings. Use exactly these values in requests and 
 | Field | Type | Description |
 |---|---|---|
 | id | UUID | Unique slot identifier |
-| greenhouseId | UUID | Parent greenhouse (FK) |
 | position | object | `{ row: number, col: number }` |
 | cropId | UUID\|null | Currently planted crop |
 | cropName | string\|null | Display name |
@@ -2021,6 +2047,27 @@ All enum values are uppercase strings. Use exactly these values in requests and 
 | plantedAt | string\|null | ISO 8601 when crop was planted |
 | activeStressTypes | StressType[] | Currently detected stressors; empty if healthy |
 | estimatedYieldKg | number\|null | Projected yield at harvest based on current growth trajectory |
+
+### Zone
+
+| Field | Type | Description |
+|---|---|---|
+| id | number | Zone index (1–4) |
+| areaM2 | number | Growing area in m² |
+| cropPlan | object | Map of crop key → allocation fraction; values must sum to 1.0 |
+| artificialLight | boolean | Whether artificial lighting is active |
+| waterAllocation | number | Water multiplier 0.0–1.5 |
+
+---
+
+### StoredFood
+
+| Field | Type | Description |
+|---|---|---|
+| totalCalories | number | Total calories in the pre-launched food supply |
+| remainingCalories | number | Calories remaining after crew consumption to date |
+
+---
 
 ### AgentLogEntry
 
@@ -2081,7 +2128,6 @@ All enum values are uppercase strings. Use exactly these values in requests and 
 | outcomeScore | number\|null | Final score 0–100 |
 | autonomyLevel | AutonomyLevel | Agent autonomy setting used in this run |
 | riskTolerance | RiskTolerance | Risk tolerance setting used in this run |
-| diversityScore | number\|null | Crop diversity score 0–100, available when running or completed |
 
 ### ScenarioInjection
 
@@ -2089,7 +2135,6 @@ All enum values are uppercase strings. Use exactly these values in requests and 
 |---|---|---|
 | id | UUID | Unique injection ID |
 | scenarioId | UUID | Which scenario type |
-| simulationId | UUID | Target simulation |
 | triggeredAt | string | ISO 8601 |
 | resolvedAt | string\|null | ISO 8601 or null |
 | intensity | number | 0.0–1.0 |
