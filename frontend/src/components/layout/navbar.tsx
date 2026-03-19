@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +15,9 @@ import { useSimulation } from "@/providers/simulation-provider";
 import { StatusPopover } from "./status-popover";
 
 export function Navbar() {
+  const pathname = usePathname();
   const { state } = useSimulation();
+  const isAdminActive = pathname.startsWith("/admin");
   const { resources, alerts, recommendations } = state;
   const openAlertCount = alerts.filter((a) => a.status === "OPEN").length;
   const pendingRecs = recommendations.filter((r) => r.status === "PENDING").length;
@@ -41,8 +45,9 @@ export function Navbar() {
 
           {/* Admin Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <DropdownMenuTrigger className={`px-3 py-1.5 text-sm transition-colors flex items-center gap-1 ${isAdminActive ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground"}`}>
               Admin
+              <ChevronDown className="h-3 w-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuItem

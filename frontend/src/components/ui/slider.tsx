@@ -18,6 +18,8 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
       onChange?.(Number(e.target.value))
     }
 
+    const percentage = max > min ? ((value - min) / (max - min)) * 100 : 0
+
     return (
       <input
         type="range"
@@ -28,11 +30,14 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
         value={value}
         onChange={handleChange}
         className={cn(
-          "w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary",
-          "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary",
+          "w-full h-2 rounded-lg appearance-none cursor-pointer",
+          "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-[0_0_0_2px_var(--background)]",
           "[&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0",
           className
         )}
+        style={{
+          background: `linear-gradient(to right, var(--primary) ${percentage}%, var(--border) ${percentage}%)`
+        }}
         {...props}
       />
     )

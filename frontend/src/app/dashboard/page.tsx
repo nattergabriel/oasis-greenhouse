@@ -22,9 +22,24 @@ export default function DashboardPage() {
   const ghFractionPct = Math.round(latestNutrition.calorieGhFraction * 100);
   const storedPct = Math.round((mockStoredFood.remainingCalories / mockStoredFood.totalCalories) * 100);
 
+  const openAlerts = state.alerts.filter((a) => a.status === "OPEN");
+  const criticalAlert = openAlerts.find((a) => a.severity === "CRITICAL");
+  const pendingRecs = state.recommendations.filter((r) => r.status === "PENDING");
+  const missionProgress = (state.currentMissionDay / state.totalMissionDays) * 100;
+
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <span className="text-sm text-muted-foreground font-mono tabular-nums">
+          SOL {state.currentMissionDay} / {state.totalMissionDays}
+        </span>
+      </div>
+
+      {/* Mission Progress */}
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted border border-border">
+        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${missionProgress}%` }} />
+      </div>
 
       {/* Row 1: Greenhouse visualization (left) + Live stats (right) */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2" style={{ alignItems: "stretch" }}>
@@ -57,7 +72,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Row 2: Weather + Stockpile */}
+      {/* Row 2: Weather + Food Supply */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <Card className="p-4">
           <span className="text-xs uppercase tracking-wide text-muted-foreground">Mars Weather</span>
@@ -111,6 +126,50 @@ export default function DashboardPage() {
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* Row 3: Alerts + Agent Status */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <Link href="/alerts" className="block">
+          <Card className="p-4 hover:bg-secondary transition-colors h-full">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Alerts</span>
+              {openAlerts.length > 0 && (
+                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-destructive text-[10px] font-bold text-white">
+                  {openAlerts.length}
+                </span>
+              )}
+            </div>
+            {criticalAlert ? (
+              <div className="mt-2 flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: "var(--color-status-critical)" }} />
+                <p className="text-sm truncate">{criticalAlert.diagnosis}</p>
+              </div>
+            ) : openAlerts.length > 0 ? (
+              <p className="mt-2 text-sm">{openAlerts.length} open alert{openAlerts.length > 1 ? "s" : ""} — no criticals</p>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">All systems nominal</p>
+            )}
+          </Card>
+        </Link>
+
+        <Link href="/agent" className="block">
+          <Card className="p-4 hover:bg-secondary transition-colors h-full">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">AI Agent</span>
+              {pendingRecs.length > 0 && (
+                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: "var(--color-agent-purple)" }}>
+                  {pendingRecs.length}
+                </span>
+              )}
+            </div>
+            {pendingRecs.length > 0 ? (
+              <p className="mt-2 text-sm">{pendingRecs.length} decision{pendingRecs.length > 1 ? "s" : ""} awaiting approval</p>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">Operating autonomously</p>
+            )}
+          </Card>
+        </Link>
       </div>
     </div>
   );
