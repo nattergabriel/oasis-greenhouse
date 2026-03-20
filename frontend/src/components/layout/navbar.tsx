@@ -41,12 +41,10 @@ export function Navbar() {
           />
         </div>
 
-        {/* Right-side admin links */}
+        {/* Right-side links */}
         <div className="flex items-center ml-3">
           <Divider />
           <NavLink href="/simulation" label="Simulation" />
-          <Divider />
-          <NavLink href="/admin" label="Admin" />
         </div>
       </div>
     </nav>
