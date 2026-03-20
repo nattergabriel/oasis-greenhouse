@@ -17,10 +17,11 @@ resource "aws_apigatewayv2_api" "main" {
       "http://localhost:5174",
       "https://${aws_cloudfront_distribution.frontend.domain_name}"
     ]
-    allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-    allow_headers = ["*"]
-    expose_headers = ["*"]
-    max_age = 3600
+    allow_methods     = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    allow_headers     = ["*"]
+    allow_credentials = true  # Required for X-API-Key header + cookies
+    expose_headers    = ["*"]
+    max_age           = 3600
   }
 
   tags = {
@@ -123,7 +124,7 @@ resource "aws_apigatewayv2_authorizer" "api_key" {
 
   authorizer_payload_format_version = "2.0"
   enable_simple_responses            = true
-  authorizer_result_ttl_in_seconds   = 60  # Reduced to 1 minute for faster key rotation
+  authorizer_result_ttl_in_seconds   = 300
 }
 
 # Lambda permission for API Gateway
@@ -148,7 +149,7 @@ resource "aws_apigatewayv2_integration" "management_backend" {
   timeout_milliseconds   = 10000 # 10 seconds
 
   request_parameters = {
-    "overwrite:path" = "$request.path.proxy"
+    "overwrite:path" = "/api/$request.path.proxy"
   }
 }
 
@@ -158,6 +159,13 @@ resource "aws_apigatewayv2_route" "management_backend" {
   target             = "integrations/${aws_apigatewayv2_integration.management_backend.id}"
   authorizer_id      = aws_apigatewayv2_authorizer.api_key.id
   authorization_type = "CUSTOM"
+}
+
+# OPTIONS route for CORS preflight (no auth required)
+resource "aws_apigatewayv2_route" "management_backend_options" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "OPTIONS /api/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.management_backend.id}"
 }
 
 # Agent Backend Integration
@@ -183,6 +191,13 @@ resource "aws_apigatewayv2_route" "agent_backend" {
   authorization_type = "CUSTOM"
 }
 
+# OPTIONS route for CORS preflight (no auth required)
+resource "aws_apigatewayv2_route" "agent_backend_options" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "OPTIONS /agent/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.agent_backend.id}"
+}
+
 # Simulation Integration
 resource "aws_apigatewayv2_integration" "simulation" {
   api_id             = aws_apigatewayv2_api.main.id
@@ -204,6 +219,13 @@ resource "aws_apigatewayv2_route" "simulation" {
   target             = "integrations/${aws_apigatewayv2_integration.simulation.id}"
   authorizer_id      = aws_apigatewayv2_authorizer.api_key.id
   authorization_type = "CUSTOM"
+}
+
+# OPTIONS route for CORS preflight (no auth required)
+resource "aws_apigatewayv2_route" "simulation_options" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "OPTIONS /sim/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.simulation.id}"
 }
 
 # ─── API Gateway Stage ────────────────────────────────────────────────────────

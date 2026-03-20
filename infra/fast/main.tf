@@ -411,12 +411,6 @@ resource "aws_apprunner_service" "simulation" {
   }
 }
 
-# ─── Lambda & EventBridge (Removed — using App Runner instead) ──────────────
-#
-# Simulation runs as App Runner service (always online FastAPI server)
-# Backend orchestrator calls simulation REST API directly
-# No Lambda or EventBridge Scheduler needed
-
 # ─── Frontend (S3 + CloudFront) ──────────────────────────────────────────────
 # Frontend infrastructure is defined in frontend.tf
 # Deploy with: ./deploy-frontend.sh
