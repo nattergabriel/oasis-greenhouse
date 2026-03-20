@@ -265,4 +265,13 @@ public class SimulationServiceImpl implements SimulationService {
                         new PriorityWeightsDto(sim.getPriorityWeightYield(), sim.getPriorityWeightDiversity(), sim.getPriorityWeightResourceConservation())),
                 new CurrentMetricsDto(0, 100.0, 100.0, 100.0, 0.0));
     }
+
+    @Override
+    public String getAgentResults(String id) {
+        Simulation sim = findOrThrow(id);
+        if (sim.getAgentResultsJson() == null) {
+            throw new IllegalStateException("Agent results not available for simulation: " + id);
+        }
+        return sim.getAgentResultsJson();
+    }
 }

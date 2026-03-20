@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -31,6 +32,7 @@ public class SimulationBridgeServiceImpl implements SimulationBridgeService {
     private final StockpileItemRepository stockpileItemRepository;
     private final StoredFoodRepository storedFoodRepository;
     private final AlertRepository alertRepository;
+    private final ObjectMapper objectMapper;
 
     // Simulation engine crop type string → management-backend crop name
     private static final Map<String, String> CROP_NAME_MAP = Map.of(
@@ -178,7 +180,15 @@ public class SimulationBridgeServiceImpl implements SimulationBridgeService {
             storedFoodRepository.save(sf);
         }
 
-        // --- 6. Update simulation with final metrics ---
+        // --- 6. Store agent results as JSON ---
+        try {
+            String agentResultsJson = objectMapper.writeValueAsString(payload);
+            sim.setAgentResultsJson(agentResultsJson);
+        } catch (Exception e) {
+            log.error("Failed to serialize agent results to JSON: {}", e.getMessage());
+        }
+
+        // --- 7. Update simulation with final metrics ---
         if (payload.finalMetrics() != null) {
             MetricsPayload m = payload.finalMetrics();
             // Compute an outcome score (0-100) from the metrics

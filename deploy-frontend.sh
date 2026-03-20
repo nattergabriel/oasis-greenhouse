@@ -7,7 +7,7 @@ REGION="us-west-2"
 cd infra/fast
 S3_BUCKET=$(terraform.exe output -raw frontend_s3_bucket 2>/dev/null || echo "")
 CLOUDFRONT_URL=$(terraform.exe output -raw frontend_url 2>/dev/null || echo "")
-CLOUDFRONT_ID=$(terraform.exe output -json frontend_url 2>/dev/null | grep -o 'd[a-z0-9]*\.cloudfront\.net' | cut -d'.' -f1 || echo "")
+CLOUDFRONT_ID=$(terraform.exe output -raw frontend_cloudfront_id 2>/dev/null || echo "")
 cd ../..
 
 if [ -z "$S3_BUCKET" ]; then
@@ -37,10 +37,29 @@ echo "✅ Environment configured"
 
 # 2. Build Next.js static export
 echo ""
+echo "🧹 Cleaning previous build..."
+cd frontend
+rm -rf out .next
 echo "📦 Building Next.js app..."
 # Use Windows npm from bash (fixes native module issues on Windows filesystem)
-cd frontend
-powershell.exe -Command "npm run build"
+if ! powershell.exe -Command "npm run build"; then
+  echo ""
+  echo "❌ ERROR: Frontend build failed!"
+  echo "   Check the error messages above for details."
+  cd ..
+  rm -f frontend/.env.local
+  exit 1
+fi
+
+# Verify build output exists
+if [ ! -d "out" ]; then
+  echo ""
+  echo "❌ ERROR: Build output directory 'out' not found!"
+  echo "   The Next.js build did not produce the expected output."
+  cd ..
+  rm -f frontend/.env.local
+  exit 1
+fi
 cd ..
 
 # 2. Sync to S3
@@ -78,12 +97,25 @@ if [ -n "$CLOUDFRONT_ID" ]; then
 fi
 
 echo ""
-echo "✅ Frontend deployed!"
+echo "⏳ Verifying deployment..."
+
+# Wait a moment for S3/CloudFront to update
+sleep 3
+
+# Test if the frontend is accessible
+if curl -sf "$CLOUDFRONT_URL" > /dev/null 2>&1; then
+  echo "✅ Frontend is accessible at: $CLOUDFRONT_URL"
+else
+  echo "⚠️  WARNING: Frontend URL not immediately accessible"
+  echo "   CloudFront may still be propagating (this is normal)"
+  echo "   URL: $CLOUDFRONT_URL"
+fi
+
 echo ""
+echo "✅ Frontend deployed!"
 
 # Clean up .env.local (contains API key)
 rm -f frontend/.env.local
 
-echo "Frontend URL: $CLOUDFRONT_URL"
 echo ""
-echo "Note: CloudFront distribution may take 5-10 minutes to fully propagate."
+echo "Note: CloudFront distribution may take 5-10 minutes to fully propagate if this is the first deployment."

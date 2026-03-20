@@ -28,16 +28,7 @@ echo "📦 4/4 Building and deploying frontend (Next.js → S3 + CloudFront)..."
 ./deploy-frontend.sh
 echo
 
-echo "🔄 5/5 Refreshing API Gateway integrations with Terraform..."
-cd infra/fast
-terraform.exe apply -auto-approve -target=aws_apigatewayv2_integration.management_backend -target=aws_apigatewayv2_integration.agent_backend -target=aws_apigatewayv2_integration.simulation
-cd ../..
-echo "✅ API Gateway integrations refreshed"
-echo
-
-echo "✅ All services deployed!"
-echo
-echo "App Runner will automatically deploy the new images (~2-3 minutes)."
+echo "✅ All services deployed immediately!"
 echo "CloudFront deployment complete (cache invalidated)."
 echo
 echo "Get all connection details (frontend URL + API endpoints + API key):"

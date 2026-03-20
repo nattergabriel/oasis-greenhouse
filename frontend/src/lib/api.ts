@@ -27,6 +27,7 @@ import type {
   TimelineEvent,
   SlotHistorySnapshot,
   SimulationStatus,
+  AgentResults,
 } from "./types";
 
 import { useState, useEffect } from "react";
@@ -203,6 +204,7 @@ export const api = {
     resume: (id: string) => post<{ id: string; status: SimulationStatus }>(`/api/simulations/${id}/resume`),
     stop: (id: string) => post<{ id: string; status: SimulationStatus; completedAt: string; outcomeScore: number }>(`/api/simulations/${id}/stop`),
     timeline: (id: string, params?: { from?: string; to?: string; types?: string; page?: number; pageSize?: number }): Promise<{ simulationId: string; total: number; page: number; pageSize: number; events: TimelineEvent[] }> => get(`/api/simulations/${id}/timeline${qs({ from: params?.from, to: params?.to, types: params?.types, page: params?.page, pageSize: params?.pageSize })}`),
+    agentResults: (id: string): Promise<AgentResults> => get(`/api/simulations/${id}/agent-results`),
     injections: {
       list: (simId: string): Promise<{ injections: ScenarioInjection[] }> => get(`/api/simulations/${simId}/injections`),
       inject: (simId: string, body: { scenarioId: string; intensity: number; durationMinutes?: number }) => post<{ id: string; scenarioId: string; triggeredAt: string; estimatedResolutionAt: string | null; status: string }>(`/api/simulations/${simId}/injections`, body),

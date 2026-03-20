@@ -52,4 +52,8 @@ public class Simulation {
     private double priorityWeightYield;
     private double priorityWeightDiversity;
     private double priorityWeightResourceConservation;
+
+    // Agent backend results (JSON blob from Python agent)
+    @Column(columnDefinition = "TEXT")
+    private String agentResultsJson;
 }

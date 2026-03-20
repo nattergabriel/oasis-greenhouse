@@ -88,4 +88,9 @@ public class SimulationController {
             @RequestParam(defaultValue = "50") @Min(1) @Max(200) int pageSize) {
         return ResponseEntity.ok(simulationService.getTimeline(id, from, to, types, page, pageSize));
     }
+
+    @GetMapping("/{id}/agent-results")
+    public ResponseEntity<String> getAgentResults(@PathVariable String id) {
+        return ResponseEntity.ok(simulationService.getAgentResults(id));
+    }
 }

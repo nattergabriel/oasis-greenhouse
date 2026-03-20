@@ -17,4 +17,5 @@ public interface SimulationService {
     SimulationStatusResponse resumeSimulation(String id);
     StopSimulationResponse stopSimulation(String id);
     TimelineResponse getTimeline(String id, String from, String to, String types, int page, int pageSize);
+    String getAgentResults(String id);
 }

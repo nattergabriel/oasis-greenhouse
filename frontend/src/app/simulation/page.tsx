@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { emptySimulationDetail } from "@/lib/defaults"
-import { api, useApi, useApiState } from "@/lib/api"
+import { useState, useEffect } from "react"
+import { api, useApiState } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,16 +13,14 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { Pause, Play, FastForward } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
-import type { Scenario, SimulationSummary } from "@/lib/types"
+import { Plus, Play, Square, Brain, TrendingUp, Zap } from "lucide-react"
+import type { Scenario, SimulationSummary, AgentResults } from "@/lib/types"
 
-type TabValue = "current" | "scenarios" | "history"
+type TabValue = "scenarios" | "history"
 
 const TABS: { value: TabValue; label: string }[] = [
-  { value: "current", label: "Current Run" },
-  { value: "scenarios", label: "Scenarios" },
-  { value: "history", label: "History" },
+  { value: "scenarios", label: "Test Scenarios" },
+  { value: "history", label: "Learning History" },
 ]
 
 function statusColor(status: string) {
@@ -54,102 +51,227 @@ function severityColor(severity: string) {
   }
 }
 
-/* ---------- Inline per-simulation controls ---------- */
-function InlineSimControls({ simId }: { simId: string }) {
-  const [speed, setSpeed] = useState<0 | 1 | 10>(1)
-  const isRunning = speed > 0
-
-  // In a real app this would dispatch to the simulation runner keyed by simId.
-  // For now we just manage local visual state.
-  void simId
-
-  return (
-    <div className="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
-      <button
-        onClick={() => setSpeed(0)}
-        className={`p-1.5 rounded-md transition-colors ${
-          !isRunning
-            ? "bg-secondary text-foreground"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-        aria-label="Pause simulation"
-      >
-        <Pause className="h-3.5 w-3.5" />
-      </button>
-      <button
-        onClick={() => setSpeed(1)}
-        className={`p-1.5 rounded-md transition-colors ${
-          isRunning && speed === 1
-            ? "bg-secondary text-foreground"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-        aria-label="Play at 1x speed"
-      >
-        <Play className="h-3.5 w-3.5" />
-      </button>
-      <button
-        onClick={() => setSpeed(10)}
-        className={`p-1.5 rounded-md transition-colors ${
-          isRunning && speed === 10
-            ? "bg-secondary text-foreground"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-        aria-label="Play at 10x speed"
-      >
-        <FastForward className="h-3.5 w-3.5" />
-      </button>
-    </div>
-  )
-}
-
 export default function SimulationPage() {
-  const [activeTab, setActiveTab] = useState<TabValue>("current")
-  const { data: simulations, loading: simulationsLoading } = useApiState(() => api.simulations.list().then(r => r.simulations), [] as SimulationSummary[])
-  const simulation = useApi(() => simulations[0] ? api.simulations.get(simulations[0].id) : Promise.reject(), emptySimulationDetail, [simulations])
-  const { data: scenarios, loading: scenariosLoading } = useApiState(() => api.scenarios.list().then(r => r.scenarios), [] as Scenario[])
-  const runningSimulations = simulations.filter((s) => s.status === "RUNNING")
+  const [activeTab, setActiveTab] = useState<TabValue>("scenarios")
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [stopping, setStopping] = useState(false)
+  const [agentResults, setAgentResults] = useState<AgentResults | null>(null)
+  const [loadingAgentResults, setLoadingAgentResults] = useState(false)
+
+  const { data: simulations } = useApiState(
+    () => api.simulations.list().then(r => r.simulations),
+    [] as SimulationSummary[],
+    [refreshTrigger]
+  )
+
+  const { data: scenarios } = useApiState(
+    () => api.scenarios.list().then(r => r.scenarios),
+    [] as Scenario[]
+  )
+
+  const runningSimulations = simulations.filter(s => s.status === "RUNNING")
+
+  // Auto-refresh when there's a running simulation
+  useEffect(() => {
+    if (runningSimulations.length === 0) return
+
+    // Poll every 5 seconds when a simulation is running
+    const interval = setInterval(() => {
+      refreshSimulations()
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [runningSimulations.length])
 
   // Scenario detail dialog
   const [scenarioDetailOpen, setScenarioDetailOpen] = useState(false)
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null)
 
-  // Inject dialog
-  const [injectOpen, setInjectOpen] = useState(false)
-  const [injectScenario, setInjectScenario] = useState<Scenario | null>(null)
-  const [selectedSimId, setSelectedSimId] = useState<string | null>(null)
+  // Create simulation dialog
+  const [createOpen, setCreateOpen] = useState(false)
+  const [selectedScenarioForSim, setSelectedScenarioForSim] = useState<Scenario | null>(null)
 
   // History detail dialog
   const [historyOpen, setHistoryOpen] = useState(false)
   const [selectedSim, setSelectedSim] = useState<SimulationSummary | null>(null)
+
+  // Full screen agent decisions dialog
+  const [fullScreenDecisionsOpen, setFullScreenDecisionsOpen] = useState(false)
+
+  function refreshSimulations() {
+    setRefreshTrigger(prev => prev + 1)
+  }
 
   function openScenarioDetail(scenario: Scenario) {
     setSelectedScenario(scenario)
     setScenarioDetailOpen(true)
   }
 
-  function openInjectDialog(scenario: Scenario) {
-    setInjectScenario(scenario)
-    setSelectedSimId(runningSimulations.length > 0 ? runningSimulations[0].id : null)
-    setInjectOpen(true)
+  function openCreateDialog(scenario?: Scenario) {
+    setSelectedScenarioForSim(scenario ?? null)
+    setError(null)
+    setCreateOpen(true)
   }
 
-  function confirmInject() {
-    // In a real app this would call the backend inject endpoint
-    setInjectOpen(false)
-    setInjectScenario(null)
-    setSelectedSimId(null)
+  async function handleStopSimulation(simId: string) {
+    if (stopping) return false
+    setStopping(true)
+    setError(null)
+
+    try {
+      const response = await api.simulations.stop(simId)
+      console.log("Simulation stopped:", response)
+
+      // Force immediate refresh to show updated status
+      refreshSimulations()
+
+      // Wait a moment and refresh again to ensure we got the update
+      setTimeout(() => {
+        refreshSimulations()
+      }, 500)
+
+      return true
+    } catch (err) {
+      console.error("Failed to stop simulation:", err)
+      setError("Failed to stop simulation. Please try again.")
+      return false
+    } finally {
+      setStopping(false)
+    }
+  }
+
+  async function handleCreateSimulation() {
+    if (creating) return
+    setCreating(true)
+    setError(null)
+
+    try {
+      const timestamp = new Date().toISOString().split('T')[0]
+      const scenarioName = selectedScenarioForSim ? ` - ${selectedScenarioForSim.name}` : ""
+
+      await api.simulations.create({
+        name: `Learning Job ${timestamp}${scenarioName}`,
+        learningGoal: selectedScenarioForSim
+          ? `Test agent response to ${selectedScenarioForSim.name} scenario`
+          : "Optimize crop yield and resource efficiency for Mars conditions",
+        missionDuration: 180,
+        crewSize: 4,
+        yieldTarget: 1000,
+        resourceAvailability: {
+          waterLiters: 10000,
+          nutrientKg: 500,
+          energyKwh: 5000
+        },
+        agentConfig: {
+          autonomyLevel: "HYBRID",
+          certaintyThreshold: 0.7,
+          riskTolerance: "MODERATE",
+          priorityWeights: { yield: 0.4, diversity: 0.3, resourceConservation: 0.3 }
+        }
+      })
+
+      setCreateOpen(false)
+      refreshSimulations()
+      setActiveTab("history")
+    } catch (err: any) {
+      const errorMessage = err?.message || String(err)
+      if (errorMessage.includes("409") || errorMessage.includes("already running")) {
+        setError("Another learning job is already running. Wait for it to complete or stop it first.")
+      } else {
+        setError("Failed to create simulation. Please try again.")
+      }
+      console.error("Failed to create simulation:", err)
+    } finally {
+      setCreating(false)
+    }
   }
 
   function openHistoryDetail(sim: SimulationSummary) {
     setSelectedSim(sim)
     setHistoryOpen(true)
+    setAgentResults(null)
+  }
+
+  // Fetch agent results when history dialog opens (COMPLETED only) - for metrics and strategy
+  useEffect(() => {
+    if (!historyOpen || !selectedSim) {
+      return
+    }
+
+    // Only fetch results for COMPLETED simulations
+    if (selectedSim.status === "COMPLETED" && !agentResults) {
+      fetchAgentResults()
+    }
+  }, [historyOpen, selectedSim, refreshTrigger])
+
+  async function fetchAgentResults() {
+    if (!selectedSim) return
+
+    try {
+      setLoadingAgentResults(true)
+      const results = await api.simulations.agentResults(selectedSim.id)
+      setAgentResults(results)
+    } catch (err: any) {
+      // Not available for incomplete simulations or if import failed
+      if (err?.message?.includes("404") || err?.message?.includes("not available")) {
+        setAgentResults(null)
+      } else {
+        console.error("Failed to fetch agent results:", err)
+      }
+    } finally {
+      setLoadingAgentResults(false)
+    }
   }
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Simulation</h1>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Simulation & Learning</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Run batch learning jobs to test agent behavior under different scenarios
+          </p>
+        </div>
+        <Button onClick={() => openCreateDialog()} className="gap-2">
+          <Plus className="h-4 w-4" />
+          New Learning Job
+        </Button>
       </div>
+
+      {runningSimulations.length > 0 && (
+        <Card className="p-4 border-[var(--color-status-healthy)]/30 bg-[var(--color-status-healthy)]/10 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={statusColor("RUNNING")}>
+                  RUNNING
+                </Badge>
+                <span className="text-sm font-medium">{runningSimulations[0].name}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Learning job in progress. Only one job can run at a time.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                openHistoryDetail(runningSimulations[0])
+              }}
+            >
+              View Details
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {error && (
+        <Card className="p-4 border-destructive/30 bg-destructive/10 animate-in fade-in slide-in-from-top-2 duration-300">
+          <p className="text-sm text-destructive">{error}</p>
+        </Card>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2">
@@ -168,245 +290,121 @@ export default function SimulationPage() {
         ))}
       </div>
 
-      {/* Current Run — per-simulation cards with inline controls */}
-      {activeTab === "current" && (
-        <div className="space-y-4">
-          {simulationsLoading && (
-            <Card className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-8 w-28 rounded-lg" />
-              </div>
-              <div className="grid grid-cols-5 gap-4">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-3 w-20" />
-                    <Skeleton className="h-8 w-16" />
-                  </div>
-                ))}
-              </div>
-              <Skeleton className="h-3 w-32" />
-              <Skeleton className="h-4 w-full" />
-            </Card>
-          )}
-          {!simulationsLoading && simulations.length === 0 && (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No simulations</p>
-              <p className="text-xs text-muted-foreground mt-1">No simulation data available. Create a simulation to get started.</p>
-            </Card>
-          )}
-          {!simulationsLoading && simulations.length > 0 && simulations.filter((s) => s.status === "RUNNING" || s.status === "PAUSED").length === 0 && (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No active simulations</p>
-              <p className="text-xs text-muted-foreground mt-1">Start a new simulation or check history for past runs.</p>
-            </Card>
-          )}
-          {simulations
-            .filter((s) => s.status === "RUNNING" || s.status === "PAUSED")
-            .map((sim) => {
-              // Use the detail object if this sim matches, otherwise fall back to summary
-              const detail = sim.id === simulation.id ? simulation : null
-              return (
-                <Card key={sim.id} className="p-6 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-semibold">{sim.name}</span>
+      {/* Scenarios — test scenario cards */}
+      {activeTab === "scenarios" && (
+        <div className="space-y-4 animate-in fade-in duration-300">
+          <div className="text-sm text-muted-foreground">
+            Select a crisis scenario to test how the AI agent responds. Each scenario becomes a learning job.
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {scenarios.length === 0 && (
+              <Card className="col-span-full p-8 text-center">
+                <p className="text-muted-foreground">No scenarios available</p>
+                <p className="text-xs text-muted-foreground mt-1">Crisis scenarios will appear here when configured.</p>
+              </Card>
+            )}
+            {scenarios.map((scenario) => (
+              <Card
+                key={scenario.id}
+                className="flex flex-col h-full p-4 cursor-pointer hover:bg-secondary/50 transition-colors"
+                onClick={() => openScenarioDetail(scenario)}
+              >
+                {/* Top row: severity left, type right */}
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <Badge variant="outline" className={severityColor(scenario.severity)}>
+                    {scenario.severity}
+                  </Badge>
+                  <Badge variant="outline" className="shrink-0 text-xs uppercase tracking-wide">
+                    {scenario.type.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+
+                {/* Title */}
+                <h3 className="font-semibold mb-2">{scenario.name}</h3>
+
+                {/* Description — truncated */}
+                <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                  {scenario.description}
+                </p>
+
+                {/* Test button pinned to bottom */}
+                <div className="mt-auto">
+                  <Button
+                    className="w-full gap-2"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openCreateDialog(scenario)
+                    }}
+                  >
+                    <Play className="h-4 w-4" />
+                    Run Test
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* History — completed learning jobs */}
+      {activeTab === "history" && (
+        <Card className="p-6 animate-in fade-in duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">Past Learning Jobs</span>
+            {simulations.length > 0 && (
+              <span className="text-xs text-muted-foreground">{simulations.length} total</span>
+            )}
+          </div>
+
+          {simulations.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground">No simulation history</p>
+              <p className="text-xs text-muted-foreground mt-1">Run a learning job to see results here.</p>
+              <Button onClick={() => openCreateDialog()} className="mt-4 gap-2">
+                <Plus className="h-4 w-4" />
+                Create First Job
+              </Button>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 font-medium text-muted-foreground">Name</th>
+                  <th className="text-left py-2 font-medium text-muted-foreground">Status</th>
+                  <th className="text-left py-2 font-medium text-muted-foreground">Score</th>
+                  <th className="text-left py-2 font-medium text-muted-foreground">Config</th>
+                  <th className="text-left py-2 font-medium text-muted-foreground">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {simulations.map((sim) => (
+                  <tr
+                    key={sim.id}
+                    className="border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 transition-colors"
+                    onClick={() => openHistoryDetail(sim)}
+                  >
+                    <td className="py-3">{sim.name}</td>
+                    <td className="py-3">
                       <Badge variant="outline" className={statusColor(sim.status)}>
                         {sim.status}
                       </Badge>
-                    </div>
-                    <InlineSimControls simId={sim.id} />
-                  </div>
-
-                  {detail && (
-                    <>
-                      <div className="grid grid-cols-5 gap-4">
-                        {[
-                          { label: "Mission Day", value: detail.currentMetrics.missionDay },
-                          { label: "Water Reserve", value: `${detail.currentMetrics.waterReservePercent}%` },
-                          { label: "Nutrient Reserve", value: `${detail.currentMetrics.nutrientReservePercent}%` },
-                          { label: "Energy Reserve", value: `${detail.currentMetrics.energyReservePercent}%` },
-                          { label: "Total Yield", value: `${detail.currentMetrics.totalYieldKg} kg` },
-                        ].map((m) => (
-                          <div key={m.label}>
-                            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-                              {m.label}
-                            </div>
-                            <div className="text-2xl font-mono tabular-nums">{m.value}</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div>
-                        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                          Learning Goal
-                        </div>
-                        <p className="text-muted-foreground">{detail.learningGoal}</p>
-                      </div>
-
-                      <div>
-                        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                          Configuration
-                        </div>
-                        <div className="grid grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Autonomy:</span>{" "}
-                            <span className="font-medium">{detail.agentConfig.autonomyLevel}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Risk:</span>{" "}
-                            <span className="font-medium">{detail.agentConfig.riskTolerance}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Crew:</span>{" "}
-                            <span className="font-medium font-mono">{detail.crewSize}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Yield Target:</span>{" "}
-                            <span className="font-medium font-mono">{detail.yieldTarget} kg</span>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {!detail && (
-                    <div className="grid grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Autonomy:</span>{" "}
-                        <span className="font-medium">{sim.autonomyLevel}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Risk:</span>{" "}
-                        <span className="font-medium">{sim.riskTolerance}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Crew:</span>{" "}
-                        <span className="font-medium font-mono">{sim.crewSize}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Yield Target:</span>{" "}
-                        <span className="font-medium font-mono">{sim.yieldTarget} kg</span>
-                      </div>
-                    </div>
-                  )}
-                </Card>
-              )
-            })}
-        </div>
-      )}
-
-      {/* Scenarios — redesigned cards */}
-      {activeTab === "scenarios" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {scenariosLoading && Array.from({ length: 6 }, (_, i) => (
-            <Card key={i} className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-5 w-16 rounded-md" />
-                <Skeleton className="h-5 w-24 rounded-md" />
-              </div>
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-9 w-full rounded-lg mt-2" />
-            </Card>
-          ))}
-          {!scenariosLoading && scenarios.length === 0 && (
-            <Card className="col-span-full p-8 text-center">
-              <p className="text-muted-foreground">No scenarios available</p>
-              <p className="text-xs text-muted-foreground mt-1">Crisis scenarios will appear here when configured.</p>
-            </Card>
+                    </td>
+                    <td className="py-3 font-mono tabular-nums">
+                      {sim.outcomeScore !== null ? sim.outcomeScore.toFixed(1) : "--"}
+                    </td>
+                    <td className="py-3 text-muted-foreground text-xs">
+                      {sim.autonomyLevel} · {sim.riskTolerance}
+                    </td>
+                    <td className="py-3 text-muted-foreground">
+                      {new Date(sim.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
-          {scenarios.map((scenario) => (
-            <Card
-              key={scenario.id}
-              className="flex flex-col h-full p-4 cursor-pointer hover:bg-secondary/50 transition-colors"
-              onClick={() => openScenarioDetail(scenario)}
-            >
-              {/* Top row: severity left, type right */}
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <Badge variant="outline" className={severityColor(scenario.severity)}>
-                  {scenario.severity}
-                </Badge>
-                <Badge variant="outline" className="shrink-0 text-xs uppercase tracking-wide">
-                  {scenario.type.replace(/_/g, " ")}
-                </Badge>
-              </div>
-
-              {/* Title */}
-              <h3 className="font-semibold mb-2">{scenario.name}</h3>
-
-              {/* Description — truncated */}
-              <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                {scenario.description}
-              </p>
-
-              {/* Inject button pinned to bottom */}
-              <div className="mt-auto">
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    openInjectDialog(scenario)
-                  }}
-                >
-                  Inject
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* History — clickable rows */}
-      {activeTab === "history" && (
-        <Card className="p-6">
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">Past Simulations</span>
-          {simulationsLoading && (
-            <div className="mt-4 space-y-3">
-              {Array.from({ length: 4 }, (_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          )}
-          {!simulationsLoading && simulations.length === 0 && (
-            <p className="text-muted-foreground text-sm mt-4">No simulation history available.</p>
-          )}
-          <table className={`w-full text-sm mt-4 ${simulationsLoading || simulations.length === 0 ? "hidden" : ""}`}>
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-2 font-medium text-muted-foreground">Name</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Status</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Score</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Autonomy</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Risk</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {simulations.map((sim) => (
-                <tr
-                  key={sim.id}
-                  className="border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 transition-colors"
-                  onClick={() => openHistoryDetail(sim)}
-                >
-                  <td className="py-3">{sim.name}</td>
-                  <td className="py-3">
-                    <Badge variant="outline" className={statusColor(sim.status)}>
-                      {sim.status}
-                    </Badge>
-                  </td>
-                  <td className="py-3 font-mono tabular-nums">{sim.outcomeScore ?? "--"}</td>
-                  <td className="py-3">{sim.autonomyLevel}</td>
-                  <td className="py-3">{sim.riskTolerance}</td>
-                  <td className="py-3 text-muted-foreground">
-                    {new Date(sim.createdAt).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </Card>
       )}
 
@@ -455,13 +453,14 @@ export default function SimulationPage() {
               </div>
               <DialogFooter>
                 <Button
-                  variant="outline"
                   onClick={() => {
                     setScenarioDetailOpen(false)
-                    openInjectDialog(selectedScenario)
+                    openCreateDialog(selectedScenario)
                   }}
+                  className="gap-2"
                 >
-                  Inject into Simulation
+                  <Play className="h-4 w-4" />
+                  Run Learning Job
                 </Button>
               </DialogFooter>
             </>
@@ -469,62 +468,109 @@ export default function SimulationPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ========== Inject Dialog ========== */}
-      <Dialog open={injectOpen} onOpenChange={setInjectOpen}>
+      {/* ========== Create Simulation Dialog ========== */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-lg">
-          {injectScenario && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Inject Scenario</DialogTitle>
-                <DialogDescription>
-                  Select a running simulation to inject{" "}
-                  <span className="font-medium text-foreground">{injectScenario.name}</span> into.
-                </DialogDescription>
-              </DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Create Learning Job</DialogTitle>
+            <DialogDescription>
+              {selectedScenarioForSim
+                ? `Run a learning simulation with the ${selectedScenarioForSim.name} scenario.`
+                : "Run a baseline learning simulation to test agent behavior."}
+            </DialogDescription>
+          </DialogHeader>
 
-              {runningSimulations.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-2">
-                  No simulations are currently running.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                    Running Simulations
-                  </div>
-                  {runningSimulations.map((sim) => (
-                    <button
-                      key={sim.id}
-                      onClick={() => setSelectedSimId(sim.id)}
-                      className={`w-full text-left rounded-lg border p-3 transition-colors ${
-                        selectedSimId === sim.id
-                          ? "border-primary bg-primary/10"
-                          : "border-border bg-card hover:bg-secondary"
-                      }`}
+          <div className="space-y-4 py-4">
+            {runningSimulations.length > 0 && (
+              <Card className="p-4 border-[var(--color-status-warning)]/30 bg-[var(--color-status-warning)]/10">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground mb-1">A job is already running</p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Only one simulation can run at a time: <strong>{runningSimulations[0].name}</strong>
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        if (runningSimulations.length > 0) {
+                          const stopped = await handleStopSimulation(runningSimulations[0].id)
+                          if (stopped) {
+                            setCreateOpen(false)
+                          }
+                        }
+                      }}
+                      disabled={stopping}
+                      className="h-7 text-xs gap-1.5"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">{sim.name}</span>
-                        <Badge variant="outline" className={statusColor(sim.status)}>
-                          {sim.status}
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Crew {sim.crewSize} · {sim.autonomyLevel} · {sim.riskTolerance}
-                      </div>
-                    </button>
-                  ))}
+                      <Square className="h-3 w-3" />
+                      {stopping ? "Stopping..." : "Stop Running Job"}
+                    </Button>
+                  </div>
                 </div>
-              )}
+              </Card>
+            )}
 
-              <DialogFooter>
-                <Button
-                  disabled={!selectedSimId || runningSimulations.length === 0}
-                  onClick={confirmInject}
-                >
-                  Confirm Inject
-                </Button>
-              </DialogFooter>
-            </>
-          )}
+            <div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                Configuration
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Duration:</span>{" "}
+                  <span className="font-medium font-mono">180 days</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Crew Size:</span>{" "}
+                  <span className="font-medium font-mono">4</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Autonomy:</span>{" "}
+                  <span className="font-medium">HYBRID</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Risk:</span>{" "}
+                  <span className="font-medium">MODERATE</span>
+                </div>
+              </div>
+            </div>
+
+            {selectedScenarioForSim && (
+              <div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                  Test Scenario
+                </div>
+                <Card className="p-3 bg-secondary/50">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className={severityColor(selectedScenarioForSim.severity)}>
+                      {selectedScenarioForSim.severity}
+                    </Badge>
+                    <span className="font-medium text-sm">{selectedScenarioForSim.name}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{selectedScenarioForSim.description}</p>
+                </Card>
+              </div>
+            )}
+
+            <div className="text-xs text-muted-foreground bg-muted/50 rounded p-3">
+              <strong>Note:</strong> This will create a batch learning job that runs to completion.
+              Results will be available in the Learning History tab.
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateSimulation}
+              disabled={creating || runningSimulations.length > 0}
+              className="gap-2"
+            >
+              <Play className="h-4 w-4" />
+              {creating ? "Creating..." : runningSimulations.length > 0 ? "Job Already Running" : "Start Job"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -540,7 +586,7 @@ export default function SimulationPage() {
                   </Badge>
                   {selectedSim.outcomeScore !== null && (
                     <span className="text-xs text-muted-foreground font-mono tabular-nums">
-                      Score: {selectedSim.outcomeScore}
+                      Score: {selectedSim.outcomeScore.toFixed(1)}
                     </span>
                   )}
                 </div>
@@ -548,6 +594,14 @@ export default function SimulationPage() {
               </DialogHeader>
 
               <div className="space-y-4">
+                {/* Learning Goal */}
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                    Learning Goal
+                  </div>
+                  <p className="text-sm text-muted-foreground">{selectedSim.learningGoal}</p>
+                </div>
+
                 {/* Configuration */}
                 <div>
                   <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
@@ -585,43 +639,195 @@ export default function SimulationPage() {
                   </div>
                 </div>
 
-                {/* Learning Goal */}
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                    Learning Goal
-                  </div>
-                  <p className="text-sm text-muted-foreground">{selectedSim.learningGoal}</p>
-                </div>
-
-                {/* Timeline placeholder */}
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                    Key Events
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { day: 1, event: "Simulation started, initial crop assignments" },
-                      { day: 30, event: "First scheduled review, minor adjustments" },
-                      { day: 75, event: "Water recycling degradation event triggered" },
-                      { day: 142, event: "Current state — simulation in progress" },
-                    ].map((entry) => (
-                      <div
-                        key={entry.day}
-                        className="flex items-start gap-3 text-sm"
-                      >
-                        <span className="shrink-0 font-mono tabular-nums text-muted-foreground whitespace-nowrap">
-                          SOL {entry.day}
-                        </span>
-                        <span className="text-muted-foreground">{entry.event}</span>
+                {/* Outcome */}
+                {selectedSim.status === "COMPLETED" && (
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                      Outcome
+                    </div>
+                    <Card className="p-4 bg-secondary/50">
+                      <div className="text-2xl font-mono tabular-nums mb-1">
+                        {selectedSim.outcomeScore !== null ? selectedSim.outcomeScore.toFixed(1) : "--"}
                       </div>
-                    ))}
+                      <div className="text-xs text-muted-foreground">
+                        Learning score · Completed {selectedSim.completedAt ? new Date(selectedSim.completedAt).toLocaleDateString() : "--"}
+                      </div>
+                    </Card>
                   </div>
+                )}
+
+                {/* Running Status */}
+                {selectedSim.status === "RUNNING" && (
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                      Status
+                    </div>
+                    <Card className="p-4 bg-[var(--color-status-healthy)]/10">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium mb-1">Job in progress</div>
+                          <div className="text-xs text-muted-foreground">
+                            The learning job is currently running. Results will be available when complete.
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            const stopped = await handleStopSimulation(selectedSim.id)
+                            if (stopped) {
+                              setHistoryOpen(false)
+                            }
+                          }}
+                          disabled={stopping}
+                          className="gap-1.5"
+                        >
+                          <Square className="h-3.5 w-3.5" />
+                          {stopping ? "Stopping..." : "Stop Job"}
+                        </Button>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                {selectedSim.status === "COMPLETED" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setFullScreenDecisionsOpen(true)}
+                    className="gap-2"
+                  >
+                    <Brain className="h-4 w-4" />
+                    View Agent Decisions
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ========== Full Screen Agent Decisions Dialog ========== */}
+      <Dialog open={fullScreenDecisionsOpen} onOpenChange={setFullScreenDecisionsOpen}>
+        <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              Agent Decisions — {selectedSim?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Performance metrics and decision history from the completed simulation
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingAgentResults ? (
+            <div className="flex-1 flex items-center justify-center py-16">
+              <div className="text-center">
+                <div className="text-muted-foreground mb-2">Loading agent decisions...</div>
+                <div className="text-xs text-muted-foreground">This may take a moment</div>
+              </div>
+            </div>
+          ) : agentResults ? (
+            <div className="flex-1 overflow-y-auto -mx-6 px-6">
+              {/* Final Metrics */}
+              <div className="mb-6">
+                <div className="text-sm uppercase tracking-wide text-muted-foreground mb-3">
+                  Final Metrics
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <Card className="p-4 bg-secondary/50">
+                    <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      Total Harvested
+                    </div>
+                    <div className="text-xl font-mono tabular-nums">
+                      {agentResults.final_metrics.total_harvested_kg.toFixed(1)} kg
+                    </div>
+                  </Card>
+                  <Card className="p-4 bg-secondary/50">
+                    <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <Zap className="h-3 w-3" />
+                      Resource Efficiency
+                    </div>
+                    <div className="text-xl font-mono tabular-nums">
+                      {(agentResults.final_metrics.resource_efficiency * 100).toFixed(0)}%
+                    </div>
+                  </Card>
+                  <Card className="p-4 bg-secondary/50">
+                    <div className="text-xs text-muted-foreground mb-1">Calorie Coverage</div>
+                    <div className="text-xl font-mono tabular-nums">
+                      {(agentResults.final_metrics.avg_calorie_gh_fraction * 100).toFixed(0)}%
+                    </div>
+                  </Card>
+                  <Card className="p-4 bg-secondary/50">
+                    <div className="text-xs text-muted-foreground mb-1">Protein Coverage</div>
+                    <div className="text-xl font-mono tabular-nums">
+                      {(agentResults.final_metrics.avg_protein_gh_fraction * 100).toFixed(0)}%
+                    </div>
+                  </Card>
+                  <Card className="p-4 bg-secondary/50">
+                    <div className="text-xs text-muted-foreground mb-1">Micronutrients</div>
+                    <div className="text-xl font-mono tabular-nums">
+                      {agentResults.final_metrics.avg_micronutrient_coverage.toFixed(1)}
+                    </div>
+                  </Card>
+                  <Card className="p-4 bg-secondary/50">
+                    <div className="text-xs text-muted-foreground mb-1">Crops Lost</div>
+                    <div className="text-xl font-mono tabular-nums">
+                      {agentResults.final_metrics.crops_lost}
+                    </div>
+                  </Card>
                 </div>
               </div>
 
-              <DialogFooter showCloseButton />
-            </>
+              {/* Agent Decisions */}
+              <div className="mb-3">
+                <div className="text-sm uppercase tracking-wide text-muted-foreground mb-3">
+                  All Decisions ({agentResults.agent_decisions.length})
+                </div>
+              </div>
+              <div className="space-y-3">
+                {agentResults.agent_decisions.slice().reverse().map((decision, idx) => (
+                  <Card key={idx} className="p-4 hover:bg-secondary/30 transition-colors">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <span className="text-sm font-mono text-muted-foreground font-medium">
+                        Day {decision.day}
+                      </span>
+                      <Badge variant="outline" className="shrink-0">
+                        {decision.node}
+                      </Badge>
+                    </div>
+                    <p className="text-base leading-relaxed mb-2">{decision.reasoning}</p>
+                    {decision.actions.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        <div className="text-sm text-muted-foreground font-medium">
+                          Actions taken ({decision.actions.length}):
+                        </div>
+                        <div className="space-y-1">
+                          {decision.actions.map((action, actionIdx) => (
+                            <div key={actionIdx} className="text-sm text-muted-foreground pl-3 border-l-2 border-border">
+                              <code className="text-xs bg-secondary/50 px-2 py-1 rounded">
+                                {typeof action === 'string' ? action : JSON.stringify(action)}
+                              </code>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center py-16">
+              <div className="text-center text-muted-foreground">
+                No agent decisions available
+              </div>
+            </div>
           )}
+
+          <DialogFooter showCloseButton />
         </DialogContent>
       </Dialog>
     </div>

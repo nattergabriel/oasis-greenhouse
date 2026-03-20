@@ -398,6 +398,54 @@ export interface Scenario {
   defaultDurationMinutes: number | null;
 }
 
+// Agent Backend Results (from Python agent backend)
+export interface AgentDecision {
+  day: number;
+  node: string; // "plan" or "react"
+  reasoning: string;
+  actions: Array<Record<string, unknown>>;
+}
+
+export interface DailySnapshot {
+  day: number;
+  resources: {
+    water: number;
+    nutrients: number;
+    water_recycling_rate: number;
+  };
+  daily_nutrition: {
+    calorie_gh_fraction: number;
+    protein_gh_fraction: number;
+    micronutrient_count: number;
+  };
+}
+
+export interface SimulationMetrics {
+  avg_calorie_gh_fraction: number;
+  avg_protein_gh_fraction: number;
+  avg_micronutrient_coverage: number;
+  total_harvested_kg: number;
+  crops_lost: number;
+  stored_food_remaining_pct: number;
+  resource_efficiency: number;
+  events_handled: number;
+}
+
+export interface AgentResults {
+  id: string;
+  agent_decisions: AgentDecision[];
+  daily_snapshots: DailySnapshot[];
+  events: Array<{
+    type: string;
+    started_day: number;
+    duration_sols: number;
+    remaining_sols: number;
+  }>;
+  final_metrics: SimulationMetrics;
+  strategy_doc_before: string;
+  strategy_doc_after: string;
+}
+
 // AnalyticsController
 export interface AgentPerformance {
   simulationId: string;
