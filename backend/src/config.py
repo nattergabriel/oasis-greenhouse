@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     # AWS Bedrock
     aws_region: str = "us-west-2"
     bedrock_model_id: str = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+    aws_bearer_token_bedrock: str | None = None  # Workshop Studio bearer token
 
     # MCP Knowledge Base
     kb_endpoint: str = (

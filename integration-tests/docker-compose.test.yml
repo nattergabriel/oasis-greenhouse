@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # PostgreSQL test database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: greenhouse-postgres-test
+    environment:
+      POSTGRES_DB: greenhouse_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5532:5432"
+    networks:
+      - greenhouse-test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d greenhouse_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+
+  # Simulation engine (test instance)
+  simulation-test:
+    build:
+      context: ../simulation
+      dockerfile: Dockerfile
+    container_name: greenhouse-simulation-test
+    environment:
+      PORT: 8000
+      LOG_LEVEL: INFO
+    ports:
+      - "8101:8000"
+    networks:
+      - greenhouse-test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Backend orchestrator (test instance)
+  backend-test:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: greenhouse-backend-test
+    environment:
+      PORT: 8000
+      SIM_ENGINE_URL: http://simulation-test:8000
+      MANAGEMENT_BACKEND_URL: http://management-backend-test:8080
+      AWS_REGION: ${AWS_REGION:-us-west-2}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+      USE_MOCK_BEDROCK: ${USE_MOCK_BEDROCK:-false}
+      BEDROCK_MODEL_ID: us.anthropic.claude-sonnet-4-20250514-v1:0
+      LOG_LEVEL: INFO
+    ports:
+      - "8102:8000"
+    networks:
+      - greenhouse-test-network
+    depends_on:
+      simulation-test:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Management backend (test instance)
+  management-backend-test:
+    build:
+      context: ../management-backend
+      dockerfile: Dockerfile
+    container_name: greenhouse-management-backend-test
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-test:5432/greenhouse_test
+      SPRING_DATASOURCE_USERNAME: test_user
+      SPRING_DATASOURCE_PASSWORD: test_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      SPRING_PROFILES_ACTIVE: test
+    ports:
+      - "8180:8080"
+    networks:
+      - greenhouse-test-network
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  greenhouse-test-network:
+    driver: bridge
+
+volumes:
+  postgres-test-data:

@@ -81,7 +81,18 @@ SLOT SUMMARY:
 FOOD SUPPLY (stockpile):
 {food_supply_summary}
 
-Review the current slot assignments and metrics. Adjust crop assignments, water allocations, lighting, or temperature as needed for the next {plan_horizon} days. Harvesting and replanting happen automatically per slot crop type."""
+Review the current slot assignments and metrics. Adjust crop assignments, water allocations, lighting, or temperature as needed for the next {plan_horizon} days. Harvesting and replanting happen automatically per slot crop type.
+
+REQUIRED JSON OUTPUT FORMAT:
+{{
+  "reasoning": "Your strategic reasoning for these actions (2-3 sentences)",
+  "actions": [
+    {{"action": "set_crop", "slot_id": 0, "crop_type": "potato"}},
+    {{"action": "water_adjust", "slot_id": 1, "multiplier": 1.2}}
+  ]
+}}
+
+Respond with ONLY valid JSON. No markdown, no explanations outside the JSON structure."""
 
 
 def build_react_prompt(
@@ -119,7 +130,18 @@ RESOURCE STATUS:
 - Energy: {energy_generated:.0f}/{energy_needed:.0f} (deficit: {energy_deficit:.0f})
 - Days remaining in mission: {days_remaining}
 
-Respond to this alert. Prioritize: human safety > system stability > crop survival > yield."""
+Respond to this alert. Prioritize: human safety > system stability > crop survival > yield.
+
+REQUIRED JSON OUTPUT FORMAT:
+{{
+  "reasoning": "Your crisis response reasoning (2-3 sentences)",
+  "actions": [
+    {{"action": "set_temperature", "target_temp": 18.0}},
+    {{"action": "light_toggle", "slot_id": 0, "on": false}}
+  ]
+}}
+
+Respond with ONLY valid JSON. No markdown, no explanations outside the JSON structure."""
 
 
 def build_reflect_prompt(
@@ -151,4 +173,11 @@ RUN METRICS:
 KEY DECISIONS AND OUTCOMES:
 {decisions_log}
 
-Rewrite the strategy document. Keep what worked. Drop or revise what didn't. Be specific and actionable. The document should be 2-3 pages max and directly usable by the planning agent in future runs."""
+Rewrite the strategy document. Keep what worked. Drop or revise what didn't. Be specific and actionable. The document should be 2-3 pages max and directly usable by the planning agent in future runs.
+
+REQUIRED JSON OUTPUT FORMAT:
+{{
+  "strategy_document": "# Mars Greenhouse Strategy\\n\\nYour complete revised strategy document here as markdown text...\\n\\n## Crop Selection\\n...\\n\\n## Resource Management\\n..."
+}}
+
+Respond with ONLY valid JSON. The strategy_document field should contain your complete strategy as a markdown-formatted string. No additional text outside the JSON structure."""

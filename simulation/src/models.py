@@ -453,6 +453,21 @@ def state_to_dict(state: GreenhouseState) -> dict[str, Any]:
     }
 
 
+def _deserialize_rng_state(state_list: list | None) -> tuple | None:
+    """Convert RNG state from JSON list format back to nested tuple format.
+
+    Random.getstate() returns (version, state_tuple, gauss_next) where
+    state_tuple is a tuple of 624 integers. When serialized to JSON, tuples
+    become lists. This function reconstructs the proper nested tuple structure.
+    """
+    if not state_list or not isinstance(state_list, list) or len(state_list) != 3:
+        return None
+    try:
+        return (state_list[0], tuple(state_list[1]), state_list[2])
+    except (TypeError, IndexError):
+        return None
+
+
 def dict_to_state(d: dict[str, Any]) -> GreenhouseState:
     """Deserialize a dict back into a GreenhouseState."""
     return GreenhouseState(
@@ -468,7 +483,7 @@ def dict_to_state(d: dict[str, Any]) -> GreenhouseState:
         next_crop_id=d["next_crop_id"],
         seed=d["seed"],
         consecutive_energy_deficit_days=d.get("consecutive_energy_deficit_days", 0),
-        rng_state=tuple(d["rng_state"]) if d.get("rng_state") else None,
+        rng_state=_deserialize_rng_state(d.get("rng_state")),
     )
 
 
