@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="docs/thumbnail.png" alt="OASIS" width="100%" />
+  <img src="docs/thumbnail.png" alt="Oasis" width="100%" />
 </p>
 
 <p align="center">
-OASIS is an autonomous AI agent that doesn't just manage a greenhouse, it teaches itself how to farm. Grounded in Syngenta's Knowledge Base and forged under extreme conditions, built to transfer to precision agriculture on Earth.
+Oasis is an autonomous AI agent that doesn't just manage a greenhouse, it teaches itself how to farm. Grounded in Syngenta's Knowledge Base and forged under extreme conditions, built to transfer to precision agriculture on Earth.
 </p>
 
 <p align="center">
@@ -14,14 +14,14 @@ OASIS is an autonomous AI agent that doesn't just manage a greenhouse, it teache
 
 ## What it does
 
-OASIS runs a 450-day Martian greenhouse simulation to feed a crew of 4 astronauts. An AI agent plans crop allocations, reacts to crises in real time, and rewrites its own strategy after each run. Every decision is grounded in Syngenta's MCP Knowledge Base, covering crop profiles, stress management, and nutrition data.
+Oasis runs a 450-day Martian greenhouse simulation to feed a crew of 4 astronauts. An AI agent plans crop allocations, reacts to crises in real time, and rewrites its own strategy after each run. Every decision is grounded in Syngenta's MCP Knowledge Base, covering crop profiles, stress management, and nutrition data.
 
 The same technology transfers directly to controlled environment agriculture (CEA) on Earth: vertical farms, hydroponic systems, and Syngenta's Cropwise platform.
 
 ## Architecture
 
 <p align="center">
-  <img src="docs/architecture.png" alt="OASIS Architecture" width="100%" />
+  <img src="docs/architecture.png" alt="Oasis Architecture" width="100%" />
 </p>
 
 ## Tech stack
@@ -113,4 +113,4 @@ Each run takes around 20-25 LLM calls. The agent improves with every simulation.
 
 The controlled environment agriculture market is projected to grow from $108B to $420B by 2035. NASA's Biomass Production Chamber (1988-2000) pioneered the LED lighting, hydroponics, and closed-loop systems now used by companies like Plenty, AeroFarms, and Bowery Farming.
 
-OASIS applies the same principles with an autonomous decision layer on top. The agent architecture maps directly to Syngenta's Cropwise platform as a decision-support module for real-world greenhouse and vertical farm operations.
+Oasis applies the same principles with an autonomous decision layer on top. The agent architecture maps directly to Syngenta's Cropwise platform as a decision-support module for real-world greenhouse and vertical farm operations.
