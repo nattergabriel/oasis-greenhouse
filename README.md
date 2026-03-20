@@ -6,6 +6,10 @@
 OASIS is an autonomous AI agent that doesn't just manage a greenhouse, it teaches itself how to farm. Grounded in Syngenta's Knowledge Base and forged under extreme conditions, built to transfer to precision agriculture on Earth.
 </p>
 
+<p align="center">
+  <a href="https://d1jnha6e8xdf6p.cloudfront.net/simulation/">Try the live demo</a>
+</p>
+
 ---
 
 ## What it does
