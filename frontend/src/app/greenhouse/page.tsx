@@ -317,7 +317,7 @@ function CircularTopView({
                 <g key={`${r}-${c}`} opacity={isEmpty ? 0.4 : 1}>
                   <title>
                     {slot?.cropName
-                      ? `${slot.cropName} — ${slot.growthStagePercent}% — ${slot.status}`
+                      ? `${slot.cropName} — ${slot.growthStagePercent.toFixed(1)}% — ${slot.status}`
                       : `Zone ${r + 1} — Empty`}
                   </title>
                   <rect
@@ -354,7 +354,7 @@ function CircularTopView({
                       >
                         {metricMode === "yield" && slot.estimatedYieldKg !== null
                           ? `${slot.estimatedYieldKg.toFixed(1)}kg`
-                          : `${slot.growthStagePercent}%`}
+                          : `${slot.growthStagePercent.toFixed(1)}%`}
                       </text>
                       {slot.activeStressTypes.length > 0 && (
                         <circle

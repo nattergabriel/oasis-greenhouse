@@ -3,6 +3,7 @@ import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SimulationProvider } from "@/providers/simulation-provider";
 import { AppShell } from "@/components/layout/app-shell";
+import { SplashScreen } from "@/components/splash/splash-screen";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -31,6 +32,7 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
+        <SplashScreen />
         <SimulationProvider>
           <TooltipProvider>
             <AppShell>{children}</AppShell>
