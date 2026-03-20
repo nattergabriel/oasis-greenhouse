@@ -28,9 +28,15 @@ output "simulation_url_internal" {
   description = "Internal App Runner URL (access via API Gateway instead)"
 }
 
-output "frontend_url" {
-  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}"
-  description = "CloudFront URL for frontend"
+output "frontend_cloudfront_domain" {
+  value       = aws_cloudfront_distribution.frontend.domain_name
+  description = "CloudFront domain (requires ?api_key=xxx)"
+}
+
+output "frontend_url_with_key" {
+  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}?api_key=${var.api_key}"
+  description = "CloudFront URL with API key (ready to use)"
+  sensitive   = true
 }
 
 output "frontend_s3_bucket" {

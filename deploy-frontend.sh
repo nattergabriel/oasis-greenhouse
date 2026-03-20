@@ -29,7 +29,7 @@ API_KEY=$(terraform.exe output -raw api_key_demo 2>/dev/null | sed 's/Set X-API-
 cd ../..
 
 cat > frontend/.env.local << EOF
-NEXT_PUBLIC_API_URL=${API_URL}/api
+NEXT_PUBLIC_API_URL=${API_URL}
 NEXT_PUBLIC_API_KEY=${API_KEY}
 EOF
 
@@ -38,8 +38,9 @@ echo "✅ Environment configured"
 # 2. Build Next.js static export
 echo ""
 echo "📦 Building Next.js app..."
+# Use Windows npm from bash (fixes native module issues on Windows filesystem)
 cd frontend
-npm run build
+powershell.exe -Command "npm run build"
 cd ..
 
 # 2. Sync to S3

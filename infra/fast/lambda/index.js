@@ -33,6 +33,19 @@ function secureCompare(a, b) {
 }
 
 exports.handler = async (event) => {
+  console.log('Authorizer event:', JSON.stringify(event, null, 2));
+
+  // Allow OPTIONS requests (CORS preflight) without authentication
+  const method = event.requestContext?.http?.method || event.routeKey?.split(' ')[0];
+  console.log('Request method:', method);
+
+  if (method === 'OPTIONS') {
+    console.log('Allowing OPTIONS request');
+    return {
+      isAuthorized: true
+    };
+  }
+
   // Extract API key from header
   const apiKey = event.headers?.['x-api-key'] || event.headers?.['X-API-Key'];
 
