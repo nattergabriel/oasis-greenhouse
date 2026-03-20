@@ -47,17 +47,16 @@ async def react_node(state: AgentState) -> dict[str, Any]:
 
     response = await bedrock_client.call(SYSTEM_PROMPT, user_prompt)
 
-    diagnosis = response.get("diagnosis", "No diagnosis provided")
-    actions = response.get("immediate_actions", [])
-    monitoring_plan = response.get("monitoring_plan", "")
-    revised_horizon = response.get("revised_plan_horizon", 10)
+    # Extract fields matching the prompt format
+    reasoning = response.get("reasoning", "No reasoning provided")
+    actions = response.get("actions", [])
 
-    logger.info("[REACT] %d immediate actions, horizon=%d", len(actions), revised_horizon)
+    logger.info("[REACT] %d actions taken", len(actions))
 
     decision = AgentAction(
         day=mission_day,
         node="react",
-        reasoning=f"{diagnosis}\n\nMonitoring: {monitoring_plan}",
+        reasoning=reasoning,
         actions=actions,
     )
 
@@ -68,7 +67,7 @@ async def react_node(state: AgentState) -> dict[str, Any]:
         "agent_decisions": decisions,
         "sim_result": {
             "planned_actions": actions,
-            "plan_horizon": revised_horizon,
+            "plan_horizon": 10,  # Default horizon for react
         },
     }
 

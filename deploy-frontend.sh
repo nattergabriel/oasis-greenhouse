@@ -45,7 +45,7 @@ echo "✅ Environment configured"
 echo ""
 echo "🧹 Cleaning previous build..."
 cd frontend
-rm -rf out .next
+rm -rf out .next 2>/dev/null || true
 echo "📦 Building Next.js app..."
 # Use Windows npm from bash (fixes native module issues on Windows filesystem)
 if ! powershell.exe -Command "npm run build"; then
