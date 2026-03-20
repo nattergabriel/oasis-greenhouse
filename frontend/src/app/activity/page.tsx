@@ -307,6 +307,8 @@ export default function ActivityPage() {
   const { state } = useSimulation();
   const [logFilter, setLogFilter] = useState<AgentOutcome | "ALL">("ALL");
   const [alertFilter, setAlertFilter] = useState<AlertFilter>("ALL");
+  const [alertLimit, setAlertLimit] = useState(5);
+  const [logLimit, setLogLimit] = useState(5);
 
   const pending = state.recommendations.filter((r) => r.status === "PENDING");
 
@@ -376,10 +378,20 @@ export default function ActivityPage() {
           </Card>
         ) : (
           <div>
-            {sortedAlerts.map((alert, i) => (
+            {sortedAlerts.slice(0, alertLimit).map((alert, i) => (
               <AlertRow key={alert.id} alert={alert} isFirst={i === 0} />
             ))}
             <div className="border-b border-border rounded-b-lg" />
+            {sortedAlerts.length > alertLimit && (
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => setAlertLimit((l) => l + 5)}
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Show more
+                </button>
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -411,10 +423,20 @@ export default function ActivityPage() {
           </Card>
         ) : (
           <div>
-            {sortedLog.map((entry, i) => (
+            {sortedLog.slice(0, logLimit).map((entry, i) => (
               <LogRow key={entry.id} entry={entry} isFirst={i === 0} />
             ))}
             <div className="border-b border-border rounded-b-lg" />
+            {sortedLog.length > logLimit && (
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => setLogLimit((l) => l + 5)}
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Show more
+                </button>
+              </div>
+            )}
           </div>
         )}
       </section>

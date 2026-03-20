@@ -347,10 +347,10 @@ function SlotCell({ slot }: { slot: PlantSlot }) {
       </div>
       <div className="mt-1.5">
         <div className="h-1 rounded-full bg-secondary overflow-hidden">
-          <div className="h-full rounded-full" style={{ width: `${slot.growthStagePercent}%`, backgroundColor: growthColor }} />
+          <div className="h-full rounded-full" style={{ width: `${Math.round(slot.growthStagePercent)}%`, backgroundColor: growthColor }} />
         </div>
         <div className="flex items-center justify-between mt-1">
-          <span className="text-[10px] font-mono tabular-nums text-muted-foreground">{slot.growthStagePercent}%</span>
+          <span className="text-[10px] font-mono tabular-nums text-muted-foreground">{Math.round(slot.growthStagePercent)}%</span>
           {isNearHarvest && <span className="text-[10px] font-medium" style={{ color: growthColor }}>harvest</span>}
           {!isNearHarvest && isStressed && <span className="text-[10px] text-destructive font-medium">stress</span>}
         </div>
