@@ -43,7 +43,7 @@ echo ""
 # Update via Terraform (simpler and safer)
 echo "📝 Updating services via Terraform with environment variables..."
 
-# Create temporary tfvars file with URLs
+# Create tfvars file with URLs (keep for future deployments)
 cat > service-urls.auto.tfvars << EOF
 management_backend_python_url = "$AGENT_URL"
 agent_sim_url = "$SIMULATION_URL"
@@ -51,11 +51,13 @@ agent_management_url = "$MANAGEMENT_URL"
 simulation_backend_url = "$MANAGEMENT_URL"
 EOF
 
+echo ""
+echo "⚠️  IMPORTANT: service-urls.auto.tfvars created."
+echo "   This file must be kept and committed to git for deploy-*.sh scripts to work."
+echo ""
+
 # Re-apply Terraform with the new variables
 terraform.exe apply -auto-approve
-
-# Clean up
-rm -f service-urls.auto.tfvars
 
 echo ""
 echo "✅ All services configured!"

@@ -75,6 +75,7 @@ infra/**/.terraform.tfstate.lock.info
 infra/**/*.tfplan
 infra/**/*.tfplan.json
 infra/**/*.auto.tfvars
+!infra/fast/service-urls.auto.tfvars
 infra/**/override.tf
 infra/**/override.tf.json
 infra/**/*_override.tf

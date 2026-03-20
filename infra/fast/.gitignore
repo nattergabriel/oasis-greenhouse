@@ -10,6 +10,7 @@
 # Secrets (never commit)
 terraform.tfvars
 *.auto.tfvars
+!service-urls.auto.tfvars
 override.tf
 override.tf.json
 *_override.tf
