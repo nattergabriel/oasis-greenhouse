@@ -42,6 +42,34 @@ resource "aws_s3_bucket_policy" "frontend" {
       }
     ]
   })
+
+  depends_on = [
+    aws_s3_bucket_public_access_block.frontend,
+    aws_cloudfront_origin_access_identity.frontend
+  ]
+}
+
+# CloudFront Function to rewrite directory URLs to index.html
+resource "aws_cloudfront_function" "url_rewrite" {
+  name    = "${var.project}-url-rewrite"
+  runtime = "cloudfront-js-2.0"
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+
+      // Append index.html to directory requests
+      if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+      }
+      // Add /index.html if no file extension (handles SPA routes)
+      else if (!uri.match(/\.[a-z0-9]+$/i)) {
+        request.uri += '/index.html';
+      }
+
+      return request;
+    }
+  EOT
 }
 
 # CloudFront distribution
@@ -77,6 +105,12 @@ resource "aws_cloudfront_distribution" "frontend" {
     default_ttl            = 3600    # 1 hour
     max_ttl                = 86400   # 24 hours
     compress               = true
+
+    # Apply URL rewrite function
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.url_rewrite.arn
+    }
   }
 
   # Custom error page for SPA routing

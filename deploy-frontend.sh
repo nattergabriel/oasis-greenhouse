@@ -3,6 +3,12 @@ set -euo pipefail
 
 REGION="us-west-2"
 
+# Validate AWS credentials
+if ! aws.exe sts get-caller-identity &>/dev/null; then
+  echo "❌ Error: AWS credentials expired or invalid. Please authenticate."
+  exit 1
+fi
+
 # Get S3 bucket and CloudFront distribution from Terraform output
 cd infra/fast
 S3_BUCKET=$(terraform.exe output -raw frontend_s3_bucket 2>/dev/null || echo "")

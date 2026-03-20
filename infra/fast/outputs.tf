@@ -11,37 +11,36 @@ output "api_key_demo" {
   sensitive   = true
 }
 
-# ─── Direct Service URLs (Not publicly accessible) ───────────────────────────
+# ─── Service URLs ─────────────────────────────────────────────────────────────
 
 output "management_backend_url_internal" {
   value       = "https://${aws_apprunner_service.management_backend.service_url}"
-  description = "Internal App Runner URL (access via API Gateway instead)"
+  description = "Management backend URL"
 }
 
 output "agent_backend_url_internal" {
   value       = "https://${aws_apprunner_service.agent_backend.service_url}"
-  description = "Internal App Runner URL (access via API Gateway instead)"
+  description = "Agent backend URL"
 }
 
 output "simulation_url_internal" {
   value       = "https://${aws_apprunner_service.simulation.service_url}"
-  description = "Internal App Runner URL (access via API Gateway instead)"
+  description = "Simulation URL"
 }
 
-output "frontend_cloudfront_domain" {
-  value       = aws_cloudfront_distribution.frontend.domain_name
-  description = "CloudFront domain (requires ?api_key=xxx)"
-}
-
-output "frontend_url_with_key" {
-  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}?api_key=${var.api_key}"
-  description = "CloudFront URL with API key (ready to use)"
-  sensitive   = true
+output "frontend_url" {
+  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+  description = "Frontend CloudFront URL"
 }
 
 output "frontend_s3_bucket" {
   value       = aws_s3_bucket.frontend.id
   description = "S3 bucket name for frontend static files"
+}
+
+output "frontend_cloudfront_id" {
+  value       = aws_cloudfront_distribution.frontend.id
+  description = "CloudFront distribution ID for cache invalidation"
 }
 
 output "db_endpoint" {
@@ -67,3 +66,4 @@ output "ecr_simulation_repository" {
   value       = aws_ecr_repository.simulation.repository_url
   description = "ECR repository URL for simulation images"
 }
+

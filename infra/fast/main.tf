@@ -11,15 +11,34 @@ provider "aws" {
   region = var.aws_region
 }
 
+# ─── Local Values ────────────────────────────────────────────────────────────
+
+locals {
+  ecr_lifecycle_policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep only last 3 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 3
+      }
+      action = {
+        type = "expire"
+      }
+    }]
+  })
+}
+
 # ─── ECR Repositories (Auto-Created) ────────────────────────────────────────
 
 resource "aws_ecr_repository" "management_backend" {
   name                 = "martian-greenhouse-management-backend"
   image_tag_mutability = "MUTABLE"
-  force_delete         = true  # Allow delete even if images exist (hackathon mode)
+  force_delete         = true
 
   image_scanning_configuration {
-    scan_on_push = true  # Enable vulnerability scanning
+    scan_on_push = false  # Disabled for faster deployments
   }
 
   tags = {
@@ -57,59 +76,17 @@ resource "aws_ecr_repository" "simulation" {
 
 resource "aws_ecr_lifecycle_policy" "management_backend" {
   repository = aws_ecr_repository.management_backend.name
-
-  policy = jsonencode({
-    rules = [{
-      rulePriority = 1
-      description  = "Keep only last 3 images"
-      selection = {
-        tagStatus   = "any"
-        countType   = "imageCountMoreThan"
-        countNumber = 3
-      }
-      action = {
-        type = "expire"
-      }
-    }]
-  })
+  policy     = local.ecr_lifecycle_policy
 }
 
 resource "aws_ecr_lifecycle_policy" "agent_backend" {
   repository = aws_ecr_repository.agent_backend.name
-
-  policy = jsonencode({
-    rules = [{
-      rulePriority = 1
-      description  = "Keep only last 3 images"
-      selection = {
-        tagStatus   = "any"
-        countType   = "imageCountMoreThan"
-        countNumber = 3
-      }
-      action = {
-        type = "expire"
-      }
-    }]
-  })
+  policy     = local.ecr_lifecycle_policy
 }
 
 resource "aws_ecr_lifecycle_policy" "simulation" {
   repository = aws_ecr_repository.simulation.name
-
-  policy = jsonencode({
-    rules = [{
-      rulePriority = 1
-      description  = "Keep only last 3 images"
-      selection = {
-        tagStatus   = "any"
-        countType   = "imageCountMoreThan"
-        countNumber = 3
-      }
-      action = {
-        type = "expire"
-      }
-    }]
-  })
+  policy     = local.ecr_lifecycle_policy
 }
 
 # ─── Secrets Manager ─────────────────────────────────────────────────────────
@@ -234,6 +211,27 @@ resource "aws_iam_role_policy" "apprunner_secrets" {
   })
 }
 
+resource "aws_iam_role_policy" "apprunner_bedrock" {
+  name = "invoke-bedrock"
+  role = aws_iam_role.apprunner_instance.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ]
+      Resource = [
+        "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-*",
+        "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-3-*",
+        "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-sonnet-*"
+      ]
+    }]
+  })
+}
+
 resource "aws_iam_role" "apprunner_access" {
   name = "${var.project}-apprunner-access-role"
 
@@ -263,6 +261,9 @@ resource "aws_apprunner_service" "management_backend" {
       image_repository_type = "ECR"
       image_configuration {
         port = "8080"
+        runtime_environment_variables = var.management_backend_python_url != "" ? {
+          PYTHON_BACKEND_URL = var.management_backend_python_url
+        } : {}
         runtime_environment_secrets = {
           DB_URL      = aws_secretsmanager_secret.db_url.arn
           DB_USER     = aws_secretsmanager_secret.db_user.arn
@@ -313,10 +314,10 @@ resource "aws_apprunner_service" "agent_backend" {
       image_repository_type = "ECR"
       image_configuration {
         port = "8000"
-        runtime_environment_variables = {
-          SIM_ENGINE_URL = "https://${aws_apprunner_service.simulation.service_url}"
-          MANAGEMENT_URL = "https://${aws_apprunner_service.management_backend.service_url}"
-        }
+        runtime_environment_variables = var.agent_sim_url != "" && var.agent_management_url != "" ? {
+          SIM_ENGINE_URL         = var.agent_sim_url
+          MANAGEMENT_BACKEND_URL = var.agent_management_url
+        } : {}
         runtime_environment_secrets = {
           AGENT_TOKEN       = aws_secretsmanager_secret.agent_token.arn
           ANTHROPIC_API_KEY = aws_secretsmanager_secret.anthropic_key.arn
@@ -369,9 +370,9 @@ resource "aws_apprunner_service" "simulation" {
       image_repository_type = "ECR"
       image_configuration {
         port = "8000"
-        runtime_environment_variables = {
-          BACKEND_URL = "https://${aws_apprunner_service.management_backend.service_url}"
-        }
+        runtime_environment_variables = var.simulation_backend_url != "" ? {
+          BACKEND_URL = var.simulation_backend_url
+        } : {}
         runtime_environment_secrets = {
           API_KEY = aws_secretsmanager_secret.api_key.arn
         }

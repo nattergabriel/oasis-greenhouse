@@ -1,0 +1,61 @@
+@startuml Mars Greenhouse AWS Architecture
+
+skinparam backgroundColor white
+skinparam roundcorner 10
+skinparam PackagePadding 20
+
+left to right direction
+
+actor "👤\nUser" as user
+
+rectangle "☁️\n**CloudFront + S3**\nStatic Frontend" as frontend #FF9900
+
+rectangle "🚪\n**API Gateway**\nHTTP API\nLambda Auth" as gateway #FF4F8B
+
+rectangle "🏃 **App Runner Services**" #00A4A6 {
+    together {
+        rectangle "📦\nManagement" as mgmt #00A4A6
+        rectangle "🤖\nAI Agent" as agent #00A4A6
+        rectangle "🧪\nSimulation" as sim #00A4A6
+    }
+}
+
+rectangle "📦\n**ECR**\nContainer Registry" as ecr #FF9900
+
+rectangle "🧠\n**Amazon Bedrock**\nClaude API" as bedrock #FF6B6B
+
+storage "📚\n**Bedrock Knowledge Base**\nSyngenta Resources" as kb #9B59B6
+
+database "💾\n**RDS**\nPostgreSQL" as db #527FFF
+
+storage "🔐\n**Secrets**" as secrets #DD344C
+
+cloud "🌐 VPC" as vpc #E8E8E8
+
+' Horizontal flow
+user --> frontend
+frontend --> gateway
+gateway --> mgmt
+gateway --> agent
+gateway --> sim
+
+' Container deployment
+ecr .down.> mgmt : pull image
+ecr .down.> agent : pull image
+ecr .down.> sim : pull image
+
+agent .right.> mgmt
+agent .right.> sim
+
+' AI connections
+agent --> bedrock : Converse API
+agent --> kb : MCP
+
+' Data layer
+mgmt --> db
+agent .right.> secrets
+
+vpc .up.> agent
+vpc .up.> db
+
+@enduml

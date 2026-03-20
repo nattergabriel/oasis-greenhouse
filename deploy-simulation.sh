@@ -3,6 +3,12 @@ set -euo pipefail
 
 REGION="us-west-2"
 
+# Validate AWS credentials
+if ! aws.exe sts get-caller-identity &>/dev/null; then
+  echo "❌ Error: AWS credentials expired or invalid. Please authenticate."
+  exit 1
+fi
+
 # Get ECR repository URL from Terraform output
 cd infra/fast
 SIMULATION_REPO=$(terraform.exe output -raw ecr_simulation_repository 2>/dev/null || echo "")
@@ -17,8 +23,8 @@ IMAGE="$SIMULATION_REPO:latest"
 
 echo "Building and pushing simulation to $IMAGE..."
 
-# Build Docker image (NO CACHE - always fresh build)
-docker build --no-cache -t "$IMAGE" ./simulation
+# Build Docker image
+docker build -t "$IMAGE" ./simulation
 
 # Extract account ID and login to ECR
 ACCOUNT_ID=$(echo "$SIMULATION_REPO" | cut -d'.' -f1)
@@ -36,15 +42,27 @@ cd ../..
 
 echo ""
 echo "⏳ Waiting for deployment to become healthy..."
-for i in {1..60}; do
+ATTEMPT=0
+MAX_ATTEMPTS=30
+SLEEP_TIME=5
+
+while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+  ATTEMPT=$((ATTEMPT + 1))
+
   if curl -sf "$SIMULATION_URL/health" > /dev/null 2>&1; then
     echo "✅ Simulation is healthy and deployed!"
     exit 0
   fi
-  echo "   Attempt $i/60: waiting for health check..."
-  sleep 5
+
+  echo "   Attempt $ATTEMPT/$MAX_ATTEMPTS: waiting ${SLEEP_TIME}s..."
+  sleep $SLEEP_TIME
+
+  # Exponential backoff: increase wait time after 10 attempts
+  if [ $ATTEMPT -eq 10 ] || [ $ATTEMPT -eq 20 ]; then
+    SLEEP_TIME=$((SLEEP_TIME * 2))
+  fi
 done
 
-echo "❌ ERROR: Simulation failed to become healthy after 5 minutes!"
+echo "❌ ERROR: Simulation failed to become healthy after $((MAX_ATTEMPTS * 5 / 60)) minutes!"
 echo "   Check logs: aws.exe logs tail /aws/apprunner/martian-greenhouse-simulation --follow"
 exit 1

@@ -26,3 +26,24 @@ variable "api_key" {
   description = "API key for demo access control"
   sensitive   = true
 }
+
+# Cross-service URLs (set after initial deployment to break circular dependency)
+variable "management_backend_python_url" {
+  description = "Agent backend URL for management backend"
+  default     = ""
+}
+
+variable "agent_sim_url" {
+  description = "Simulation URL for agent backend"
+  default     = ""
+}
+
+variable "agent_management_url" {
+  description = "Management backend URL for agent backend"
+  default     = ""
+}
+
+variable "simulation_backend_url" {
+  description = "Management backend URL for simulation"
+  default     = ""
+}
